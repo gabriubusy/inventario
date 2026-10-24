@@ -1,0 +1,58 @@
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - windows/**
+    - "**/*.g.dart"
+    - "**/*.freezed.dart"
+    - web/**
+  language:
+    strict-casts: true
+    strict-inference: true
+    strict-raw-types: true
+  errors:
+    missing_return: error
+    missing_required_param: error
+    unawaited_futures: warning
+
+linter:
+  rules:
+    # Types and immutability
+    - always_declare_return_types
+    - prefer_final_fields
+    - prefer_final_locals
+    - prefer_final_in_for_each
+    - avoid_dynamic_calls
+    - avoid_types_on_closure_parameters
+    - type_annotate_public_apis
+
+    # Widgets and performance
+    - prefer_const_constructors
+    - prefer_const_constructors_in_immutables
+    - prefer_const_declarations
+    - prefer_const_literals_to_create_immutables
+    - sized_box_for_whitespace
+    - use_colored_box
+    - use_decorated_box
+    - avoid_unnecessary_containers
+    - use_build_context_synchronously
+
+    # Async safety
+    - unawaited_futures
+    - discarded_futures
+    - cancel_subscriptions
+    - close_sinks
+
+    # Readability
+    - prefer_single_quotes
+    - directives_ordering
+    - always_use_package_imports
+    - avoid_print
+    - unnecessary_lambdas
+    - unnecessary_parenthesis
+    - use_super_parameters
+    - exhaustive_cases
+    - no_default_cases
+    - sort_child_properties_last
+    - only_throw_errors
