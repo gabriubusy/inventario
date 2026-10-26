@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/inicio/presentation/accion_rapida.dart';
-import 'package:inventario/features/inicio/presentation/tecla_atajo.dart';
 
 class BotonAccion extends StatelessWidget {
   const BotonAccion({super.key, required this.accion, required this.onPulsar});

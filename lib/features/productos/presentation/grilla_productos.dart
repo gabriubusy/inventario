@@ -13,7 +13,7 @@ class GrillaProductos extends StatelessWidget {
   });
 
   static const _anchoTarjeta = 320.0;
-  static const _altoTarjeta = 148.0;
+  static const _altoTarjeta = 180.0;
 
   final EstadoExistencias estado;
   final List<Producto> productos;

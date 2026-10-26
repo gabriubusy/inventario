@@ -27,6 +27,13 @@ abstract final class TemaApp {
           side: BorderSide(color: colores.outlineVariant),
         ),
       ),
+      dialogTheme: DialogThemeData(
+        backgroundColor: colores.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: _radioTarjeta,
+          side: BorderSide(color: colores.outlineVariant),
+        ),
+      ),
       inputDecorationTheme: InputDecorationTheme(
         border: const OutlineInputBorder(borderRadius: _radio),
         enabledBorder: OutlineInputBorder(

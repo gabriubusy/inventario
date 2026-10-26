@@ -6,6 +6,7 @@ import 'package:inventario/features/productos/domain/estado_stock.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/presentation/estilo_estado.dart';
 import 'package:inventario/features/productos/presentation/etiqueta_estado.dart';
+import 'package:inventario/features/productos/presentation/textos_producto.dart';
 
 class TarjetaProducto extends StatelessWidget {
   const TarjetaProducto(this.producto, {super.key});
@@ -17,7 +18,7 @@ class TarjetaProducto extends StatelessWidget {
   /// The bar is full at twice the minimum, so "low" sits under half.
   double get _nivel => producto.minimo <= 0
       ? 1
-      : math.min(1, producto.existencia / (producto.minimo * 2));
+      : math.min(1, producto.medida / (producto.minimo * 2));
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +26,12 @@ class TarjetaProducto extends StatelessWidget {
     final colores = tema.colorScheme;
     final espaciado = context.espaciado;
     final estado = producto.estado;
+    final secundario = tema.textTheme.bodySmall?.copyWith(
+      color: colores.onSurfaceVariant,
+      fontFeatures: _cifras,
+    );
+    final peso = textoPeso(producto);
+    final marcas = textoMarcas(producto);
     return Card(
       child: Padding(
         padding: EdgeInsets.all(espaciado.lg),
@@ -46,12 +53,7 @@ class TarjetaProducto extends StatelessWidget {
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      Text(
-                        producto.categoria.etiqueta,
-                        style: tema.textTheme.bodySmall?.copyWith(
-                          color: colores.onSurfaceVariant,
-                        ),
-                      ),
+                      Text(producto.categoria.etiqueta, style: secundario),
                     ],
                   ),
                 ),
@@ -59,19 +61,24 @@ class TarjetaProducto extends StatelessWidget {
               ],
             ),
             const Spacer(),
-            // Shrinks instead of wrapping when a large figure meets a narrow card.
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              alignment: Alignment.centerLeft,
-              child: Text(
-                producto.unidad.formatear(producto.existencia),
-                style: tema.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
+            _CifraPrincipal(producto),
+            if (peso != null)
+              Text(
+                peso,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: tema.textTheme.bodySmall?.copyWith(
                   fontFeatures: _cifras,
                 ),
               ),
-            ),
-            SizedBox(height: espaciado.xs),
+            if (marcas != null)
+              Text(
+                marcas,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: secundario,
+              ),
+            SizedBox(height: espaciado.sm),
             Row(
               spacing: espaciado.sm,
               children: [
@@ -86,17 +93,60 @@ class TarjetaProducto extends StatelessWidget {
                     ),
                   ),
                 ),
-                Text(
-                  'mín. ${producto.unidad.formatear(producto.minimo)}',
-                  style: tema.textTheme.bodySmall?.copyWith(
-                    color: colores.onSurfaceVariant,
-                    fontFeatures: _cifras,
-                  ),
-                ),
+                Text(textoMinimo(producto), style: secundario),
               ],
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// Main figure plus a "+1 abierta" chip; shrinks instead of wrapping.
+class _CifraPrincipal extends StatelessWidget {
+  const _CifraPrincipal(this.producto);
+
+  final Producto producto;
+
+  @override
+  Widget build(BuildContext context) {
+    final tema = Theme.of(context);
+    final espaciado = context.espaciado;
+    final abiertas = producto.piezasAbiertas;
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      alignment: Alignment.centerLeft,
+      child: Row(
+        spacing: espaciado.sm,
+        children: [
+          Text(
+            textoPrincipal(producto),
+            style: tema.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              fontFeatures: TarjetaProducto._cifras,
+            ),
+          ),
+          if (abiertas > 0)
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: tema.colorScheme.surfaceContainerHighest,
+                borderRadius: BorderRadius.circular(espaciado.xxl),
+              ),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: espaciado.sm,
+                  vertical: espaciado.xs / 2,
+                ),
+                child: Text(
+                  abiertas == 1 ? '+1 abierta' : '+$abiertas abiertas',
+                  style: tema.textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

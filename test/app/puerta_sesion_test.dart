@@ -7,12 +7,21 @@ import 'package:inventario/features/autenticacion/data/almacen_sesion_en_memoria
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_en_memoria.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/domain/usuario.dart';
+import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
+import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
+import 'package:inventario/features/productos/application/gestor_fotos.dart';
+import 'package:inventario/features/productos/data/almacen_imagenes_en_memoria.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
+import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
+import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
+import 'package:inventario/features/tasa/application/controlador_tasa.dart';
+import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
 
 void main() {
   late ControladorSesion sesion;
   late ControladorExistencias existencias;
+  late ControladorProveedores proveedores;
 
   setUp(() async {
     sesion = ControladorSesion(
@@ -22,15 +31,18 @@ void main() {
       )),
       AlmacenSesionEnMemoria(),
     );
-    existencias = ControladorExistencias(
-      const RepositorioProductosEnMemoria([]),
-    );
+    existencias = ControladorExistencias(RepositorioProductosEnMemoria([]));
     await existencias.cargar();
+    proveedores = ControladorProveedores(
+      RepositorioProveedoresEnMemoria([]),
+      existencias,
+    );
   });
 
   tearDown(() {
     sesion.dispose();
     existencias.dispose();
+    proveedores.dispose();
   });
 
   Future<void> entrar(WidgetTester tester) async {
@@ -40,6 +52,11 @@ void main() {
       InventarioApp(
         controladorSesion: sesion,
         controladorExistencias: existencias,
+        controladorProveedores: proveedores,
+        controladorEntradas: ControladorEntradas(existencias),
+        controladorListaProductos: ControladorListaProductos(existencias),
+        controladorTasa: ControladorTasa(AlmacenTasaEnMemoria()),
+        gestorFotos: GestorFotos(AlmacenImagenesEnMemoria()),
       ),
     );
     for (final digito in ['1', '2', '3', '4']) {

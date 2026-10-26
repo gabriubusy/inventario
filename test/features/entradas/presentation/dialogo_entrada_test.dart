@@ -91,7 +91,11 @@ void main() {
   Producto producto(String id) =>
       existencias.productos.firstWhere((p) => p.id == id);
 
-  Future<void> elegirProducto(WidgetTester tester, String texto, String nombre) async {
+  Future<void> elegirProducto(
+    WidgetTester tester,
+    String texto,
+    String nombre,
+  ) async {
     await tester.enterText(campo('Producto'), texto);
     await tester.pump();
     await tester.tap(find.widgetWithText(ListTile, nombre));
@@ -139,7 +143,11 @@ void main() {
   testWidgets('Alt+2 picks the second brand', (tester) async {
     await abrir(tester);
     await elegirProducto(tester, 'queso', 'Queso blanco duro');
-    await conTecla(tester, LogicalKeyboardKey.altLeft, LogicalKeyboardKey.digit2);
+    await conTecla(
+      tester,
+      LogicalKeyboardKey.altLeft,
+      LogicalKeyboardKey.digit2,
+    );
     await tester.enterText(campo('Piezas'), '1');
     await tester.enterText(campo('Peso'), '0,8');
     await registrar(tester);
@@ -155,7 +163,11 @@ void main() {
     await registrar(tester);
     expect(
       producto('p2').lotes.single,
-      const LoteMarca(marca: 'Propia', proveedor: 'Frigorífico 1', cantidad: 12500),
+      const LoteMarca(
+        marca: 'Propia',
+        proveedor: 'Frigorífico 1',
+        cantidad: 12500,
+      ),
     );
   });
 

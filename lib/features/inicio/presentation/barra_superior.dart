@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/core/fechas.dart';
-import 'package:inventario/features/inicio/presentation/tecla_atajo.dart';
 
 class BarraSuperior extends StatelessWidget {
-  const BarraSuperior({super.key, required this.onBloquear});
+  const BarraSuperior({
+    super.key,
+    required this.onProveedores,
+    required this.onBloquear,
+  });
 
+  final VoidCallback onProveedores;
   final VoidCallback onBloquear;
 
   @override
@@ -53,6 +58,17 @@ class BarraSuperior extends StatelessWidget {
               ),
             ),
             const Spacer(),
+            TextButton.icon(
+              onPressed: onProveedores,
+              icon: const Icon(Icons.local_shipping_outlined),
+              label: Row(
+                spacing: espaciado.sm,
+                children: [
+                  const Text('Proveedores'),
+                  TeclaAtajo('F5', color: colores.onSurfaceVariant),
+                ],
+              ),
+            ),
             TextButton.icon(
               onPressed: onBloquear,
               icon: const Icon(Icons.lock_outline),

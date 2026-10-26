@@ -1,7 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:inventario/core/unidad.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
+import 'package:inventario/features/productos/domain/filtro_estado.dart';
 import 'package:inventario/features/productos/domain/filtro_productos.dart';
+import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 
 Producto _producto(
@@ -12,9 +14,9 @@ Producto _producto(
   id: nombre,
   nombre: nombre,
   categoria: categoria,
-  unidad: UnidadBase.kg,
-  existencia: existencia,
+  forma: FormaConteo.porKilo,
   minimo: 5000,
+  lotes: [if (existencia > 0) LoteMarca(marca: 'A', cantidad: existencia)],
 );
 
 void main() {
@@ -61,6 +63,22 @@ void main() {
       'Mortadela',
       'Bistec',
       'Jamón de pierna',
+    ]);
+  });
+
+  test('also finds products by brand', () {
+    final conMarca = jamon.copyWith(
+      lotes: [const LoteMarca(marca: 'Plumrose', cantidad: 5000)],
+    );
+    expect(filtrarProductos([bistec, conMarca], texto: 'plum'), [conMarca]);
+  });
+
+  test('the state filter keeps only low or only sold-out products', () {
+    expect(nombres(filtrarProductos(todos, filtro: FiltroEstado.bajo)), [
+      'Mortadela',
+    ]);
+    expect(nombres(filtrarProductos(todos, filtro: FiltroEstado.agotados)), [
+      'Queso guayanés',
     ]);
   });
 }
