@@ -1,0 +1,122 @@
+import 'dart:convert';
+
+import 'package:file_selector/file_selector.dart';
+import 'package:flutter/foundation.dart';
+import 'package:inventario/features/reportes/data/csv_reporte.dart';
+import 'package:inventario/features/reportes/domain/exportador_reportes.dart';
+import 'package:inventario/features/reportes/domain/reporte.dart';
+import 'package:pdf/pdf.dart';
+import 'package:pdf/widgets.dart' as pw;
+import 'package:printing/printing.dart';
+
+/// PDF through the print dialog and CSV through a save dialog (a download
+/// in the browser).
+class ExportadorArchivos implements ExportadorReportes {
+  const ExportadorArchivos();
+
+  @override
+  Future<void> pdf(Reporte reporte, {required String subtitulo}) =>
+      Printing.layoutPdf(
+        name: reporte.titulo,
+        onLayout: (formato) => _documento(reporte, subtitulo, formato),
+      );
+
+  @override
+  Future<bool> csv(Reporte reporte, {required String nombre}) async {
+    final bytes = Uint8List.fromList(utf8.encode(csvDeReporte(reporte)));
+    final archivo = XFile.fromData(
+      bytes,
+      mimeType: 'text/csv',
+      name: '$nombre.csv',
+    );
+    if (kIsWeb) {
+      await archivo.saveTo('$nombre.csv');
+      return true;
+    }
+    final destino = await getSaveLocation(
+      suggestedName: '$nombre.csv',
+      acceptedTypeGroups: const [
+        XTypeGroup(label: 'CSV', extensions: ['csv']),
+      ],
+    );
+    if (destino == null) return false;
+    await archivo.saveTo(destino.path);
+    return true;
+  }
+
+  Future<Uint8List> _documento(
+    Reporte reporte,
+    String subtitulo,
+    PdfPageFormat formato,
+  ) async {
+    final doc = pw.Document(title: reporte.titulo);
+    doc.addPage(
+      pw.MultiPage(
+        pageFormat: formato,
+        build: (_) => [
+          pw.Text(
+            _latin(reporte.titulo),
+            style: const pw.TextStyle(
+              fontSize: 20,
+              fontWeight: pw.FontWeight.bold,
+            ),
+          ),
+          pw.Text(_latin(subtitulo)),
+          pw.SizedBox(height: 12),
+          pw.Wrap(
+            spacing: 24,
+            runSpacing: 8,
+            children: [
+              for (final c in reporte.cifras)
+                pw.Column(
+                  crossAxisAlignment: pw.CrossAxisAlignment.start,
+                  children: [
+                    pw.Text(
+                      _latin(c.titulo),
+                      style: const pw.TextStyle(fontSize: 9),
+                    ),
+                    pw.Text(
+                      _latin(c.valor),
+                      style: const pw.TextStyle(
+                        fontSize: 13,
+                        fontWeight: pw.FontWeight.bold,
+                      ),
+                    ),
+                    if (c.detalle.isNotEmpty)
+                      pw.Text(
+                        _latin(c.detalle),
+                        style: const pw.TextStyle(fontSize: 9),
+                      ),
+                  ],
+                ),
+            ],
+          ),
+          pw.SizedBox(height: 16),
+          pw.TableHelper.fromTextArray(
+            headers: [for (final c in reporte.columnas) _latin(c)],
+            data: [
+              for (final fila in reporte.filas)
+                [for (final c in fila) _latin(c)],
+            ],
+            headerStyle: const pw.TextStyle(
+              fontSize: 9,
+              fontWeight: pw.FontWeight.bold,
+            ),
+            cellStyle: const pw.TextStyle(fontSize: 9),
+            cellAlignments: {
+              for (final i in reporte.numericas) i: pw.Alignment.centerRight,
+            },
+          ),
+        ],
+      ),
+    );
+    return doc.save();
+  }
+
+  // The built-in PDF font only has Latin-1; swap the few symbols outside it.
+  static String _latin(String texto) => texto
+      .replaceAll('−', '-')
+      .replaceAll('≈', '~')
+      .replaceAll('—', '-')
+      .replaceAll('–', '-');
+}
