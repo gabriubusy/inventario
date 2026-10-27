@@ -27,14 +27,11 @@ class SelectorFormaConteo extends StatelessWidget {
     return Row(
       spacing: context.espaciado.sm,
       children: [
-        for (final (i, forma) in FormaConteo.values.indexed)
+        for (final forma in FormaConteo.values)
           Expanded(
             child: OpcionSeleccionable(
               titulo: forma.etiqueta,
-              detalle: forma.ejemplo,
-              atajo: i < teclasFormaConteo.length
-                  ? 'Alt ${teclasFormaConteo[i].$2}'
-                  : '',
+              ayuda: 'Por ejemplo: ${forma.ejemplo.toLowerCase()}',
               elegida: forma == elegida,
               onPulsar: () => onElegir(forma),
             ),

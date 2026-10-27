@@ -130,18 +130,24 @@ void main() {
     expect(find.text('1 \$ = 40,00 Bs'), findsOneWidget);
   });
 
-  testWidgets('arrows choose the product shown in the form', (tester) async {
+  testWidgets('arrows choose and Enter opens the edit window', (tester) async {
     await abrir(tester);
     // Sold out first, so the cheese starts chosen.
-    expect(
-      find.widgetWithText(TextFormField, 'Queso guayanés'),
-      findsOneWidget,
-    );
     await tecla(tester, LogicalKeyboardKey.arrowDown);
+    await tecla(tester, LogicalKeyboardKey.enter);
+    expect(find.text('Editar producto'), findsOneWidget);
     expect(
       find.widgetWithText(TextFormField, 'Jamón de pierna'),
       findsOneWidget,
     );
+  });
+
+  testWidgets('clicking a product opens its edit window', (tester) async {
+    await abrir(tester);
+    await tester.tap(find.text('Jamón de pierna'));
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoNuevoProducto), findsOneWidget);
+    expect(find.text('Editar producto'), findsOneWidget);
   });
 
   testWidgets('Ctrl+S saves the edit and Deshacer brings it back', (
@@ -149,6 +155,7 @@ void main() {
   ) async {
     await abrir(tester);
     await tecla(tester, LogicalKeyboardKey.arrowDown);
+    await tecla(tester, LogicalKeyboardKey.enter);
     await tester.enterText(campo('Avisar cuando queden (total)'), '6');
     await tester.enterText(campo('Precio'), '10,50');
     await conTecla(
@@ -161,6 +168,7 @@ void main() {
     // The stock is untouched by an edit.
     expect(guardado('p1').lotes.single.piezaAbierta, isTrue);
     expect(guardado('p1').cantidad, 16400);
+    expect(find.byType(DialogoNuevoProducto), findsNothing);
     expect(find.text('Jamón de pierna guardado'), findsOneWidget);
 
     await tester.tap(find.text('Deshacer'));
@@ -173,8 +181,11 @@ void main() {
     tester,
   ) async {
     await abrir(tester);
+    await tecla(tester, LogicalKeyboardKey.enter);
     expect(find.text('Por litro'), findsOneWidget);
+    await tecla(tester, LogicalKeyboardKey.escape);
     await tecla(tester, LogicalKeyboardKey.arrowDown);
+    await tecla(tester, LogicalKeyboardKey.enter);
     expect(find.text('No se cambia mientras haya existencias'), findsOneWidget);
     expect(find.text('Por litro'), findsNothing);
   });

@@ -1,23 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
-import 'package:inventario/app/tecla_atajo.dart';
 
-/// A radio-like tile with its shortcut; the chosen one gets a light fill.
+/// A radio-like tile; the chosen one gets a light fill. Its keyboard shortcut
+/// is not drawn inside: it ate the space and cut the words short.
 class OpcionSeleccionable extends StatelessWidget {
   const OpcionSeleccionable({
     super.key,
     required this.titulo,
-    required this.atajo,
     required this.elegida,
     required this.onPulsar,
     this.detalle,
+    this.ayuda,
   });
 
   static const _alto = 44.0;
+  static const _tamanoAyuda = 16.0;
 
   final String titulo;
+
+  /// Always-visible second line, for facts the user needs at a glance.
   final String? detalle;
-  final String atajo;
+
+  /// Explanation behind a "?" shown on hover, for what is only a reminder.
+  final String? ayuda;
   final bool elegida;
   final VoidCallback onPulsar;
 
@@ -27,6 +32,7 @@ class OpcionSeleccionable extends StatelessWidget {
     final colores = tema.colorScheme;
     final espaciado = context.espaciado;
     final detalle = this.detalle;
+    final ayuda = this.ayuda;
     return Semantics(
       selected: elegida,
       child: OutlinedButton(
@@ -47,35 +53,46 @@ class OpcionSeleccionable extends StatelessWidget {
             width: elegida ? 2 : 1,
           ),
         ),
-        child: Row(
-          spacing: espaciado.xs,
-          children: [
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+        child: SizedBox(
+          width: double.infinity,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                spacing: espaciado.xs,
                 children: [
-                  Text(
-                    titulo,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: tema.textTheme.labelLarge?.copyWith(
-                      fontWeight: elegida ? FontWeight.w600 : FontWeight.w500,
-                    ),
-                  ),
-                  if (detalle != null)
-                    Text(
-                      detalle,
+                  Expanded(
+                    child: Text(
+                      titulo,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: tema.textTheme.bodySmall?.copyWith(
+                      style: tema.textTheme.labelLarge?.copyWith(
+                        fontWeight: elegida ? FontWeight.w600 : FontWeight.w500,
+                      ),
+                    ),
+                  ),
+                  if (ayuda != null)
+                    Tooltip(
+                      message: ayuda,
+                      child: Icon(
+                        Icons.help_outline,
+                        size: _tamanoAyuda,
                         color: colores.onSurfaceVariant,
                       ),
                     ),
                 ],
               ),
-            ),
-            TeclaAtajo(atajo, color: colores.onSurfaceVariant),
-          ],
+              if (detalle != null)
+                Text(
+                  detalle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: tema.textTheme.bodySmall?.copyWith(
+                    color: colores.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );

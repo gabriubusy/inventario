@@ -13,13 +13,12 @@ import 'package:inventario/features/productos/presentation/barra_productos.dart'
 import 'package:inventario/features/productos/presentation/dialogo_nuevo_producto.dart';
 import 'package:inventario/features/productos/presentation/elegir_imagen.dart';
 import 'package:inventario/features/productos/presentation/lista_productos.dart';
-import 'package:inventario/features/productos/presentation/panel_producto.dart';
 import 'package:inventario/features/productos/presentation/textos_producto.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/presentation/aviso_tasa.dart';
 import 'package:inventario/features/tasa/presentation/dialogo_tasa.dart';
 
-/// Products (F4): the list on the left, the chosen one's form on the right.
+/// Products (F4): the full-width list; creating and editing open a window.
 class PantallaProductos extends StatefulWidget {
   const PantallaProductos({
     super.key,
@@ -30,8 +29,7 @@ class PantallaProductos extends StatefulWidget {
     this.elegirImagen = elegirImagenDelEquipo,
   });
 
-  static const _anchoMaximo = 1360.0;
-  static const _anchoPanel = 460.0;
+  static const _anchoMaximo = 1240.0;
 
   final ControladorListaProductos lista;
   final ControladorTasa tasa;
@@ -46,28 +44,38 @@ class PantallaProductos extends StatefulWidget {
 class _PantallaProductosState extends State<PantallaProductos> {
   late final _busqueda = TextEditingController(text: widget.lista.busqueda);
   final _focoBusqueda = FocusNode();
-  final _focoNombre = FocusNode();
-  final _focoPanel = FocusNode(canRequestFocus: false, skipTraversal: true);
+  final _focoLista = FocusNode(debugLabel: 'lista de productos');
 
   @override
   void dispose() {
     _busqueda.dispose();
     _focoBusqueda.dispose();
-    _focoNombre.dispose();
-    _focoPanel.dispose();
+    _focoLista.dispose();
     super.dispose();
   }
+
+  static final _teclasDeLista = {
+    LogicalKeyboardKey.arrowUp,
+    LogicalKeyboardKey.arrowDown,
+    LogicalKeyboardKey.enter,
+    LogicalKeyboardKey.numpadEnter,
+  };
+
+  // Our shortcuts already used them; without this Flutter would also move the
+  // focus to a button with the arrows and press it with Enter.
+  KeyEventResult _absorberTeclasDeLista(FocusNode _, KeyEvent evento) =>
+      _teclasDeLista.contains(evento.logicalKey)
+      ? KeyEventResult.handled
+      : KeyEventResult.ignored;
 
   void _limpiarBusqueda() {
     _busqueda.clear();
     widget.lista.buscar('');
   }
 
-  /// Leaves the form first, then clears the search, then goes home.
+  /// Clears the search first, then goes home.
   void _escape() {
-    if (_focoPanel.hasFocus) {
-      _focoBusqueda.requestFocus();
-    } else if (_busqueda.text.isNotEmpty) {
+    if (_busqueda.text.isNotEmpty) {
       _limpiarBusqueda();
     } else {
       unawaited(Navigator.of(context).maybePop());
@@ -85,6 +93,24 @@ class _PantallaProductosState extends State<PantallaProductos> {
       elegirImagen: widget.elegirImagen,
     ),
   );
+
+  void _editar(Producto producto) => unawaited(
+    mostrarDialogoEditarProducto(
+      context,
+      widget.lista.existencias,
+      producto: producto,
+      fotos: widget.fotos,
+      proveedores: widget.proveedores,
+      aBolivares: widget.tasa.aBolivares,
+      elegirImagen: widget.elegirImagen,
+      alEditar: _guardado,
+    ),
+  );
+
+  void _editarElegido() {
+    final elegido = widget.lista.elegido;
+    if (elegido != null) _editar(elegido);
+  }
 
   void _ponerTasa() => unawaited(mostrarDialogoTasa(context, widget.tasa));
 
@@ -132,15 +158,11 @@ class _PantallaProductosState extends State<PantallaProductos> {
     const SingleActivator(LogicalKeyboardKey.keyK, control: true):
         _focoBusqueda.requestFocus,
     const SingleActivator(LogicalKeyboardKey.keyT, control: true): _ponerTasa,
-  };
-
-  // Only while not typing in the form, where arrows and Enter have their use.
-  Map<ShortcutActivator, VoidCallback> get _atajosLista => {
     const SingleActivator(LogicalKeyboardKey.arrowUp): () =>
         widget.lista.moverEleccion(-1),
     const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
         widget.lista.moverEleccion(1),
-    const SingleActivator(LogicalKeyboardKey.enter): _focoNombre.requestFocus,
+    const SingleActivator(LogicalKeyboardKey.enter): _editarElegido,
   };
 
   @override
@@ -149,77 +171,50 @@ class _PantallaProductosState extends State<PantallaProductos> {
     final lista = widget.lista;
     final tasa = widget.tasa;
     return AtajosDeTeclado(
-      atajos: _atajosLista,
-      activo: () => !_focoPanel.hasFocus,
-      child: AtajosDeTeclado(
-        atajos: _atajos,
-        child: Scaffold(
-          body: ListenableBuilder(
-            listenable: Listenable.merge([lista, lista.existencias, tasa]),
-            builder: (context, _) {
-              final elegido = lista.elegido;
-              return Column(
-                children: [
-                  BarraProductos(
-                    resumen: resumenProductos(lista.existencias.productos),
-                    tasa: tasa,
-                    onVolver: () => unawaited(Navigator.of(context).maybePop()),
-                    onTasa: _ponerTasa,
-                    onNuevo: _nuevo,
-                  ),
-                  if (!tasa.esDeHoy)
-                    AvisoTasa(controlador: tasa, onPoner: _ponerTasa),
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: PantallaProductos._anchoMaximo,
-                        ),
-                        child: Padding(
-                          padding: EdgeInsets.all(espaciado.xl),
-                          child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            spacing: espaciado.xl,
-                            children: [
-                              Expanded(
-                                child: ListaProductos(
-                                  controlador: lista,
-                                  fotos: widget.fotos,
-                                  busqueda: _busqueda,
-                                  focoBusqueda: _focoBusqueda,
-                                  aBolivares: tasa.aBolivares,
-                                  onCrear: _nuevo,
-                                  onLimpiar: _limpiarBusqueda,
-                                ),
-                              ),
-                              SizedBox(
-                                width: PantallaProductos._anchoPanel,
-                                child: Focus(
-                                  focusNode: _focoPanel,
-                                  child: elegido == null
-                                      ? const SizedBox.shrink()
-                                      : PanelProducto(
-                                          producto: elegido,
-                                          existencias: lista.existencias,
-                                          fotos: widget.fotos,
-                                          focoNombre: _focoNombre,
-                                          proveedores: widget.proveedores,
-                                          aBolivares: tasa.aBolivares,
-                                          elegirImagen: widget.elegirImagen,
-                                          alGuardar: _guardado,
-                                        ),
-                                ),
-                              ),
-                            ],
-                          ),
+      atajos: _atajos,
+      child: Scaffold(
+        body: ListenableBuilder(
+          listenable: Listenable.merge([lista, lista.existencias, tasa]),
+          builder: (context, _) => Column(
+            children: [
+              BarraProductos(
+                resumen: resumenProductos(lista.existencias.productos),
+                tasa: tasa,
+                onVolver: () => unawaited(Navigator.of(context).maybePop()),
+                onTasa: _ponerTasa,
+                onNuevo: _nuevo,
+              ),
+              if (!tasa.esDeHoy)
+                AvisoTasa(controlador: tasa, onPoner: _ponerTasa),
+              Expanded(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: PantallaProductos._anchoMaximo,
+                    ),
+                    child: Padding(
+                      padding: EdgeInsets.all(espaciado.xl),
+                      child: Focus(
+                        focusNode: _focoLista,
+                        autofocus: true,
+                        onKeyEvent: _absorberTeclasDeLista,
+                        child: ListaProductos(
+                          controlador: lista,
+                          fotos: widget.fotos,
+                          busqueda: _busqueda,
+                          focoBusqueda: _focoBusqueda,
+                          aBolivares: tasa.aBolivares,
+                          onCrear: _nuevo,
+                          onAbrir: _editar,
+                          onLimpiar: _limpiarBusqueda,
                         ),
                       ),
                     ),
                   ),
-                ],
-              );
-            },
+                ),
+              ),
+            ],
           ),
         ),
       ),

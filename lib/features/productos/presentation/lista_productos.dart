@@ -3,6 +3,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/productos/domain/filtro_estado.dart';
+import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/presentation/fila_producto.dart';
 import 'package:inventario/features/productos/presentation/lista_productos_vacia.dart';
 
@@ -15,6 +16,7 @@ class ListaProductos extends StatelessWidget {
     required this.focoBusqueda,
     required this.aBolivares,
     required this.onCrear,
+    required this.onAbrir,
     required this.onLimpiar,
   });
 
@@ -26,6 +28,9 @@ class ListaProductos extends StatelessWidget {
 
   /// Opens the new product window, prefilled with [nombre] if not empty.
   final ValueChanged<String> onCrear;
+
+  /// Opens the edit window of a clicked product.
+  final ValueChanged<Producto> onAbrir;
   final VoidCallback onLimpiar;
 
   @override
@@ -95,7 +100,10 @@ class ListaProductos extends StatelessWidget {
                         fotos: fotos,
                         elegido: producto.id == elegido?.id,
                         aBolivares: aBolivares,
-                        onElegir: () => controlador.elegir(producto.id),
+                        onElegir: () {
+                          controlador.elegir(producto.id);
+                          onAbrir(producto);
+                        },
                       );
                     },
                   ),

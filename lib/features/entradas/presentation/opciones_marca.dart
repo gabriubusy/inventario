@@ -42,7 +42,6 @@ class OpcionesMarca extends StatelessWidget {
                     if (lote.proveedor.isNotEmpty) lote.proveedor,
                     textoLote(producto, lote),
                   ].join(' · '),
-                  atajo: 'Alt ${i + 1}',
                   elegida: elegido == i,
                   onPulsar: () => onElegir(i),
                 ),
@@ -52,7 +51,6 @@ class OpcionesMarca extends StatelessWidget {
               child: OpcionSeleccionable(
                 titulo: '+ Otra marca',
                 detalle: 'Marca o proveedor nuevo',
-                atajo: 'Alt ${lotes.length + 1}',
                 elegida: elegido == null,
                 onPulsar: () => onElegir(null),
               ),

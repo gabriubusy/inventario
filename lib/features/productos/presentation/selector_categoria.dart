@@ -19,11 +19,10 @@ class SelectorCategoria extends StatelessWidget {
     return Row(
       spacing: context.espaciado.sm,
       children: [
-        for (final (i, categoria) in Categoria.values.indexed)
+        for (final categoria in Categoria.values)
           Expanded(
             child: OpcionSeleccionable(
               titulo: categoria.etiqueta,
-              atajo: 'Alt ${i + 1}',
               elegida: categoria == elegida,
               onPulsar: () => onElegir(categoria),
             ),
