@@ -109,7 +109,8 @@ class _DialogoTasaState extends State<DialogoTasa> {
                 else if (anterior != null)
                   Text(
                     'Última: ${formatearBolivares(anterior.bolivaresPorDolar)}'
-                    ' · ${formatearFechaLarga(anterior.fecha)}',
+                    ' · ${formatearFechaLarga(anterior.fecha)}'
+                    ' · ${anterior.origen.etiqueta}',
                     style: estilo,
                   ),
                 BotonesCrear(

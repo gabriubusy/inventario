@@ -17,6 +17,18 @@ void main() {
     expect(tasa.esDelDia(DateTime(2026, 10, 25)), isFalse);
   });
 
+  test('measures the change from the previous rate in hundredths of %', () {
+    TasaCambio con(int valor, int? anterior) => TasaCambio(
+      bolivaresPorDolar: valor,
+      fecha: DateTime(2026, 10, 26),
+      anterior: anterior,
+    );
+    expect(con(88623, 88475).variacion, 17);
+    expect(con(88475, 88623).variacion, -17);
+    expect(con(88623, 88623).variacion, 0);
+    expect(con(88623, null).variacion, isNull);
+  });
+
   test('two rates of the same day and value are equal', () {
     final otra = TasaCambio(
       bolivaresPorDolar: 3960,

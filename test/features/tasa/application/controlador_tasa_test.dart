@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
+import 'package:inventario/features/tasa/domain/fuente_tasa.dart';
+import 'package:inventario/features/tasa/domain/origen_tasa.dart';
 import 'package:inventario/features/tasa/domain/tasa_cambio.dart';
 
 void main() {
@@ -39,4 +41,84 @@ void main() {
       TasaCambio(bolivaresPorDolar: 4000, fecha: hoy),
     );
   });
+
+  test('a rate typed by hand is compared with the last saved day', () async {
+    final controlador = crear(deAyer);
+    await controlador.cargar();
+    await controlador.guardar(4000);
+    expect(controlador.tasa?.anterior, 3960);
+    // A same-day correction still compares with yesterday.
+    await controlador.guardar(4010);
+    expect(controlador.tasa?.anterior, 3960);
+  });
+
+  group('from the internet', () {
+    ControladorTasa conFuente(
+      ResultadoConsultaTasa respuesta, {
+      TasaCambio? guardada,
+      List<int>? consultas,
+    }) => ControladorTasa(
+      AlmacenTasaEnMemoria(guardada),
+      fuente: _FuenteFija(respuesta, consultas ?? []),
+      ahora: () => hoy,
+    );
+
+    test("saves today's BCV rate when there is none for today", () async {
+      final controlador = conFuente(
+        const TasaObtenida(88623),
+        guardada: deAyer,
+      );
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(controlador.esDeHoy, isTrue);
+      expect(controlador.tasa?.bolivaresPorDolar, 88623);
+      expect(controlador.tasa?.origen, OrigenTasa.bcv);
+    });
+
+    test("does not ask again once today's rate is in", () async {
+      final consultas = <int>[];
+      final controlador = conFuente(
+        const TasaObtenida(88623),
+        guardada: TasaCambio(bolivaresPorDolar: 4000, fecha: hoy),
+        consultas: consultas,
+      );
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(consultas, isEmpty);
+      expect(controlador.tasa?.bolivaresPorDolar, 4000);
+    });
+
+    test('keeps the previous BCV rate to show the change', () async {
+      final controlador = conFuente(
+        const TasaObtenida(88623, anterior: 88475),
+        guardada: deAyer,
+      );
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(controlador.tasa?.variacion, 17);
+    });
+
+    test('keeps the last rate when the service is unreachable', () async {
+      final controlador = conFuente(const TasaNoDisponible(), guardada: deAyer);
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(controlador.tasa, deAyer);
+      expect(controlador.esDeHoy, isFalse);
+      expect(controlador.consultando, isFalse);
+    });
+  });
+}
+
+/// Answers every call with the same result and counts the calls.
+class _FuenteFija implements FuenteTasa {
+  _FuenteFija(this._respuesta, this._consultas);
+
+  final ResultadoConsultaTasa _respuesta;
+  final List<int> _consultas;
+
+  @override
+  Future<ResultadoConsultaTasa> consultar() async {
+    _consultas.add(1);
+    return _respuesta;
+  }
 }

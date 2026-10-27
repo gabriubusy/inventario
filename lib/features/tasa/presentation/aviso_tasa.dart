@@ -19,6 +19,15 @@ class AvisoTasa extends StatelessWidget {
 
   String get _texto {
     final tasa = controlador.tasa;
+    if (controlador.sinRespuesta) {
+      final ultima = tasa == null
+          ? ''
+          : ' Mientras, se usa la del '
+                '${formatearFechaLarga(tasa.fecha).toLowerCase()}: '
+                '1 \$ = ${formatearBolivares(tasa.bolivaresPorDolar)}.';
+      return 'No se pudo obtener la tasa BCV de hoy (¿sin internet?). '
+          'Escríbela a mano.$ultima';
+    }
     if (tasa == null) {
       return 'Pon la tasa de hoy para ver los precios en bolívares.';
     }
@@ -29,6 +38,8 @@ class AvisoTasa extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // The BCV rate may still arrive; warning now would only flash.
+    if (controlador.consultando) return const SizedBox.shrink();
     final alertas = context.coloresEstado;
     final espaciado = context.espaciado;
     return Semantics(
