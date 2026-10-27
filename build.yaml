@@ -1,0 +1,7 @@
+targets:
+  $default:
+    builders:
+      drift_dev:
+        options:
+          # Keeps microseconds and the local time of sales and entries.
+          store_date_time_values_as_text: true
