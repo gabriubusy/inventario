@@ -9,6 +9,7 @@ class TecladoPin extends StatelessWidget {
     required this.onDigito,
     required this.onBorrar,
     required this.onEntrar,
+    this.etiquetaEntrar = 'Entrar',
   });
 
   static const _filas = [
@@ -22,6 +23,7 @@ class TecladoPin extends StatelessWidget {
   final ValueChanged<String> onDigito;
   final VoidCallback onBorrar;
   final VoidCallback onEntrar;
+  final String etiquetaEntrar;
 
   @override
   Widget build(BuildContext context) {
@@ -68,7 +70,7 @@ class TecladoPin extends StatelessWidget {
                         dimension: espaciado.lg,
                         child: const CircularProgressIndicator(strokeWidth: 2),
                       )
-                    : const Text('Entrar'),
+                    : Text(etiquetaEntrar),
               ),
             ),
           ],

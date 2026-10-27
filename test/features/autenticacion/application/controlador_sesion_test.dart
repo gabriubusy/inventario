@@ -6,6 +6,7 @@ import 'package:inventario/features/autenticacion/application/estado_sesion.dart
 import 'package:inventario/features/autenticacion/data/almacen_sesion_en_memoria.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/domain/repositorio_autenticacion.dart';
+import 'package:inventario/features/autenticacion/domain/resultado_cambio_pin.dart';
 import 'package:inventario/features/autenticacion/domain/resultado_inicio_sesion.dart';
 import 'package:inventario/features/autenticacion/domain/usuario.dart';
 
@@ -14,10 +15,21 @@ class _RepositorioFalso implements RepositorioAutenticacion {
   Completer<ResultadoInicioSesion> respuesta = Completer();
   int llamadas = 0;
 
+  ({Pin actual, Pin nuevo})? cambio;
+
   @override
   Future<ResultadoInicioSesion> iniciarSesion({required Pin pin}) {
     llamadas++;
     return respuesta.future;
+  }
+
+  @override
+  Future<ResultadoCambioPin> cambiarPin({
+    required Pin actual,
+    required Pin nuevo,
+  }) async {
+    cambio = (actual: actual, nuevo: nuevo);
+    return const PinCambiado();
   }
 }
 
@@ -116,5 +128,14 @@ void main() {
     controlador.cerrarSesion();
     await pumpEventQueue();
     expect(await almacen.leer(), isNull);
+  });
+
+  test('changing the PIN goes to the repository', () async {
+    final resultado = await controlador.cambiarPin(
+      actual: Pin.tryParse('1234')!,
+      nuevo: Pin.tryParse('4826')!,
+    );
+    expect(resultado, isA<PinCambiado>());
+    expect(repositorio.cambio?.nuevo, Pin.tryParse('4826'));
   });
 }

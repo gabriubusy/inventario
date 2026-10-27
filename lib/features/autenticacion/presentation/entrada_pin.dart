@@ -9,29 +9,7 @@ import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/presentation/aviso_error.dart';
 import 'package:inventario/features/autenticacion/presentation/indicador_pin.dart';
 import 'package:inventario/features/autenticacion/presentation/teclado_pin.dart';
-
-final _digitosPorTecla = <LogicalKeyboardKey, String>{
-  LogicalKeyboardKey.digit0: '0',
-  LogicalKeyboardKey.digit1: '1',
-  LogicalKeyboardKey.digit2: '2',
-  LogicalKeyboardKey.digit3: '3',
-  LogicalKeyboardKey.digit4: '4',
-  LogicalKeyboardKey.digit5: '5',
-  LogicalKeyboardKey.digit6: '6',
-  LogicalKeyboardKey.digit7: '7',
-  LogicalKeyboardKey.digit8: '8',
-  LogicalKeyboardKey.digit9: '9',
-  LogicalKeyboardKey.numpad0: '0',
-  LogicalKeyboardKey.numpad1: '1',
-  LogicalKeyboardKey.numpad2: '2',
-  LogicalKeyboardKey.numpad3: '3',
-  LogicalKeyboardKey.numpad4: '4',
-  LogicalKeyboardKey.numpad5: '5',
-  LogicalKeyboardKey.numpad6: '6',
-  LogicalKeyboardKey.numpad7: '7',
-  LogicalKeyboardKey.numpad8: '8',
-  LogicalKeyboardKey.numpad9: '9',
-};
+import 'package:inventario/features/autenticacion/presentation/teclas_pin.dart';
 
 /// PIN pad that also accepts digits, Backspace and Enter from the keyboard.
 class EntradaPin extends StatefulWidget {
@@ -71,7 +49,7 @@ class _EntradaPinState extends State<EntradaPin> {
       return KeyEventResult.ignored;
     }
     final tecla = evento.logicalKey;
-    final digito = _digitosPorTecla[tecla];
+    final digito = digitoDeTecla(tecla);
     if (digito != null) {
       _anadir(digito);
     } else if (tecla == LogicalKeyboardKey.backspace) {
