@@ -13,6 +13,9 @@ Producto devolverVenta(
   required int cantidad,
   required bool abrioPieza,
 }) {
+  // Weight back without its whole piece is a started piece: mark it open,
+  // or it would sit in the lot belonging to no piece.
+  final suelto = producto.forma.cuentaPiezas && piezas == 0 && cantidad > 0;
   final claveMarca = normalizarParaBusqueda(marca);
   final claveProveedor = normalizarParaBusqueda(proveedor);
   final indice = producto.lotes.indexWhere(
@@ -28,6 +31,7 @@ Producto devolverVenta(
           marca: marca,
           proveedor: proveedor,
           piezas: piezas,
+          piezaAbierta: suelto,
           cantidad: cantidad,
         ),
       ],
@@ -37,7 +41,7 @@ Producto devolverVenta(
   final cierra = abrioPieza && lote.piezaAbierta;
   final devuelto = lote.copyWith(
     piezas: lote.piezas + piezas + (cierra ? 1 : 0),
-    piezaAbierta: lote.piezaAbierta && !cierra,
+    piezaAbierta: !cierra && (lote.piezaAbierta || suelto),
     cantidad: lote.cantidad + cantidad,
   );
   return producto.copyWith(

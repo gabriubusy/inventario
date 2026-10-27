@@ -47,6 +47,20 @@ void main() {
     expect(devuelto.lotes.single.cantidad, 8200);
   });
 
+  test('part of a piece comes back as the open piece', () {
+    final devuelto = devolverVenta(
+      queso,
+      marca: 'A',
+      proveedor: 'Lácteos',
+      piezas: 0,
+      cantidad: 400,
+      abrioPieza: false,
+    );
+    expect(devuelto.lotes.single.piezas, 9);
+    expect(devuelto.lotes.single.piezaAbierta, isTrue);
+    expect(devuelto.lotes.single.cantidad, 7850);
+  });
+
   test('a lot that is gone comes back as a new one', () {
     final devuelto = devolverVenta(
       queso,

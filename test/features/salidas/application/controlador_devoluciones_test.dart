@@ -14,6 +14,7 @@ import 'package:inventario/features/salidas/application/controlador_salidas.dart
 import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/resultado_anulacion.dart';
 import 'package:inventario/features/salidas/domain/resultado_devolucion.dart';
+import 'package:inventario/features/salidas/domain/salida.dart';
 
 void main() {
   const molida = Producto(
@@ -65,6 +66,23 @@ void main() {
   });
 
   int cantidad() => existencias.productos.single.cantidad;
+
+  test('a sale with a return can no longer be undone', () async {
+    final salidas = ControladorSalidas(existencias, movimientos: movimientos);
+    addTearDown(salidas.dispose);
+    await salidas.registrar(
+      'p1',
+      const Salida(marca: 'Propia', proveedor: 'Frigorífico 1', cantidad: 500),
+    );
+    final vendida = movimientos.ventasDeHoy.first;
+    await devoluciones.devolver(
+      vendida,
+      cantidad: 500,
+      destino: DestinoDevolucion.merma,
+    );
+    expect(await salidas.deshacer(), isFalse);
+    expect(movimientos.todos, contains(vendida));
+  });
 
   test('goods in good shape go back to their lot and refund', () async {
     final resultado = await devoluciones.devolver(

@@ -48,7 +48,8 @@ Future<void> deshacerSalida(
         content: Text(
           deshecha
               ? 'Salida deshecha'
-              : 'No se pudo deshacer: el producto cambió después',
+              : 'No se pudo deshacer: el producto cambió o hubo una '
+                    'devolución después',
         ),
       ),
     );

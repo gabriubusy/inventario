@@ -163,6 +163,9 @@ class ControladorSalidas extends ChangeNotifier {
     if (ultima.cambios.any((c) => _buscar(c.despues.id) != c.despues)) {
       return false;
     }
+    // A return already hangs from it: undoing would leave it orphaned.
+    final historial = _movimientos?.todos ?? const <Movimiento>[];
+    if (ultima.anotados.any((m) => yaDevuelto(m, historial) > 0)) return false;
     return _transacciones.enUna(() async {
       var bien = true;
       for (final cambio in ultima.cambios) {
