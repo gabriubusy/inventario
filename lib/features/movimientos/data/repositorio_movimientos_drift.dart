@@ -57,6 +57,7 @@ class RepositorioMovimientosDrift implements RepositorioMovimientos {
     tasa: Value(m.tasa),
     nota: m.nota,
     origenId: Value(m.origenId),
+    ventaId: Value(m.ventaId),
   );
 
   Movimiento _aMovimiento(FilaMovimiento f) => Movimiento(
@@ -77,5 +78,6 @@ class RepositorioMovimientosDrift implements RepositorioMovimientos {
     tasa: f.tasa,
     nota: f.nota,
     origenId: f.origenId,
+    ventaId: f.ventaId,
   );
 }

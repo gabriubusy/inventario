@@ -21,6 +21,7 @@ void main() {
     abrioPieza: true,
     tasa: 88730,
     nota: 'Cliente fijo',
+    ventaId: 't1',
   );
   late BaseDatos db;
   late RepositorioMovimientosDrift repositorio;

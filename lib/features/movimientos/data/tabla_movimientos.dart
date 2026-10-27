@@ -26,6 +26,9 @@ class Movimientos extends Table {
   TextColumn get nota => text()();
   TextColumn get origenId => text().nullable()();
 
+  /// The paid ticket a sale line belongs to (schema 3).
+  TextColumn get ventaId => text().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }

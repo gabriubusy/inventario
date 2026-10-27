@@ -21,6 +21,7 @@ class Movimiento {
     this.tasa,
     this.nota = '',
     this.origenId,
+    this.ventaId,
   });
 
   /// Empty until the repository stores it.
@@ -65,6 +66,9 @@ class Movimiento {
   /// The sale a customer return belongs to; null otherwise.
   final String? origenId;
 
+  /// The paid ticket a sale line belongs to; null for one-product sales.
+  final String? ventaId;
+
   Movimiento _con({String? id, DateTime? fecha, bool? anulada}) => Movimiento(
     id: id ?? this.id,
     fecha: fecha ?? this.fecha,
@@ -83,6 +87,7 @@ class Movimiento {
     tasa: tasa,
     nota: nota,
     origenId: origenId,
+    ventaId: ventaId,
   );
 
   Movimiento conId(String id) => _con(id: id);
@@ -110,7 +115,8 @@ class Movimiento {
       other.anulada == anulada &&
       other.tasa == tasa &&
       other.nota == nota &&
-      other.origenId == origenId;
+      other.origenId == origenId &&
+      other.ventaId == ventaId;
 
   @override
   int get hashCode => Object.hash(
@@ -131,5 +137,6 @@ class Movimiento {
     tasa,
     nota,
     origenId,
+    ventaId,
   );
 }

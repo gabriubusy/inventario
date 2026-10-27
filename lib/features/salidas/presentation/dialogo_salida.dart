@@ -11,19 +11,20 @@ import 'package:inventario/features/productos/application/controlador_existencia
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
-import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
+import 'package:inventario/features/salidas/domain/linea_ticket.dart';
 import 'package:inventario/features/salidas/domain/medida_venta.dart';
 import 'package:inventario/features/salidas/domain/modo_venta.dart';
-import 'package:inventario/features/salidas/domain/resultado_salida.dart';
+import 'package:inventario/features/salidas/domain/resultado_cobro.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
+import 'package:inventario/features/salidas/domain/ticket.dart';
 import 'package:inventario/features/salidas/domain/vender.dart';
-import 'package:inventario/features/salidas/presentation/aviso_salida.dart';
+import 'package:inventario/features/salidas/presentation/aviso_venta.dart';
 import 'package:inventario/features/salidas/presentation/buscador_producto_salida.dart';
 import 'package:inventario/features/salidas/presentation/campo_cantidad_vendida.dart';
-import 'package:inventario/features/salidas/presentation/opciones_marca_salida.dart';
-import 'package:inventario/features/salidas/presentation/opciones_presentacion_salida.dart';
-import 'package:inventario/features/salidas/presentation/seccion_cantidad_salida.dart';
+import 'package:inventario/features/salidas/presentation/detalle_salida.dart';
+import 'package:inventario/features/salidas/presentation/dialogo_cobro.dart';
+import 'package:inventario/features/salidas/presentation/seccion_ticket.dart';
 import 'package:inventario/features/salidas/presentation/selector_modo_venta.dart';
 import 'package:inventario/features/salidas/presentation/teclas_salida.dart';
 
@@ -41,8 +42,8 @@ Future<void> mostrarDialogoSalida(
   ),
 );
 
-/// One product per sale. Built for speed: the pack, the brand and the way
-/// of selling come preselected and Enter in the amount registers.
+/// F1: a customer's ticket. Each product goes in with Enter (pack, brand and
+/// way of selling preselected) and F10 charges them all together.
 class DialogoSalida extends StatefulWidget {
   const DialogoSalida({
     super.key,
@@ -51,7 +52,7 @@ class DialogoSalida extends StatefulWidget {
     required this.aBolivares,
   });
 
-  static const _ancho = 640.0;
+  static const _ancho = 760.0;
 
   final ControladorSalidas salidas;
   final ControladorExistencias existencias;
@@ -68,11 +69,19 @@ class _DialogoSalidaState extends State<DialogoSalida> {
   final _nota = TextEditingController();
   final _focoBusqueda = FocusNode();
   final _focoCantidad = FocusNode();
+
+  /// The product as it would be after the lines already in the ticket.
   Producto? _producto;
   Presentacion? _presentacion;
   int? _lote;
   var _modo = ModoVenta.piezaEntera;
-  var _guardando = false;
+  int? _elegida;
+  (int, LineaTicket)? _quitada;
+  var _cobrando = false;
+
+  Ticket get _ticket => widget.salidas.ticketEnCurso;
+
+  set _ticket(Ticket ticket) => widget.salidas.ticketEnCurso = ticket;
 
   @override
   void dispose() {
@@ -103,6 +112,9 @@ class _DialogoSalidaState extends State<DialogoSalida> {
     return producto == null || lote == null ? null : producto.lotes[lote];
   }
 
+  Producto? _actual(String id) =>
+      widget.existencias.productos.where((p) => p.id == id).firstOrNull;
+
   // The fields only exist after the rebuild, so focus on the next frame.
   void _enfocarDespues(FocusNode foco) =>
       WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -111,11 +123,12 @@ class _DialogoSalidaState extends State<DialogoSalida> {
 
   /// [presentacion] comes from a scanned code; else the default pack.
   void _elegirProducto(Producto producto, Presentacion? presentacion) {
+    final restante = _ticket.aplicado(producto) ?? producto;
     setState(() {
-      _producto = producto;
-      _presentacion = presentacion ?? producto.presentacionPredeterminada;
-      _modo = widget.salidas.modoPara(producto.id);
-      _lote = loteSugerido(producto, _modoActual);
+      _producto = restante;
+      _presentacion = presentacion ?? restante.presentacionPredeterminada;
+      _modo = widget.salidas.modoPara(restante.id);
+      _lote = loteSugerido(restante, _modoActual);
     });
     _enfocarDespues(_focoCantidad);
   }
@@ -158,7 +171,7 @@ class _DialogoSalidaState extends State<DialogoSalida> {
     _enfocarDespues(_focoBusqueda);
   }
 
-  /// Null until the fields hold a complete sale.
+  /// Null until the fields hold a complete line.
   Salida? _leerSalida() {
     final lote = _loteElegido;
     if (_producto == null || lote == null) return null;
@@ -178,63 +191,110 @@ class _DialogoSalidaState extends State<DialogoSalida> {
     );
   }
 
-  Future<void> _registrar({required bool otra}) async {
-    if (_guardando || !(_formulario.currentState?.validate() ?? false)) return;
+  /// Puts the product being typed into the ticket; false if it can't.
+  bool _agregar() {
+    if (!(_formulario.currentState?.validate() ?? false)) return false;
     final producto = _producto;
     final lote = _loteElegido;
     final salida = _leerSalida();
-    if (producto == null || lote == null || salida == null) return;
-    final importe = importeDeSalida(
-      producto,
-      lote,
-      salida.cantidad,
-      presentacion: salida.presentacion,
+    if (producto == null || lote == null || salida == null) return false;
+    final linea = LineaTicket(
+      productoId: producto.id,
+      producto: producto.nombre,
+      forma: producto.forma,
+      salida: salida,
+      importe: importeDeSalida(
+        producto,
+        lote,
+        salida.cantidad,
+        presentacion: salida.presentacion,
+      ),
     );
-    setState(() => _guardando = true);
+    final actual = _actual(producto.id);
+    final nuevo = actual == null ? null : _ticket.agregar(actual, linea);
+    if (nuevo == null) {
+      _avisar('Ya no hay suficiente de ${producto.nombre}');
+      _cambiarProducto();
+      return false;
+    }
+    setState(() {
+      _ticket = nuevo;
+      _elegida = null;
+    });
+    _cambiarProducto();
+    return true;
+  }
+
+  void _quitar(int indice) {
+    if (indice < 0 || indice >= _ticket.lineas.length) return;
+    setState(() {
+      _quitada = (indice, _ticket.lineas[indice]);
+      _ticket = _ticket.sin(indice);
+      _elegida = null;
+    });
+  }
+
+  void _recuperar() {
+    final quitada = _quitada;
+    if (quitada == null) return;
+    setState(() {
+      _ticket = _ticket.con(quitada.$1, quitada.$2);
+      _quitada = null;
+    });
+  }
+
+  void _moverEleccion(int pasos) {
+    final total = _ticket.lineas.length;
+    if (total == 0) return;
+    setState(
+      () => _elegida = ((_elegida ?? total) + pasos).clamp(0, total - 1),
+    );
+  }
+
+  /// F10: the line being typed goes in first, then the payment window.
+  Future<void> _cobrar() async {
+    if (_cobrando) return;
+    if (_leerSalida() != null && !_agregar()) return;
+    final ticket = _ticket;
+    if (ticket.vacio) return;
+    final tasa = widget.salidas.tasaDeHoy;
+    if (tasa == null) {
+      _avisar('Falta la tasa de hoy: escríbela con Ctrl+T');
+      return;
+    }
+    _cobrando = true;
     final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
-    final resultado = await widget.salidas.registrar(producto.id, salida);
+    final resultado = await mostrarDialogoCobro(
+      context,
+      total: ticket.total,
+      tasa: tasa,
+      medioInicial: widget.salidas.ultimoMedio,
+      onCobrar: (pagos) => widget.salidas.cobrar(ticket, pagos),
+    );
+    _cobrando = false;
     if (!mounted) return;
-    setState(() => _guardando = false);
     switch (resultado) {
-      case SalidaRegistrada(:final producto):
-        mostrarSalidaRegistrada(
-          mensajero,
-          widget.salidas,
-          producto,
-          salida,
-          importe: importe,
+      case VentaCobrada(:final venta):
+        navegador.pop();
+        mostrarVentaCobrada(mensajero, widget.salidas, venta);
+      case CobroSinExistencias(:final linea):
+        _avisar(
+          'Ya no hay suficiente de ${linea.producto}: quítalo del ticket',
         );
-        if (otra) {
-          _cambiarProducto();
-        } else {
-          navegador.pop();
-        }
-      case SinExistencias():
-        mensajero.showSnackBar(
-          const SnackBar(
-            content: Text('Ya no hay suficiente: las existencias cambiaron'),
-          ),
-        );
-        _cambiarProducto();
-      case SinTasaDelDia():
-        mensajero.showSnackBar(
-          const SnackBar(
-            content: Text('Falta la tasa de hoy: escríbela con Ctrl+T'),
-          ),
-        );
-      case SalidaSinProducto():
-        mensajero.showSnackBar(
-          const SnackBar(content: Text('Ese producto ya no existe')),
-        );
-        _cambiarProducto();
+      case CobroIncompleto() || CobroSinTasa() || null:
+        _enfocarDespues(_focoBusqueda);
     }
   }
 
-  // Ctrl+Enter also submits the field; the shortcut already handles it.
+  void _avisar(String texto) => ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(SnackBar(content: Text(texto)));
+
+  // Ctrl+Enter used to register and keep the window; F10 replaces it.
   void _enter() {
     if (HardwareKeyboard.instance.isControlPressed) return;
-    unawaited(_registrar(otra: false));
+    _agregar();
   }
 
   /// Packs take the digits when there are any; brands then use letters.
@@ -257,13 +317,14 @@ class _DialogoSalidaState extends State<DialogoSalida> {
       for (final MapEntry(key: modo, value: (tecla, _))
           in teclasModoVenta.entries)
         SingleActivator(tecla, alt: true): () => _elegirModo(modo),
-      const SingleActivator(LogicalKeyboardKey.enter, control: true): () =>
-          unawaited(_registrar(otra: true)),
-      const SingleActivator(
-        LogicalKeyboardKey.numpadEnter,
-        control: true,
-      ): () =>
-          unawaited(_registrar(otra: true)),
+      const SingleActivator(LogicalKeyboardKey.f10): () => unawaited(_cobrar()),
+      const SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): () =>
+          _moverEleccion(-1),
+      const SingleActivator(LogicalKeyboardKey.arrowDown, alt: true): () =>
+          _moverEleccion(1),
+      const SingleActivator(LogicalKeyboardKey.delete, alt: true): () =>
+          _quitar(_elegida ?? _ticket.lineas.length - 1),
+      const SingleActivator(LogicalKeyboardKey.keyZ, alt: true): _recuperar,
     };
   }
 
@@ -272,6 +333,7 @@ class _DialogoSalidaState extends State<DialogoSalida> {
     final espaciado = context.espaciado;
     final tema = Theme.of(context);
     final producto = _producto;
+    final lote = _loteElegido;
     return Dialog(
       alignment: Alignment.topCenter,
       insetPadding: EdgeInsets.all(espaciado.xl),
@@ -288,7 +350,7 @@ class _DialogoSalidaState extends State<DialogoSalida> {
                 spacing: espaciado.lg,
                 children: [
                   const EncabezadoDialogo(
-                    titulo: 'Registrar salida',
+                    titulo: 'Vender',
                     icono: Icons.upload_outlined,
                   ),
                   if (producto == null)
@@ -303,24 +365,57 @@ class _DialogoSalidaState extends State<DialogoSalida> {
                       producto: producto,
                       onCambiar: _cambiarProducto,
                     ),
-                    ..._detalle(producto),
+                    DetalleSalida(
+                      producto: producto,
+                      presentacion: _conPresentaciones ? _presentacion : null,
+                      lote: _lote,
+                      modo: _modoActual,
+                      teclasMarca: [
+                        for (final (_, etiqueta) in _teclasMarca) etiqueta,
+                      ],
+                      onPresentacion: _elegirPresentacion,
+                      onLote: _elegirLote,
+                      onModo: _elegirModo,
+                    ),
+                    if (lote != null)
+                      CantidadYNota(
+                        producto: producto,
+                        lote: lote,
+                        modo: _modoActual,
+                        medida: _medida,
+                        cantidad: _cantidad,
+                        focoCantidad: _focoCantidad,
+                        nota: _nota,
+                        salida: _leerSalida,
+                        aBolivares: widget.aBolivares,
+                        onEnviar: _enter,
+                      ),
+                    BotonesCrear(
+                      etiqueta: 'Agregar al ticket',
+                      guardando: false,
+                      onCrear: _agregar,
+                    ),
                   ],
-                  BotonesCrear(
-                    etiqueta: 'Registrar salida',
-                    etiquetaOtro: 'Registrar y otra',
-                    guardando: _guardando,
-                    onCrear: () => unawaited(_registrar(otra: false)),
-                    onCrearOtro: () => unawaited(_registrar(otra: true)),
+                  SeccionTicket(
+                    ticket: _ticket,
+                    elegida: _elegida,
+                    hayQuitada: _quitada != null,
+                    aBolivares: widget.aBolivares,
+                    onElegir: (i) => setState(() => _elegida = i),
+                    onQuitar: _quitar,
+                    onRecuperar: _recuperar,
+                    onCobrar: () => unawaited(_cobrar()),
                   ),
                   Text(
                     _conPresentaciones
                         ? 'Escribe o escanea el producto · Alt+1… presentación · '
-                              'Alt+Q… marca · Enter registra · Ctrl+Enter '
-                              'registra y deja lista otra · Esc cierra'
+                              'Alt+Q… marca · Enter agrega · F10 cobra · '
+                              'Alt+↑↓ elige línea · Alt+Supr la quita · Esc cierra '
+                              '(el ticket se guarda)'
                         : 'Escribe o escanea el producto · Alt+1… marca · '
                               'Alt+P pieza entera · Alt+K por kilo · Enter '
-                              'registra · Ctrl+Enter registra y deja lista '
-                              'otra · Esc cierra',
+                              'agrega · F10 cobra · Alt+↑↓ elige línea · '
+                              'Alt+Supr la quita · Esc cierra (el ticket se guarda)',
                     textAlign: TextAlign.center,
                     style: tema.textTheme.bodySmall?.copyWith(
                       color: tema.colorScheme.onSurfaceVariant,
@@ -333,75 +428,5 @@ class _DialogoSalidaState extends State<DialogoSalida> {
         ),
       ),
     );
-  }
-
-  List<Widget> _detalle(Producto producto) {
-    final lote = _loteElegido;
-    final modo = _modoActual;
-    final tema = Theme.of(context);
-    return [
-      if (_conPresentaciones)
-        ConEtiqueta(
-          etiqueta: 'Presentación',
-          child: ExcludeFocus(
-            child: OpcionesPresentacionSalida(
-              producto: producto,
-              elegida: _presentacion,
-              onElegir: _elegirPresentacion,
-            ),
-          ),
-        ),
-      if (lote == null)
-        Text(
-          producto.lotes.isEmpty
-              ? 'No hay existencias de este producto.'
-              : 'Ninguna marca tiene existencias para venderse así.',
-          style: tema.textTheme.bodyMedium?.copyWith(
-            color: tema.colorScheme.error,
-          ),
-        )
-      else
-        ConEtiqueta(
-          etiqueta: 'Marca',
-          child: ExcludeFocus(
-            child: OpcionesMarcaSalida(
-              producto: producto,
-              elegido: _lote,
-              onElegir: _elegirLote,
-              atajos: [for (final (_, etiqueta) in _teclasMarca) etiqueta],
-            ),
-          ),
-        ),
-      if (modo != null)
-        ConEtiqueta(
-          etiqueta: 'Cómo se vende',
-          child: ExcludeFocus(
-            child: SelectorModoVenta(elegido: modo, onElegir: _elegirModo),
-          ),
-        ),
-      if (lote != null) ...[
-        SeccionCantidadSalida(
-          producto: producto,
-          lote: lote,
-          modo: modo,
-          medida: _medida,
-          controller: _cantidad,
-          focusNode: _focoCantidad,
-          salida: _leerSalida,
-          aBolivares: widget.aBolivares,
-          onEnviar: _enter,
-        ),
-        TextFormField(
-          controller: _nota,
-          textCapitalization: TextCapitalization.sentences,
-          textInputAction: TextInputAction.done,
-          decoration: const InputDecoration(
-            labelText: 'Nota (opcional)',
-            hintText: 'Cliente, despacho, observaciones…',
-          ),
-          onFieldSubmitted: (_) => _enter(),
-        ),
-      ],
-    ];
   }
 }

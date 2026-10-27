@@ -46,7 +46,7 @@ void main() {
       ]),
     );
     await existencias.cargar();
-    salidas = ControladorSalidas(existencias);
+    salidas = ControladorSalidas(existencias, tasaDeHoy: () => 1000);
   });
 
   tearDown(() {
@@ -91,6 +91,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  // F10, then Enter on the empty amount: paid exactly.
+  Future<void> cobrarExacto(WidgetTester tester) async {
+    await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+    await tester.pumpAndSettle();
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('the default pack comes chosen: 2,5 kilos sold loose', (
     tester,
   ) async {
@@ -105,6 +113,8 @@ void main() {
     );
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
+    expect(find.text('Propia · 2,5 kilo'), findsOneWidget);
+    await cobrarExacto(tester);
     expect(stock(), 24000);
   });
 
@@ -116,6 +126,8 @@ void main() {
     expect(find.text(r'$ 30,00'), findsWidgets);
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
+    expect(find.text('Propia · 1 saco'), findsOneWidget);
+    await cobrarExacto(tester);
     expect(stock(), 11500);
   });
 

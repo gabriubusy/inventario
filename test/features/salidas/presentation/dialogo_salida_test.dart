@@ -53,7 +53,7 @@ void main() {
       ]),
     );
     await existencias.cargar();
-    salidas = ControladorSalidas(existencias);
+    salidas = ControladorSalidas(existencias, tasaDeHoy: () => 4000);
   });
 
   tearDown(() {
@@ -114,22 +114,80 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('product, weight and Enter: a whole piece is sold', (
+  // F10, then Enter on the empty amount: paid exactly, in the last way.
+  Future<void> cobrarExacto(WidgetTester tester) async {
+    await tester.sendKeyEvent(LogicalKeyboardKey.f10);
+    await tester.pumpAndSettle();
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('Enter puts the piece in the ticket and F10 charges it', (
     tester,
   ) async {
     await abrir(tester);
     await elegir(tester, 'queso');
     // The fullest brand comes chosen and the focus waits on the weight.
     await escribirYEnter(tester, '0,84');
+    expect(guardado('p1').lotes.last.piezas, 14);
+    expect(find.text('Marca B · 1 pieza, 0,84 kg'), findsOneWidget);
 
+    await cobrarExacto(tester);
     final lote = guardado('p1').lotes.last;
     expect(lote.piezas, 13);
     expect(lote.cantidad, 10160);
     expect(find.byType(DialogoSalida), findsNothing);
+    expect(find.textContaining('Venta registrada'), findsOneWidget);
+  });
+
+  testWidgets('one ticket sells several products together', (tester) async {
+    await abrir(tester);
+    await elegir(tester, 'queso');
+    await escribirYEnter(tester, '0,84');
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '1');
+    expect(find.text('Ticket · 2 productos'), findsOneWidget);
+    await cobrarExacto(tester);
+    expect(guardado('p1').lotes.last.piezas, 13);
+    expect(guardado('p2').cantidad, 2800);
+  });
+
+  testWidgets('a second line only gets what the first one left', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '3');
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '1');
+    expect(find.text('Solo hay 0,8 kg'), findsOneWidget);
+  });
+
+  testWidgets('Alt+Supr takes the last line out and Alt+Z brings it back', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '1');
+    await conAlt(tester, LogicalKeyboardKey.delete);
     expect(
-      find.textContaining('Salida registrada · Queso blanco duro · Marca B'),
+      find.text('El ticket está vacío: agrega productos con Enter.'),
       findsOneWidget,
     );
+    await conAlt(tester, LogicalKeyboardKey.keyZ);
+    expect(find.text('Propia · 1 kg'), findsOneWidget);
+  });
+
+  testWidgets('Esc closes the window but keeps the ticket', (tester) async {
+    await abrir(tester);
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '1');
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoSalida), findsNothing);
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+    expect(find.text('Propia · 1 kg'), findsOneWidget);
   });
 
   testWidgets('shows the amount in dollars and bolívares while typing', (
@@ -158,6 +216,7 @@ void main() {
     );
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
+    await cobrarExacto(tester);
     final lote = guardado('p1').lotes.first;
     expect(lote.piezas, 9);
     expect(lote.piezaAbierta, isTrue);
@@ -176,6 +235,7 @@ void main() {
     await abrir(tester);
     await elegir(tester, 'molida');
     await escribirYEnter(tester, '1');
+    await cobrarExacto(tester);
     expect(guardado('p2').cantidad, 2800);
     await tester.tap(find.text('Deshacer (Ctrl+Z)'));
     await tester.pumpAndSettle();
