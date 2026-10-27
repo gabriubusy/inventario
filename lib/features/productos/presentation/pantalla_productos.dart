@@ -27,6 +27,7 @@ class PantallaProductos extends StatefulWidget {
     required this.fotos,
     this.proveedores = const [],
     this.elegirImagen = elegirImagenDelEquipo,
+    this.onKardex,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -36,6 +37,9 @@ class PantallaProductos extends StatefulWidget {
   final GestorFotos fotos;
   final List<String> proveedores;
   final ElegirImagen elegirImagen;
+
+  /// F8 opens the chosen product's kardex; left out where there is none.
+  final ValueChanged<Producto>? onKardex;
 
   @override
   State<PantallaProductos> createState() => _PantallaProductosState();
@@ -112,6 +116,11 @@ class _PantallaProductosState extends State<PantallaProductos> {
     if (elegido != null) _editar(elegido);
   }
 
+  void _kardexDelElegido() {
+    final elegido = widget.lista.elegido;
+    if (elegido != null) widget.onKardex?.call(elegido);
+  }
+
   void _ponerTasa() => unawaited(mostrarDialogoTasa(context, widget.tasa));
 
   void _guardado(Producto anterior, Producto guardado) {
@@ -163,6 +172,7 @@ class _PantallaProductosState extends State<PantallaProductos> {
     const SingleActivator(LogicalKeyboardKey.arrowDown): () =>
         widget.lista.moverEleccion(1),
     const SingleActivator(LogicalKeyboardKey.enter): _editarElegido,
+    const SingleActivator(LogicalKeyboardKey.f8): _kardexDelElegido,
   };
 
   @override

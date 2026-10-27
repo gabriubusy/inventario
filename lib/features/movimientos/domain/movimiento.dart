@@ -1,7 +1,7 @@
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 
-/// One sale or entry, kept to show what happened during the day.
+/// One stock movement (sale, entry, merma…), the history behind the kardex.
 class Movimiento {
   const Movimiento({
     this.id = '',
@@ -15,8 +15,12 @@ class Movimiento {
     this.piezas = 0,
     required this.cantidad,
     this.importe,
+    this.costo,
     this.abrioPieza = false,
     this.anulada = false,
+    this.tasa,
+    this.nota = '',
+    this.origenId,
   });
 
   /// Empty until the repository stores it.
@@ -42,11 +46,24 @@ class Movimiento {
   /// Sale amount in dollar hundredths; null for entries or without a price.
   final int? importe;
 
+  /// What a sale's goods cost, in dollar hundredths; null if unknown.
+  final int? costo;
+
   /// A sale by weight that had to open a piece, which cancelling closes.
   final bool abrioPieza;
 
   /// A cancelled sale stays in the list, crossed out, and counts for nothing.
   final bool anulada;
+
+  /// Bs per dollar (hundredths) used for a sale, so old totals in Bs don't
+  /// move with later rates; null when there was none.
+  final int? tasa;
+
+  /// Why it happened: a merma's reason, what a count found, a note.
+  final String nota;
+
+  /// The sale a customer return belongs to; null otherwise.
+  final String? origenId;
 
   Movimiento _con({String? id, DateTime? fecha, bool? anulada}) => Movimiento(
     id: id ?? this.id,
@@ -60,8 +77,12 @@ class Movimiento {
     piezas: piezas,
     cantidad: cantidad,
     importe: importe,
+    costo: costo,
     abrioPieza: abrioPieza,
     anulada: anulada ?? this.anulada,
+    tasa: tasa,
+    nota: nota,
+    origenId: origenId,
   );
 
   Movimiento conId(String id) => _con(id: id);
@@ -84,8 +105,12 @@ class Movimiento {
       other.piezas == piezas &&
       other.cantidad == cantidad &&
       other.importe == importe &&
+      other.costo == costo &&
       other.abrioPieza == abrioPieza &&
-      other.anulada == anulada;
+      other.anulada == anulada &&
+      other.tasa == tasa &&
+      other.nota == nota &&
+      other.origenId == origenId;
 
   @override
   int get hashCode => Object.hash(
@@ -100,7 +125,11 @@ class Movimiento {
     piezas,
     cantidad,
     importe,
+    costo,
     abrioPieza,
     anulada,
+    tasa,
+    nota,
+    origenId,
   );
 }

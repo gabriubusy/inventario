@@ -5,6 +5,9 @@ import 'package:inventario/features/incidencias/domain/datos_incidencia.dart';
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
 import 'package:inventario/features/incidencias/domain/resultado_incidencia.dart';
 import 'package:inventario/features/incidencias/domain/tipo_incidencia.dart';
+import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
+import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
@@ -73,6 +76,27 @@ void main() {
     expect(loteActual().piezas, 8);
     expect(loteActual().cantidad, 6600);
     expect(incidencias.abiertasDe('distribuidora 1'), 1);
+  });
+
+  test('goods taken out show in the kardex, and undo removes them', () async {
+    final movimientos = ControladorMovimientos(
+      RepositorioMovimientosEnMemoria(),
+    );
+    addTearDown(movimientos.dispose);
+    final conKardex = ControladorIncidencias(
+      RepositorioIncidenciasEnMemoria(),
+      existencias,
+      ahora: () => hoy,
+      movimientos: movimientos,
+    );
+    addTearDown(conKardex.dispose);
+    await conKardex.cargar();
+    await conKardex.registrar(datos());
+    final anotado = movimientos.todos.single;
+    expect(anotado.tipo, TipoMovimiento.incidencia);
+    expect(anotado.cantidad, 1600);
+    await conKardex.deshacer();
+    expect(movimientos.todos, isEmpty);
   });
 
   test('registering without "sacar" leaves the stock alone', () async {

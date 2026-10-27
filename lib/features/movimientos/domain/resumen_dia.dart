@@ -49,8 +49,13 @@ class ResumenDia {
     for (final p in porProducto.values) {
       if (mas == null || p.importe > mas.importe) mas = p;
     }
+    // Money handed back to customers today comes off what was sold.
+    final devuelto = delDia
+        .where((m) => m.tipo == TipoMovimiento.devolucionCliente)
+        .fold(0, (total, m) => total + (m.importe ?? 0));
     return ResumenDia(
-      vendido: ventas.fold(0, (total, m) => total + (m.importe ?? 0)),
+      vendido:
+          ventas.fold(0, (total, m) => total + (m.importe ?? 0)) - devuelto,
       ventas: ventas.length,
       gramos: sumar(UnidadBase.kg),
       unidades: sumar(UnidadBase.unidad),
@@ -59,7 +64,8 @@ class ResumenDia {
     );
   }
 
-  /// Dollar hundredths; sales without a price add nothing.
+  /// Dollar hundredths, minus customer refunds; sales without a price add
+  /// nothing.
   final int vendido;
   final int ventas;
 

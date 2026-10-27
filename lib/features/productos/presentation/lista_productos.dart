@@ -115,7 +115,7 @@ class ListaProductos extends StatelessWidget {
             child: Padding(
               padding: EdgeInsets.all(espaciado.md),
               child: Text(
-                '↑ ↓ moverse · Enter editar · Ctrl+K buscar · Ctrl+T tasa',
+                '↑ ↓ moverse · Enter editar · F8 kardex · Ctrl+K buscar · Ctrl+T tasa',
                 style: nota,
               ),
             ),

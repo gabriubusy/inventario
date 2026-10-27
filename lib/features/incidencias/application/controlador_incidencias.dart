@@ -7,6 +7,9 @@ import 'package:inventario/features/incidencias/domain/repositorio_incidencias.d
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
 import 'package:inventario/features/incidencias/domain/resultado_incidencia.dart';
 import 'package:inventario/features/incidencias/domain/sacar_de_lote.dart';
+import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/movimientos/domain/movimiento.dart';
+import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -19,13 +22,23 @@ class ControladorIncidencias extends ChangeNotifier {
     this._repositorio,
     this._existencias, {
     this._ahora = DateTime.now,
+    this._movimientos,
   });
 
   final RepositorioIncidencias _repositorio;
   final ControladorExistencias _existencias;
   final DateTime Function() _ahora;
+
+  /// Where goods taken out are noted for the kardex; optional in tests.
+  final ControladorMovimientos? _movimientos;
   EstadoIncidencias _estado = const CargandoIncidencias();
-  ({Incidencia incidencia, Producto? antes, Producto? despues})? _ultima;
+  ({
+    Incidencia incidencia,
+    Producto? antes,
+    Producto? despues,
+    Movimiento? anotado,
+  })?
+  _ultima;
 
   EstadoIncidencias get estado => _estado;
   DateTime get hoy => _ahora();
@@ -74,7 +87,28 @@ class ControladorIncidencias extends ChangeNotifier {
       }
     }
     final incidencia = await _repositorio.crear(datos);
-    _ultima = (incidencia: incidencia, antes: antes, despues: despues);
+    final anotado = despues == null
+        ? null
+        : await _movimientos?.anotar(
+            Movimiento(
+              fecha: datos.fecha,
+              tipo: TipoMovimiento.incidencia,
+              productoId: datos.productoId,
+              producto: datos.producto,
+              forma: datos.forma,
+              marca: datos.marca,
+              proveedor: datos.proveedor,
+              piezas: datos.piezas,
+              cantidad: datos.cantidad,
+              nota: '${datos.proveedor} · ${datos.tipo.etiqueta}',
+            ),
+          );
+    _ultima = (
+      incidencia: incidencia,
+      antes: antes,
+      despues: despues,
+      anotado: anotado,
+    );
     _poner([...todas, incidencia]);
     return IncidenciaRegistrada(incidencia);
   }
@@ -96,6 +130,9 @@ class ControladorIncidencias extends ChangeNotifier {
         antes.id,
         DatosProducto.desde(antes),
       );
+    }
+    if (ultima.anotado case final anotado?) {
+      await _movimientos?.quitar(anotado);
     }
     await _repositorio.borrar(ultima.incidencia.id);
     _poner([
