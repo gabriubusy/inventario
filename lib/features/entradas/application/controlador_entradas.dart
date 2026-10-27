@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/entradas/domain/entrada.dart';
 import 'package:inventario/features/entradas/domain/resultado_entrada.dart';
 import 'package:inventario/features/entradas/domain/sumar_entrada.dart';
@@ -12,9 +13,16 @@ import 'package:inventario/features/productos/domain/resultado_guardar_producto.
 
 /// Records goods received and remembers the last entry so it can be undone.
 class ControladorEntradas extends ChangeNotifier {
-  ControladorEntradas(this._existencias, {this._movimientos});
+  ControladorEntradas(
+    this._existencias, {
+    this._movimientos,
+    this._transacciones = const SinTransaccion(),
+  });
 
   final ControladorExistencias _existencias;
+
+  /// Stock and history change together or not at all.
+  final Transacciones _transacciones;
 
   /// Where each entry is noted for the day's history; optional in tests.
   final ControladorMovimientos? _movimientos;
@@ -25,10 +33,21 @@ class ControladorEntradas extends ChangeNotifier {
   Future<ResultadoEntrada> registrar(String productoId, Entrada entrada) async {
     final antes = _buscar(productoId);
     if (antes == null) return const ProductoNoEncontrado();
-    final resultado = await _existencias.actualizarProducto(
-      productoId,
-      DatosProducto.desde(sumarEntrada(antes, entrada)),
-    );
+    return _transacciones.enUna(() async {
+      final resultado = await _existencias.actualizarProducto(
+        productoId,
+        DatosProducto.desde(sumarEntrada(antes, entrada)),
+      );
+      return _anotarEntrada(resultado, antes, entrada);
+    });
+  }
+
+  Future<ResultadoEntrada> _anotarEntrada(
+    ResultadoGuardarProducto resultado,
+    Producto antes,
+    Entrada entrada,
+  ) async {
+    final productoId = antes.id;
     switch (resultado) {
       case ProductoGuardado(:final producto):
         final anotado = await _movimientos?.anotar(
@@ -60,14 +79,16 @@ class ControladorEntradas extends ChangeNotifier {
     _ultima = null;
     notifyListeners();
     if (_buscar(ultima.despues.id) != ultima.despues) return false;
-    final resultado = await _existencias.actualizarProducto(
-      ultima.antes.id,
-      DatosProducto.desde(ultima.antes),
-    );
-    if (ultima.anotado case final anotado?) {
-      await _movimientos?.quitar(anotado);
-    }
-    return resultado is ProductoGuardado;
+    return _transacciones.enUna(() async {
+      final resultado = await _existencias.actualizarProducto(
+        ultima.antes.id,
+        DatosProducto.desde(ultima.antes),
+      );
+      if (ultima.anotado case final anotado?) {
+        await _movimientos?.quitar(anotado);
+      }
+      return resultado is ProductoGuardado;
+    });
   }
 
   Producto? _buscar(String id) {

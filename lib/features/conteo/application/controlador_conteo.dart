@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/conteo/domain/aplicar_conteo.dart';
 import 'package:inventario/features/conteo/domain/conteo_lote.dart';
 import 'package:inventario/features/incidencias/domain/sacar_de_lote.dart';
@@ -13,9 +14,16 @@ import 'package:inventario/features/productos/domain/resultado_guardar_producto.
 /// Sets the stock to what was physically counted, noting each difference
 /// in the kardex. The last save can be undone as a whole.
 class ControladorConteo extends ChangeNotifier {
-  ControladorConteo(this._existencias, {this._movimientos});
+  ControladorConteo(
+    this._existencias, {
+    this._movimientos,
+    this._transacciones = const SinTransaccion(),
+  });
 
   final ControladorExistencias _existencias;
+
+  /// A whole count is saved, or undone, as one.
+  final Transacciones _transacciones;
   final ControladorMovimientos? _movimientos;
   List<({Producto antes, Producto despues})> _ultimos = const [];
   List<Movimiento> _anotados = const [];
@@ -26,6 +34,20 @@ class ControladorConteo extends ChangeNotifier {
   Future<int> guardar(List<ConteoLote> conteos) async {
     final cambios = <({Producto antes, Producto despues})>[];
     final anotados = <Movimiento>[];
+    await _transacciones.enUna(
+      () => _escribirConteos(conteos, cambios, anotados),
+    );
+    _ultimos = cambios;
+    _anotados = anotados;
+    notifyListeners();
+    return cambios.length;
+  }
+
+  Future<void> _escribirConteos(
+    List<ConteoLote> conteos,
+    List<({Producto antes, Producto despues})> cambios,
+    List<Movimiento> anotados,
+  ) async {
     for (final conteo in conteos) {
       final antes = _buscar(conteo.productoId);
       if (antes == null) continue;
@@ -45,10 +67,6 @@ class ControladorConteo extends ChangeNotifier {
         }
       }
     }
-    _ultimos = cambios;
-    _anotados = anotados;
-    notifyListeners();
-    return cambios.length;
   }
 
   /// Puts back every lot of the last save that nobody changed since;
@@ -59,21 +77,23 @@ class ControladorConteo extends ChangeNotifier {
     _ultimos = const [];
     _anotados = const [];
     notifyListeners();
-    var fallidos = 0;
-    for (final cambio in ultimos.reversed) {
-      if (_buscar(cambio.despues.id) != cambio.despues) {
-        fallidos++;
-        continue;
+    return _transacciones.enUna(() async {
+      var fallidos = 0;
+      for (final cambio in ultimos.reversed) {
+        if (_buscar(cambio.despues.id) != cambio.despues) {
+          fallidos++;
+          continue;
+        }
+        await _existencias.actualizarProducto(
+          cambio.antes.id,
+          DatosProducto.desde(cambio.antes),
+        );
       }
-      await _existencias.actualizarProducto(
-        cambio.antes.id,
-        DatosProducto.desde(cambio.antes),
-      );
-    }
-    for (final anotado in anotados) {
-      await _movimientos?.quitar(anotado);
-    }
-    return fallidos;
+      for (final anotado in anotados) {
+        await _movimientos?.quitar(anotado);
+      }
+      return fallidos;
+    });
   }
 
   Future<Movimiento?> _anotar(

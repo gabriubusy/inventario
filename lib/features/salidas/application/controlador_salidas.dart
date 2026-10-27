@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
@@ -17,9 +18,17 @@ import 'package:inventario/features/salidas/domain/vender.dart';
 /// Takes sold goods out of the stock and remembers the last sale so it can
 /// be undone. Also remembers how each product was last sold, to offer it.
 class ControladorSalidas extends ChangeNotifier {
-  ControladorSalidas(this._existencias, {this._movimientos, this._tasaDeHoy});
+  ControladorSalidas(
+    this._existencias, {
+    this._movimientos,
+    this._tasaDeHoy,
+    this._transacciones = const SinTransaccion(),
+  });
 
   final ControladorExistencias _existencias;
+
+  /// Stock and history change together or not at all.
+  final Transacciones _transacciones;
 
   /// Where each sale is noted for the day's history; optional in tests.
   final ControladorMovimientos? _movimientos;
@@ -43,10 +52,22 @@ class ControladorSalidas extends ChangeNotifier {
     if (antes == null) return const SalidaSinProducto();
     final despues = vender(antes, salida);
     if (despues == null) return const SinExistencias();
-    final resultado = await _existencias.actualizarProducto(
-      productoId,
-      DatosProducto.desde(despues),
-    );
+    return _transacciones.enUna(() async {
+      final resultado = await _existencias.actualizarProducto(
+        productoId,
+        DatosProducto.desde(despues),
+      );
+      return _anotarVenta(resultado, antes, salida, tasa);
+    });
+  }
+
+  Future<ResultadoSalida> _anotarVenta(
+    ResultadoGuardarProducto resultado,
+    Producto antes,
+    Salida salida,
+    int? tasa,
+  ) async {
+    final productoId = antes.id;
     switch (resultado) {
       case ProductoGuardado(:final producto):
         if (salida.modo case final modo?) _ultimoModo[productoId] = modo;
@@ -90,14 +111,16 @@ class ControladorSalidas extends ChangeNotifier {
     _ultima = null;
     notifyListeners();
     if (_buscar(ultima.despues.id) != ultima.despues) return false;
-    final resultado = await _existencias.actualizarProducto(
-      ultima.antes.id,
-      DatosProducto.desde(ultima.antes),
-    );
-    if (ultima.anotado case final anotado?) {
-      await _movimientos?.quitar(anotado);
-    }
-    return resultado is ProductoGuardado;
+    return _transacciones.enUna(() async {
+      final resultado = await _existencias.actualizarProducto(
+        ultima.antes.id,
+        DatosProducto.desde(ultima.antes),
+      );
+      if (ultima.anotado case final anotado?) {
+        await _movimientos?.quitar(anotado);
+      }
+      return resultado is ProductoGuardado;
+    });
   }
 
   /// Gives a sale's goods back to its brand lot and keeps the sale in the
@@ -117,11 +140,13 @@ class ControladorSalidas extends ChangeNotifier {
       cantidad: venta.cantidad,
       abrioPieza: venta.abrioPieza,
     );
-    await _existencias.actualizarProducto(
-      producto.id,
-      DatosProducto.desde(devuelto),
-    );
-    await _movimientos?.anular(venta.id);
+    await _transacciones.enUna(() async {
+      await _existencias.actualizarProducto(
+        producto.id,
+        DatosProducto.desde(devuelto),
+      );
+      await _movimientos?.anular(venta.id);
+    });
     // That sale can no longer be undone on top of the cancellation.
     if (_ultima?.anotado?.id == venta.id) _ultima = null;
     notifyListeners();

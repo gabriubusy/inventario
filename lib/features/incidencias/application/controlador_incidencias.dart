@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/incidencias/application/estado_incidencias.dart';
 import 'package:inventario/features/incidencias/domain/datos_incidencia.dart';
 import 'package:inventario/features/incidencias/domain/filtrar_incidencias.dart';
@@ -23,9 +24,13 @@ class ControladorIncidencias extends ChangeNotifier {
     this._existencias, {
     this._ahora = DateTime.now,
     this._movimientos,
+    this._transacciones = const SinTransaccion(),
   });
 
   final RepositorioIncidencias _repositorio;
+
+  /// Incident, stock and history change together or not at all.
+  final Transacciones _transacciones;
   final ControladorExistencias _existencias;
   final DateTime Function() _ahora;
 
@@ -60,6 +65,23 @@ class ControladorIncidencias extends ChangeNotifier {
   }
 
   Future<ResultadoIncidencia> registrar(DatosIncidencia datos) async {
+    final escrito = await _transacciones.enUna(() => _escribir(datos));
+    if (escrito == null) return const ExistenciaInsuficiente();
+    _ultima = escrito;
+    _poner([...todas, escrito.incidencia]);
+    return IncidenciaRegistrada(escrito.incidencia);
+  }
+
+  /// Null when the goods to take out are no longer there.
+  Future<
+    ({
+      Incidencia incidencia,
+      Producto? antes,
+      Producto? despues,
+      Movimiento? anotado,
+    })?
+  >
+  _escribir(DatosIncidencia datos) async {
     Producto? antes;
     Producto? despues;
     if (datos.sacada) {
@@ -73,7 +95,7 @@ class ControladorIncidencias extends ChangeNotifier {
               piezas: datos.piezas,
               cantidad: datos.cantidad,
             );
-      if (sacado == null) return const ExistenciaInsuficiente();
+      if (sacado == null) return null;
       final guardado = await _existencias.actualizarProducto(
         sacado.id,
         DatosProducto.desde(sacado),
@@ -83,7 +105,7 @@ class ControladorIncidencias extends ChangeNotifier {
           despues = producto;
         // The name is unchanged, so it cannot clash with another product.
         case NombreRepetido():
-          return const ExistenciaInsuficiente();
+          return null;
       }
     }
     final incidencia = await _repositorio.crear(datos);
@@ -103,14 +125,12 @@ class ControladorIncidencias extends ChangeNotifier {
               nota: '${datos.proveedor} · ${datos.tipo.etiqueta}',
             ),
           );
-    _ultima = (
+    return (
       incidencia: incidencia,
       antes: antes,
       despues: despues,
       anotado: anotado,
     );
-    _poner([...todas, incidencia]);
-    return IncidenciaRegistrada(incidencia);
   }
 
   /// Removes the last incident and puts its goods back. Refused (false)
@@ -121,20 +141,22 @@ class ControladorIncidencias extends ChangeNotifier {
     _ultima = null;
     final antes = ultima.antes;
     final despues = ultima.despues;
-    if (antes != null && despues != null) {
-      if (_buscar(despues.id) != despues) {
-        notifyListeners();
-        return false;
+    if (despues != null && _buscar(despues.id) != despues) {
+      notifyListeners();
+      return false;
+    }
+    await _transacciones.enUna(() async {
+      if (antes != null) {
+        await _existencias.actualizarProducto(
+          antes.id,
+          DatosProducto.desde(antes),
+        );
       }
-      await _existencias.actualizarProducto(
-        antes.id,
-        DatosProducto.desde(antes),
-      );
-    }
-    if (ultima.anotado case final anotado?) {
-      await _movimientos?.quitar(anotado);
-    }
-    await _repositorio.borrar(ultima.incidencia.id);
+      if (ultima.anotado case final anotado?) {
+        await _movimientos?.quitar(anotado);
+      }
+      await _repositorio.borrar(ultima.incidencia.id);
+    });
     _poner([
       for (final i in todas)
         if (i.id != ultima.incidencia.id) i,

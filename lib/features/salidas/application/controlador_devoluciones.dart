@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
@@ -12,9 +13,16 @@ import 'package:inventario/features/salidas/domain/resultado_devolucion.dart';
 /// Customer returns of today's sales. Goods that are fine go back to their
 /// brand lot; damaged ones are noted as returned and then lost (merma).
 class ControladorDevoluciones extends ChangeNotifier {
-  ControladorDevoluciones(this._existencias, this._movimientos);
+  ControladorDevoluciones(
+    this._existencias,
+    this._movimientos, {
+    this._transacciones = const SinTransaccion(),
+  });
 
   final ControladorExistencias _existencias;
+
+  /// Stock and history change together or not at all.
+  final Transacciones _transacciones;
   final ControladorMovimientos _movimientos;
   ({Producto? antes, Producto? despues, List<Movimiento> anotados})? _ultima;
 
@@ -34,22 +42,6 @@ class ControladorDevoluciones extends ChangeNotifier {
     if (antes == null) return const DevolucionSinProducto();
     // A whole piece only comes back as a piece when it returns untouched.
     final entera = queda == venta.cantidad && cantidad == venta.cantidad;
-    Producto? despues;
-    if (destino == DestinoDevolucion.stock) {
-      final devuelto = devolverVenta(
-        antes,
-        marca: venta.marca,
-        proveedor: venta.proveedor,
-        piezas: entera ? venta.piezas : 0,
-        cantidad: cantidad,
-        abrioPieza: false,
-      );
-      await _existencias.actualizarProducto(
-        antes.id,
-        DatosProducto.desde(devuelto),
-      );
-      despues = _buscar(antes.id);
-    }
     final importe = importeDevuelto(venta, cantidad);
     Movimiento base(TipoMovimiento tipo, String texto) => Movimiento(
       fecha: DateTime.now(),
@@ -66,15 +58,34 @@ class ControladorDevoluciones extends ChangeNotifier {
       origenId: tipo == TipoMovimiento.devolucionCliente ? venta.id : null,
     );
     final detalle = [destino.etiqueta, if (nota.isNotEmpty) nota].join(' · ');
-    final anotados = [
-      await _movimientos.anotar(
-        base(TipoMovimiento.devolucionCliente, detalle),
-      ),
-      if (destino == DestinoDevolucion.merma)
+    final (:despues, :anotados) = await _transacciones.enUna(() async {
+      Producto? despues;
+      if (destino == DestinoDevolucion.stock) {
+        final devuelto = devolverVenta(
+          antes,
+          marca: venta.marca,
+          proveedor: venta.proveedor,
+          piezas: entera ? venta.piezas : 0,
+          cantidad: cantidad,
+          abrioPieza: false,
+        );
+        await _existencias.actualizarProducto(
+          antes.id,
+          DatosProducto.desde(devuelto),
+        );
+        despues = _buscar(antes.id);
+      }
+      final anotados = [
         await _movimientos.anotar(
-          base(TipoMovimiento.merma, 'Devolución de cliente dañada'),
+          base(TipoMovimiento.devolucionCliente, detalle),
         ),
-    ];
+        if (destino == DestinoDevolucion.merma)
+          await _movimientos.anotar(
+            base(TipoMovimiento.merma, 'Devolución de cliente dañada'),
+          ),
+      ];
+      return (despues: despues, anotados: anotados);
+    });
     _ultima = (
       antes: despues == null ? null : antes,
       despues: despues,
@@ -93,17 +104,19 @@ class ControladorDevoluciones extends ChangeNotifier {
     notifyListeners();
     final antes = ultima.antes;
     final despues = ultima.despues;
-    if (antes != null && despues != null) {
-      if (_buscar(despues.id) != despues) return false;
-      await _existencias.actualizarProducto(
-        antes.id,
-        DatosProducto.desde(antes),
-      );
-    }
-    for (final anotado in ultima.anotados) {
-      await _movimientos.quitar(anotado);
-    }
-    return true;
+    if (despues != null && _buscar(despues.id) != despues) return false;
+    return _transacciones.enUna(() async {
+      if (antes != null) {
+        await _existencias.actualizarProducto(
+          antes.id,
+          DatosProducto.desde(antes),
+        );
+      }
+      for (final anotado in ultima.anotados) {
+        await _movimientos.quitar(anotado);
+      }
+      return true;
+    });
   }
 
   Producto? _buscar(String id) {

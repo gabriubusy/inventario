@@ -116,9 +116,10 @@ test/                    # misma estructura que lib/
   - Borrar producto: en su ventana de edición, "Borrar producto" o Alt+Supr (Ctrl+Supr borra palabras al escribir), con confirmación (`confirmar` en `app/dialogo_confirmar.dart`, para acciones delicadas sin deshacer). El historial guarda su propia copia del nombre.
 - Persistencia: SQLite con Drift (`app/base_datos/`: `BaseDatos`, `abrirBaseDatos()`). Cada funcionalidad declara sus tablas en su `data/` (`tablas_productos.dart`, `tabla_movimientos.dart`…) y su `Repositorio…Drift`; los `…EnMemoria` quedan para tests. Ids de texto (`nuevoId`), enums guardados por nombre, fechas como texto (`build.yaml`) para conservar hora local y microsegundos. Archivo `inventario.sqlite` en `getApplicationSupportDirectory()`, claves foráneas y WAL. En web usa `web/sqlite3.wasm` y `web/drift_worker.js` (de sqlite3 3.5.2 y drift 2.35.3: actualizarlos si cambian esas versiones). Solo en debug, una base vacía se llena con los datos de ejemplo (`sembrarEjemplos`); la app compilada empieza vacía. Tras cambiar tablas: `dart run build_runner build` y subir `schemaVersion` con su migración. PIN, sesión y tasa siguen en `shared_preferences`.
 
+- Transacciones: lo que cambia stock e historial a la vez (ventas, anular, entradas, mermas, conteo, devoluciones, incidencias, y sus deshacer) va dentro de `Transacciones.enUna` (`core/transacciones.dart`), inyectado por constructor: `TransaccionesDrift` en la app (las llamadas a repositorios dentro se unen a la misma transacción SQLite) y `SinTransaccion` por defecto en tests. Si falla a mitad, nada queda escrito.
+
 ## Decisiones pendientes
 
 Registrar aquí cuando se decidan:
-- Transacciones entre agregados: una venta actualiza el producto y anota el movimiento en dos escrituras; falta envolverlas en una sola transacción (unidad de trabajo).
 - Navegación (p. ej. go_router). Por ahora `app/puerta_sesion.dart` alterna entre el login y el inicio.
 - Fuente (Inter incluida como asset, con cifras tabulares).

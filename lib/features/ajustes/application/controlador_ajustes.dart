@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/ajustes/domain/ajuste.dart';
 import 'package:inventario/features/ajustes/domain/resultado_ajuste.dart';
 import 'package:inventario/features/incidencias/domain/sacar_de_lote.dart';
@@ -12,9 +13,16 @@ import 'package:inventario/features/productos/domain/resultado_guardar_producto.
 /// Takes mermas and losses out of the stock, notes them in the kardex and
 /// remembers the last one so it can be undone.
 class ControladorAjustes extends ChangeNotifier {
-  ControladorAjustes(this._existencias, {this._movimientos});
+  ControladorAjustes(
+    this._existencias, {
+    this._movimientos,
+    this._transacciones = const SinTransaccion(),
+  });
 
   final ControladorExistencias _existencias;
+
+  /// Stock and history change together or not at all.
+  final Transacciones _transacciones;
   final ControladorMovimientos? _movimientos;
   ({Producto antes, Producto despues, Movimiento? anotado})? _ultimo;
 
@@ -32,10 +40,21 @@ class ControladorAjustes extends ChangeNotifier {
             cantidad: ajuste.cantidad,
           );
     if (antes == null || sacado == null) return const AjusteSinExistencias();
-    final resultado = await _existencias.actualizarProducto(
-      productoId,
-      DatosProducto.desde(sacado),
-    );
+    return _transacciones.enUna(() async {
+      final resultado = await _existencias.actualizarProducto(
+        productoId,
+        DatosProducto.desde(sacado),
+      );
+      return _anotarAjuste(resultado, antes, ajuste);
+    });
+  }
+
+  Future<ResultadoAjuste> _anotarAjuste(
+    ResultadoGuardarProducto resultado,
+    Producto antes,
+    Ajuste ajuste,
+  ) async {
+    final productoId = antes.id;
     switch (resultado) {
       case ProductoGuardado(:final producto):
         final anotado = await _movimientos?.anotar(
@@ -71,14 +90,16 @@ class ControladorAjustes extends ChangeNotifier {
     _ultimo = null;
     notifyListeners();
     if (_buscar(ultimo.despues.id) != ultimo.despues) return false;
-    final resultado = await _existencias.actualizarProducto(
-      ultimo.antes.id,
-      DatosProducto.desde(ultimo.antes),
-    );
-    if (ultimo.anotado case final anotado?) {
-      await _movimientos?.quitar(anotado);
-    }
-    return resultado is ProductoGuardado;
+    return _transacciones.enUna(() async {
+      final resultado = await _existencias.actualizarProducto(
+        ultimo.antes.id,
+        DatosProducto.desde(ultimo.antes),
+      );
+      if (ultimo.anotado case final anotado?) {
+        await _movimientos?.quitar(anotado);
+      }
+      return resultado is ProductoGuardado;
+    });
   }
 
   Producto? _buscar(String id) {

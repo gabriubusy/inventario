@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:inventario/app/app.dart';
 import 'package:inventario/app/base_datos/abrir_base_datos.dart';
 import 'package:inventario/app/base_datos/sembrar_ejemplos.dart';
+import 'package:inventario/app/base_datos/transacciones_drift.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
 import 'package:inventario/features/autenticacion/data/almacen_sesion_preferencias.dart';
@@ -44,6 +45,7 @@ Future<void> main() async {
   final proveedores = RepositorioProveedoresDrift(baseDatos);
   final incidencias = RepositorioIncidenciasDrift(baseDatos);
   final movimientos = RepositorioMovimientosDrift(baseDatos);
+  final transacciones = TransaccionesDrift(baseDatos);
   await sembrarEjemplos(
     productos: productos,
     proveedores: proveedores,
@@ -56,6 +58,7 @@ Future<void> main() async {
     incidencias,
     controladorExistencias,
     movimientos: controladorMovimientos,
+    transacciones: transacciones,
   );
   final controladorProveedores = ControladorProveedores(
     proveedores,
@@ -65,6 +68,7 @@ Future<void> main() async {
   final controladorEntradas = ControladorEntradas(
     controladorExistencias,
     movimientos: controladorMovimientos,
+    transacciones: transacciones,
   );
   final controladorTasa = ControladorTasa(
     AlmacenTasaPreferencias(),
@@ -91,20 +95,24 @@ Future<void> main() async {
         controladorExistencias,
         movimientos: controladorMovimientos,
         tasaDeHoy: () => controladorTasa.tasaDeHoy,
+        transacciones: transacciones,
       ),
       controladorIncidencias: controladorIncidencias,
       controladorMovimientos: controladorMovimientos,
       controladorAjustes: ControladorAjustes(
         controladorExistencias,
         movimientos: controladorMovimientos,
+        transacciones: transacciones,
       ),
       controladorConteo: ControladorConteo(
         controladorExistencias,
         movimientos: controladorMovimientos,
+        transacciones: transacciones,
       ),
       controladorDevoluciones: ControladorDevoluciones(
         controladorExistencias,
         controladorMovimientos,
+        transacciones: transacciones,
       ),
       controladorListaProductos: ControladorListaProductos(
         controladorExistencias,
