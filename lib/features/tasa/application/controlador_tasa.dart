@@ -14,6 +14,8 @@ class ControladorTasa extends ChangeNotifier {
   TasaCambio? _tasa;
   var _consultando = false;
   var _sinRespuesta = false;
+  var _cargada = false;
+  var _consultada = false;
 
   /// True while asking the internet for today's rate.
   bool get consultando => _consultando;
@@ -29,8 +31,17 @@ class ControladorTasa extends ChangeNotifier {
 
   DateTime get hoy => _ahora();
 
+  /// Time to ask the user: today's rate is missing after reading the saved
+  /// one and, if there is a source, after trying it.
+  bool get hayQuePedirla =>
+      _cargada && !esDeHoy && !_consultando && (_fuente == null || _consultada);
+
+  /// Bs per dollar in hundredths, only if it was set today.
+  int? get tasaDeHoy => esDeHoy ? _tasa?.bolivaresPorDolar : null;
+
   Future<void> cargar() async {
     _tasa = await _almacen.leer();
+    _cargada = true;
     notifyListeners();
   }
 
@@ -43,6 +54,7 @@ class ControladorTasa extends ChangeNotifier {
     notifyListeners();
     final resultado = await fuente.consultar();
     _consultando = false;
+    _consultada = true;
     switch (resultado) {
       // A rate typed by hand meanwhile wins over the fetched one.
       case TasaObtenida(:final bolivaresPorDolar, :final anterior)

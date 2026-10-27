@@ -127,6 +127,12 @@ void main() {
     expect(importeDeSalida(queso, sinPrecio, 840), isNull);
   });
 
+  test('the cost is the brand cost times the quantity sold', () {
+    final conCosto = marcaA.copyWith(costo: 400);
+    expect(costoDeSalida(queso, conCosto, 840), 336);
+    expect(costoDeSalida(queso, marcaA, 840), isNull);
+  });
+
   test('suggests an open piece for weight sales, else the fullest lot', () {
     expect(loteSugerido(queso, ModoVenta.porPeso), 1);
     expect(loteSugerido(queso, ModoVenta.piezaEntera), 1);

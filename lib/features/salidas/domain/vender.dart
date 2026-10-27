@@ -74,6 +74,17 @@ int? importeDeSalida(
   );
 }
 
+/// What the goods sold cost the shop, from the brand's cost; null when the
+/// brand has none. Kept with the sale so later profit stays right.
+int? costoDeSalida(Producto producto, LoteMarca lote, int cantidad) {
+  final costo = lote.costo;
+  if (costo == null) return null;
+  return dividirRedondeando(
+    costo * cantidad,
+    producto.forma.unidad.fraccionesPorUnidad,
+  );
+}
+
 /// The lot offered first: an open piece for sales by weight, else the one
 /// holding the most. Null when no brand has stock.
 int? loteSugerido(Producto producto, ModoVenta? modo) {

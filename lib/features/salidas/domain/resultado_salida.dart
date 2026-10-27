@@ -16,6 +16,11 @@ class SinExistencias extends ResultadoSalida {
   const SinExistencias();
 }
 
+/// Nothing is sold without today's rate, so the amount in Bs is right.
+class SinTasaDelDia extends ResultadoSalida {
+  const SinTasaDelDia();
+}
+
 /// The product was removed while the window was open.
 class SalidaSinProducto extends ResultadoSalida {
   const SalidaSinProducto();

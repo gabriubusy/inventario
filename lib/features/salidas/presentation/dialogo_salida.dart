@@ -217,6 +217,12 @@ class _DialogoSalidaState extends State<DialogoSalida> {
           ),
         );
         _cambiarProducto();
+      case SinTasaDelDia():
+        mensajero.showSnackBar(
+          const SnackBar(
+            content: Text('Falta la tasa de hoy: escríbela con Ctrl+T'),
+          ),
+        );
       case SalidaSinProducto():
         mensajero.showSnackBar(
           const SnackBar(content: Text('Ese producto ya no existe')),

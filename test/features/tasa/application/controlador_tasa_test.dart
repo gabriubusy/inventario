@@ -106,6 +106,31 @@ void main() {
       expect(controlador.esDeHoy, isFalse);
       expect(controlador.consultando, isFalse);
     });
+
+    test('asks the user only after the internet failed', () async {
+      final controlador = conFuente(const TasaNoDisponible(), guardada: deAyer);
+      await controlador.cargar();
+      expect(controlador.hayQuePedirla, isFalse);
+      await controlador.actualizarDesdeInternet();
+      expect(controlador.hayQuePedirla, isTrue);
+    });
+
+    test('does not ask when the internet brought it', () async {
+      final controlador = conFuente(
+        const TasaObtenida(88623),
+        guardada: deAyer,
+      );
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(controlador.hayQuePedirla, isFalse);
+    });
+  });
+
+  test('without a source it asks as soon as the saved one is read', () async {
+    final controlador = crear(deAyer);
+    expect(controlador.hayQuePedirla, isFalse);
+    await controlador.cargar();
+    expect(controlador.hayQuePedirla, isTrue);
   });
 }
 

@@ -1,4 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
@@ -76,6 +78,28 @@ void main() {
     );
     expect(await salidas.deshacer(), isFalse);
     expect(guardado().minimo, 9);
+  });
+
+  test('refuses to sell without today\'s rate', () async {
+    final sinTasa = ControladorSalidas(existencias, tasaDeHoy: () => null);
+    addTearDown(sinTasa.dispose);
+    expect(await sinTasa.registrar('p1', porKilo), isA<SinTasaDelDia>());
+    expect(guardado(), queso);
+  });
+
+  test('the sale keeps the rate it was sold at', () async {
+    final movimientos = ControladorMovimientos(
+      RepositorioMovimientosEnMemoria(),
+    );
+    final conTasa = ControladorSalidas(
+      existencias,
+      movimientos: movimientos,
+      tasaDeHoy: () => 88730,
+    );
+    addTearDown(conTasa.dispose);
+    addTearDown(movimientos.dispose);
+    await conTasa.registrar('p1', porKilo);
+    expect(movimientos.ventasDeHoy.single.tasa, 88730);
   });
 
   test('says so when the product is gone', () async {
