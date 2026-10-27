@@ -8,6 +8,8 @@ import 'package:inventario/features/autenticacion/data/almacen_sesion_en_memoria
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_en_memoria.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/domain/usuario.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
@@ -69,6 +71,10 @@ void main() {
         ),
         controladorMovimientos: ControladorMovimientos(
           RepositorioMovimientosEnMemoria(),
+        ),
+        controladorCompras: ControladorCompras(
+          RepositorioComprasEnMemoria(),
+          existencias,
         ),
         controladorAjustes: ControladorAjustes(existencias),
         controladorConteo: ControladorConteo(existencias),

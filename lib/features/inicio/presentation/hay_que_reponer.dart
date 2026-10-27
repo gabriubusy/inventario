@@ -40,7 +40,7 @@ class HayQueReponer extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  'Entrada',
+                  'Pedir',
                   style: tema.textTheme.bodyMedium?.copyWith(
                     color: colores.onSurfaceVariant,
                   ),

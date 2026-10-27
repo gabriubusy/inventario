@@ -16,7 +16,10 @@ Future<void> sembrarEjemplos({
   required RepositorioIncidenciasDrift incidencias,
   required RepositorioMovimientosDrift movimientos,
 }) async {
-  if (!kDebugMode || (await productos.obtenerTodos()).isNotEmpty) return;
+  // A test build (--dart-define=EJEMPLOS=true) also gets them, so it is
+  // not empty outside debug.
+  const ejemplos = kDebugMode || bool.fromEnvironment('EJEMPLOS');
+  if (!ejemplos || (await productos.obtenerTodos()).isNotEmpty) return;
   final hoy = DateTime.now();
   await productos.sembrar(productosDeEjemplo);
   await proveedores.sembrar(proveedoresDeEjemplo);

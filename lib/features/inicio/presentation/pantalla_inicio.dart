@@ -7,11 +7,13 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
+import 'package:inventario/features/compras/presentation/pantalla_cuentas.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/presentation/aviso_entrada.dart';
-import 'package:inventario/features/entradas/presentation/dialogo_entrada.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/presentation/dialogo_incidencia.dart';
 import 'package:inventario/features/incidencias/presentation/pantalla_incidencias.dart';
@@ -50,6 +52,7 @@ class PantallaInicio extends StatefulWidget {
     required this.salidas,
     required this.incidencias,
     required this.movimientos,
+    required this.compras,
     required this.ajustes,
     required this.conteo,
     required this.devoluciones,
@@ -68,6 +71,7 @@ class PantallaInicio extends StatefulWidget {
   final ControladorSalidas salidas;
   final ControladorIncidencias incidencias;
   final ControladorMovimientos movimientos;
+  final ControladorCompras compras;
   final ControladorAjustes ajustes;
   final ControladorConteo conteo;
   final ControladorDevoluciones devoluciones;
@@ -130,11 +134,23 @@ class _PantallaInicioState extends State<PantallaInicio> {
   }
 
   void _registrarEntrada() => unawaited(
-    mostrarDialogoEntrada(
+    mostrarDialogoCompra(
       context,
-      entradas: widget.entradas,
+      compras: widget.compras,
       existencias: widget.controlador,
       proveedores: widget.proveedores.nombres,
+      aBolivares: widget.tasa.aBolivares,
+    ),
+  );
+
+  void _abrirCuentas() => unawaited(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PantallaCuentas(
+          compras: widget.compras,
+          aBolivares: widget.tasa.aBolivares,
+        ),
+      ),
     ),
   );
 
@@ -234,8 +250,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
         builder: (_) => PantallaProveedores(
           controlador: widget.proveedores,
           existencias: widget.controlador,
-          entradas: widget.entradas,
+          compras: widget.compras,
           incidencias: widget.incidencias,
+          aBolivares: widget.tasa.aBolivares,
         ),
       ),
     ),
@@ -276,6 +293,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
     const SingleActivator(LogicalKeyboardKey.f7): _verVentasDeHoy,
     const SingleActivator(LogicalKeyboardKey.f8): _abrirKardex,
     const SingleActivator(LogicalKeyboardKey.f9): _abrirConteo,
+    const SingleActivator(LogicalKeyboardKey.f10): _abrirCuentas,
     const SingleActivator(LogicalKeyboardKey.keyL, control: true, shift: true):
         widget.onCambiarPin,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true):
@@ -302,6 +320,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 onIncidencias: _abrirIncidencias,
                 onKardex: _abrirKardex,
                 onConteo: _abrirConteo,
+                onCuentas: _abrirCuentas,
                 onBloquear: widget.onBloquear,
                 onCambiarPin: widget.onCambiarPin,
               ),

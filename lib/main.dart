@@ -10,6 +10,8 @@ import 'package:inventario/features/autenticacion/application/controlador_sesion
 import 'package:inventario/features/autenticacion/data/almacen_sesion_preferencias.dart';
 import 'package:inventario/features/autenticacion/data/cuentas_de_desarrollo.dart';
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_preferencias.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/data/repositorio_compras_drift.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
@@ -25,6 +27,7 @@ import 'package:inventario/features/proveedores/application/controlador_proveedo
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_drift.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
+import 'package:inventario/features/salidas/data/repositorio_ventas_drift.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_preferencias.dart';
 import 'package:inventario/features/tasa/data/fuente_tasa_dolar_api.dart';
@@ -45,6 +48,8 @@ Future<void> main() async {
   final proveedores = RepositorioProveedoresDrift(baseDatos);
   final incidencias = RepositorioIncidenciasDrift(baseDatos);
   final movimientos = RepositorioMovimientosDrift(baseDatos);
+  final compras = RepositorioComprasDrift(baseDatos);
+  final ventas = RepositorioVentasDrift(baseDatos);
   final transacciones = TransaccionesDrift(baseDatos);
   await sembrarEjemplos(
     productos: productos,
@@ -60,25 +65,36 @@ Future<void> main() async {
     movimientos: controladorMovimientos,
     transacciones: transacciones,
   );
+  final controladorTasa = ControladorTasa(
+    AlmacenTasaPreferencias(),
+    fuente: FuenteTasaDolarApi(),
+  );
+  final controladorCompras = ControladorCompras(
+    compras,
+    controladorExistencias,
+    movimientos: controladorMovimientos,
+    transacciones: transacciones,
+    tasaDeHoy: () => controladorTasa.tasaDeHoy,
+  );
   final controladorProveedores = ControladorProveedores(
     proveedores,
     controladorExistencias,
-    alRenombrar: [controladorIncidencias.renombrarProveedor],
+    alRenombrar: [
+      controladorIncidencias.renombrarProveedor,
+      controladorCompras.renombrarProveedor,
+    ],
   );
   final controladorEntradas = ControladorEntradas(
     controladorExistencias,
     movimientos: controladorMovimientos,
     transacciones: transacciones,
   );
-  final controladorTasa = ControladorTasa(
-    AlmacenTasaPreferencias(),
-    fuente: FuenteTasaDolarApi(),
-  );
   final gestorFotos = GestorFotos(await crearAlmacenImagenesLocal());
   unawaited(controladorExistencias.cargar());
   unawaited(controladorProveedores.cargar());
   unawaited(controladorIncidencias.cargar());
   unawaited(controladorMovimientos.cargar());
+  unawaited(controladorCompras.cargar());
   // Today's BCV rate is fetched once, after reading the saved one.
   unawaited(
     controladorTasa.cargar().then(
@@ -94,11 +110,13 @@ Future<void> main() async {
       controladorSalidas: ControladorSalidas(
         controladorExistencias,
         movimientos: controladorMovimientos,
+        ventas: ventas,
         tasaDeHoy: () => controladorTasa.tasaDeHoy,
         transacciones: transacciones,
       ),
       controladorIncidencias: controladorIncidencias,
       controladorMovimientos: controladorMovimientos,
+      controladorCompras: controladorCompras,
       controladorAjustes: ControladorAjustes(
         controladorExistencias,
         movimientos: controladorMovimientos,

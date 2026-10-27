@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
-import 'package:inventario/features/entradas/application/controlador_entradas.dart';
-import 'package:inventario/features/entradas/presentation/dialogo_entrada.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
+import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
 import 'package:inventario/features/incidencias/presentation/dialogo_incidencia.dart';
@@ -75,7 +76,10 @@ void main() {
         home: PantallaProveedores(
           controlador: controlador,
           existencias: existencias,
-          entradas: ControladorEntradas(existencias),
+          compras: ControladorCompras(
+            RepositorioComprasEnMemoria(),
+            existencias,
+          ),
           incidencias: ControladorIncidencias(
             RepositorioIncidenciasEnMemoria(),
             existencias,
@@ -184,7 +188,7 @@ void main() {
     expect(enFicha('Queso blanco duro'), findsOneWidget);
   });
 
-  testWidgets('F2 opens an entry with the chosen supplier preselected', (
+  testWidgets('F2 opens a purchase with the chosen supplier filled in', (
     tester,
   ) async {
     await mostrar(tester);
@@ -192,7 +196,11 @@ void main() {
     await tester.pump();
     await tester.sendKeyEvent(LogicalKeyboardKey.f2);
     await tester.pumpAndSettle();
-    expect(find.byType(DialogoEntrada), findsOneWidget);
+    expect(find.byType(DialogoCompra), findsOneWidget);
+    expect(
+      find.widgetWithText(TextFormField, 'Distribuidora 1'),
+      findsOneWidget,
+    );
 
     await tester.enterText(
       find.widgetWithText(TextFormField, 'Producto'),

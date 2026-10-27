@@ -4,16 +4,16 @@ import 'package:flutter/services.dart';
 /// Home-screen actions, each with its function key.
 enum AccionRapida {
   salida(
-    'Registrar salida',
-    'Venta o despacho',
+    'Vender',
+    'Venta al cliente',
     Icons.upload_outlined,
     LogicalKeyboardKey.f1,
     'F1',
     destacada: true,
   ),
   entrada(
-    'Registrar entrada',
-    'Mercancía recibida',
+    'Pedido a proveedor',
+    'Mercancía que llega',
     Icons.download_outlined,
     LogicalKeyboardKey.f2,
     'F2',

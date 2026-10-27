@@ -3,6 +3,7 @@ import 'package:inventario/app/puerta_sesion.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
@@ -25,6 +26,7 @@ class InventarioApp extends StatelessWidget {
     required this.controladorSalidas,
     required this.controladorIncidencias,
     required this.controladorMovimientos,
+    required this.controladorCompras,
     required this.controladorAjustes,
     required this.controladorConteo,
     required this.controladorDevoluciones,
@@ -40,6 +42,7 @@ class InventarioApp extends StatelessWidget {
   final ControladorSalidas controladorSalidas;
   final ControladorIncidencias controladorIncidencias;
   final ControladorMovimientos controladorMovimientos;
+  final ControladorCompras controladorCompras;
   final ControladorAjustes controladorAjustes;
   final ControladorConteo controladorConteo;
   final ControladorDevoluciones controladorDevoluciones;
@@ -61,6 +64,7 @@ class InventarioApp extends StatelessWidget {
         controladorSalidas: controladorSalidas,
         controladorIncidencias: controladorIncidencias,
         controladorMovimientos: controladorMovimientos,
+        controladorCompras: controladorCompras,
         controladorAjustes: controladorAjustes,
         controladorConteo: controladorConteo,
         controladorDevoluciones: controladorDevoluciones,

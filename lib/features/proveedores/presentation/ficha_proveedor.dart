@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:inventario/app/colores_estado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
+import 'package:inventario/core/dinero.dart';
 import 'package:inventario/features/incidencias/domain/incidencia.dart';
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
 import 'package:inventario/features/incidencias/presentation/seccion_incidencias.dart';
@@ -20,6 +22,7 @@ class FichaProveedor extends StatelessWidget {
     required this.hoy,
     required this.onRegistrarIncidencia,
     required this.onResponder,
+    this.deuda = 0,
   });
 
   final Proveedor proveedor;
@@ -32,6 +35,9 @@ class FichaProveedor extends StatelessWidget {
   final DateTime hoy;
   final VoidCallback onRegistrarIncidencia;
   final void Function(Incidencia, RespuestaProveedor?) onResponder;
+
+  /// What is still owed to this supplier, in dollar hundredths.
+  final int deuda;
 
   @override
   Widget build(BuildContext context) {
@@ -116,7 +122,7 @@ class FichaProveedor extends StatelessWidget {
                           mainAxisSize: MainAxisSize.min,
                           spacing: espaciado.sm,
                           children: [
-                            const Text('Registrar entrada'),
+                            const Text('Pedido a proveedor'),
                             TeclaAtajo('F2', color: colores.onPrimary),
                           ],
                         ),
@@ -150,6 +156,14 @@ class FichaProveedor extends StatelessWidget {
                 ),
               ],
             ),
+            if (deuda > 0)
+              Text(
+                'Se le debe ${formatearDolares(deuda)} · ver en Cuentas (F10)',
+                style: tema.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: context.coloresEstado.textoBajo,
+                ),
+              ),
             SeccionIncidencias(
               incidencias: incidencias,
               hoy: hoy,

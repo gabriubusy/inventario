@@ -4,8 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
-import 'package:inventario/features/entradas/application/controlador_entradas.dart';
-import 'package:inventario/features/entradas/presentation/dialogo_entrada.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/domain/incidencia.dart';
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
@@ -24,8 +24,9 @@ class PantallaProveedores extends StatefulWidget {
     super.key,
     required this.controlador,
     required this.existencias,
-    required this.entradas,
+    required this.compras,
     required this.incidencias,
+    this.aBolivares,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -35,8 +36,9 @@ class PantallaProveedores extends StatefulWidget {
 
   /// Brands and products shown in the card come from the stock.
   final ControladorExistencias existencias;
-  final ControladorEntradas entradas;
+  final ControladorCompras compras;
   final ControladorIncidencias incidencias;
+  final int? Function(int)? aBolivares;
 
   @override
   State<PantallaProveedores> createState() => _PantallaProveedoresState();
@@ -68,14 +70,15 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
     );
   }
 
-  /// Opens the entry with the chosen supplier's brand already picked.
+  /// Opens a purchase with the chosen supplier already filled in.
   void _registrarEntrada() => unawaited(
-    mostrarDialogoEntrada(
+    mostrarDialogoCompra(
       context,
-      entradas: widget.entradas,
+      compras: widget.compras,
       existencias: widget.existencias,
       proveedores: widget.controlador.nombres,
       proveedorInicial: widget.controlador.elegido?.nombre ?? '',
+      aBolivares: widget.aBolivares,
     ),
   );
 
@@ -137,6 +140,7 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                         widget.controlador,
                         widget.existencias,
                         widget.incidencias,
+                        widget.compras,
                       ]),
                       builder: (context, _) {
                         final elegido = widget.controlador.elegido;
@@ -169,6 +173,9 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                                       onRegistrarIncidencia:
                                           _registrarIncidencia,
                                       onResponder: _responder,
+                                      deuda: widget.compras.deudaDe(
+                                        elegido.nombre,
+                                      ),
                                     ),
                             ),
                           ],

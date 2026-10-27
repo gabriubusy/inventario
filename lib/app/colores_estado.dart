@@ -10,6 +10,8 @@ class ColoresEstado extends ThemeExtension<ColoresEstado> {
     required this.fondoAgotado,
     required this.textoAgotado,
     required this.barraAgotado,
+    required this.fondoBien,
+    required this.textoBien,
   });
 
   static const normal = ColoresEstado(
@@ -19,6 +21,8 @@ class ColoresEstado extends ThemeExtension<ColoresEstado> {
     fondoAgotado: Color(0xFFFBE9E7),
     textoAgotado: Color(0xFF8C1D18),
     barraAgotado: Color(0xFFB3261E),
+    fondoBien: Color(0xFFE3F1E6),
+    textoBien: Color(0xFF14532D),
   );
 
   final Color fondoBajo;
@@ -28,6 +32,10 @@ class ColoresEstado extends ThemeExtension<ColoresEstado> {
   final Color textoAgotado;
   final Color barraAgotado;
 
+  /// Something done right, e.g. the change once a sale is fully paid.
+  final Color fondoBien;
+  final Color textoBien;
+
   @override
   ColoresEstado copyWith({
     Color? fondoBajo,
@@ -36,6 +44,8 @@ class ColoresEstado extends ThemeExtension<ColoresEstado> {
     Color? fondoAgotado,
     Color? textoAgotado,
     Color? barraAgotado,
+    Color? fondoBien,
+    Color? textoBien,
   }) {
     return ColoresEstado(
       fondoBajo: fondoBajo ?? this.fondoBajo,
@@ -44,6 +54,8 @@ class ColoresEstado extends ThemeExtension<ColoresEstado> {
       fondoAgotado: fondoAgotado ?? this.fondoAgotado,
       textoAgotado: textoAgotado ?? this.textoAgotado,
       barraAgotado: barraAgotado ?? this.barraAgotado,
+      fondoBien: fondoBien ?? this.fondoBien,
+      textoBien: textoBien ?? this.textoBien,
     );
   }
 
@@ -58,6 +70,8 @@ class ColoresEstado extends ThemeExtension<ColoresEstado> {
       fondoAgotado: mezclar(fondoAgotado, other.fondoAgotado),
       textoAgotado: mezclar(textoAgotado, other.textoAgotado),
       barraAgotado: mezclar(barraAgotado, other.barraAgotado),
+      fondoBien: mezclar(fondoBien, other.fondoBien),
+      textoBien: mezclar(textoBien, other.textoBien),
     );
   }
 }

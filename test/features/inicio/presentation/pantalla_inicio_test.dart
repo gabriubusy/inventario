@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
@@ -133,6 +135,10 @@ void main() {
             controlador,
           ),
           movimientos: movimientos,
+          compras: ControladorCompras(
+            RepositorioComprasEnMemoria(),
+            controlador,
+          ),
           ajustes: ControladorAjustes(controlador, movimientos: movimientos),
           conteo: ControladorConteo(controlador, movimientos: movimientos),
           devoluciones: ControladorDevoluciones(controlador, movimientos),
@@ -338,7 +344,7 @@ void main() {
   testWidgets('a wide window shows the header links side by side', (
     tester,
   ) async {
-    await mostrar(tester, ventana: const Size(1900, 900));
+    await mostrar(tester, ventana: const Size(2400, 900));
     expect(find.text('Menú'), findsNothing);
     expect(find.text('Cambiar PIN'), findsOneWidget);
   });

@@ -6,6 +6,7 @@ import 'package:inventario/features/autenticacion/application/controlador_sesion
 import 'package:inventario/features/autenticacion/application/estado_sesion.dart';
 import 'package:inventario/features/autenticacion/presentation/dialogo_cambiar_pin.dart';
 import 'package:inventario/features/autenticacion/presentation/pantalla_inicio_sesion.dart';
+import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
@@ -30,6 +31,7 @@ class PuertaSesion extends StatelessWidget {
     required this.controladorSalidas,
     required this.controladorIncidencias,
     required this.controladorMovimientos,
+    required this.controladorCompras,
     required this.controladorAjustes,
     required this.controladorConteo,
     required this.controladorDevoluciones,
@@ -45,6 +47,7 @@ class PuertaSesion extends StatelessWidget {
   final ControladorSalidas controladorSalidas;
   final ControladorIncidencias controladorIncidencias;
   final ControladorMovimientos controladorMovimientos;
+  final ControladorCompras controladorCompras;
   final ControladorAjustes controladorAjustes;
   final ControladorConteo controladorConteo;
   final ControladorDevoluciones controladorDevoluciones;
@@ -64,6 +67,7 @@ class PuertaSesion extends StatelessWidget {
           salidas: controladorSalidas,
           incidencias: controladorIncidencias,
           movimientos: controladorMovimientos,
+          compras: controladorCompras,
           ajustes: controladorAjustes,
           conteo: controladorConteo,
           devoluciones: controladorDevoluciones,

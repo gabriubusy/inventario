@@ -14,6 +14,7 @@ class BarraSuperior extends StatelessWidget {
     required this.onIncidencias,
     required this.onKardex,
     required this.onConteo,
+    required this.onCuentas,
     required this.onBloquear,
     required this.onCambiarPin,
   });
@@ -27,6 +28,7 @@ class BarraSuperior extends StatelessWidget {
   final VoidCallback onIncidencias;
   final VoidCallback onKardex;
   final VoidCallback onConteo;
+  final VoidCallback onCuentas;
   final VoidCallback onBloquear;
   final VoidCallback onCambiarPin;
 
@@ -93,6 +95,7 @@ class BarraSuperior extends StatelessWidget {
                   (texto: 'Incidencias', atajo: 'F6', onPressed: onIncidencias),
                   (texto: 'Kardex', atajo: 'F8', onPressed: onKardex),
                   (texto: 'Conteo', atajo: 'F9', onPressed: onConteo),
+                  (texto: 'Cuentas', atajo: 'F10', onPressed: onCuentas),
                   (
                     texto: 'Cambiar PIN',
                     atajo: 'Ctrl+Shift+L',
