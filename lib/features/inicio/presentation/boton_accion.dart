@@ -3,10 +3,12 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/inicio/presentation/accion_rapida.dart';
 
+/// A low button: icon, action and its key, so the day's figures fit above
+/// the fold.
 class BotonAccion extends StatelessWidget {
   const BotonAccion({super.key, required this.accion, required this.onPulsar});
 
-  static const _alto = 116.0;
+  static const _alto = 56.0;
 
   final AccionRapida accion;
   final VoidCallback onPulsar;
@@ -21,39 +23,29 @@ class BotonAccion extends StatelessWidget {
     final secundario = destacada
         ? colores.onPrimary.withValues(alpha: 0.85)
         : colores.onSurfaceVariant;
-    final contenido = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    final contenido = Row(
+      spacing: espaciado.md,
       children: [
-        Row(
-          children: [
-            Icon(accion.icono, color: destacada ? texto : colores.primary),
-            const Spacer(),
-            TeclaAtajo(accion.atajo, color: secundario),
-          ],
-        ),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              accion.titulo,
-              style: tema.textTheme.titleMedium?.copyWith(
-                color: texto,
-                fontWeight: FontWeight.w600,
-              ),
+        Icon(accion.icono, color: destacada ? texto : colores.primary),
+        Expanded(
+          child: Text(
+            accion.titulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: tema.textTheme.titleSmall?.copyWith(
+              color: texto,
+              fontWeight: FontWeight.w600,
             ),
-            Text(
-              accion.descripcion,
-              style: tema.textTheme.bodySmall?.copyWith(color: secundario),
-            ),
-          ],
+          ),
         ),
+        TeclaAtajo(accion.atajo, color: secundario),
       ],
     );
     final estilo = ButtonStyle(
       minimumSize: const WidgetStatePropertyAll(Size.fromHeight(_alto)),
-      padding: WidgetStatePropertyAll(EdgeInsets.all(espaciado.xl - 4)),
-      alignment: Alignment.topLeft,
+      padding: WidgetStatePropertyAll(
+        EdgeInsets.symmetric(horizontal: espaciado.lg),
+      ),
       shape: WidgetStatePropertyAll(
         RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(espaciado.md),
@@ -61,7 +53,7 @@ class BotonAccion extends StatelessWidget {
       ),
     );
     return Tooltip(
-      message: '${accion.titulo} (${accion.atajo})',
+      message: accion.descripcion,
       child: destacada
           ? FilledButton(onPressed: onPulsar, style: estilo, child: contenido)
           : OutlinedButton(

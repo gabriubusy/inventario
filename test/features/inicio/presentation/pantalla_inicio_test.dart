@@ -3,7 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
+import 'package:inventario/features/entradas/domain/entrada.dart';
+import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
+import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
 import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
+import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
@@ -20,15 +25,34 @@ import 'package:inventario/features/proveedores/application/controlador_proveedo
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
 import 'package:inventario/features/proveedores/presentation/pantalla_proveedores.dart';
+import 'package:inventario/features/salidas/application/controlador_salidas.dart';
+import 'package:inventario/features/salidas/domain/salida.dart';
+import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
+import 'package:inventario/features/tasa/domain/fuente_tasa.dart';
+
+class _FuenteFija implements FuenteTasa {
+  const _FuenteFija(this._respuesta);
+
+  final ResultadoConsultaTasa _respuesta;
+
+  @override
+  Future<ResultadoConsultaTasa> consultar() async => _respuesta;
+}
 
 void main() {
   late ControladorExistencias controlador;
   late ControladorProveedores proveedores;
+  late ControladorTasa tasa;
+  late ControladorEntradas entradas;
+  late ControladorSalidas salidas;
+  late ControladorMovimientos movimientos;
   var bloqueos = 0;
+  var cambiosPin = 0;
 
   setUp(() async {
+    tasa = ControladorTasa(AlmacenTasaEnMemoria());
     controlador = ControladorExistencias(
       RepositorioProductosEnMemoria([
         const Producto(
@@ -71,7 +95,11 @@ void main() {
       controlador,
     );
     await proveedores.cargar();
+    entradas = ControladorEntradas(controlador);
+    movimientos = ControladorMovimientos(RepositorioMovimientosEnMemoria());
+    salidas = ControladorSalidas(controlador, movimientos: movimientos);
     bloqueos = 0;
+    cambiosPin = 0;
   });
 
   tearDown(() {
@@ -79,8 +107,11 @@ void main() {
     proveedores.dispose();
   });
 
-  Future<void> mostrar(WidgetTester tester) async {
-    await tester.binding.setSurfaceSize(const Size(1280, 900));
+  Future<void> mostrar(
+    WidgetTester tester, {
+    Size ventana = const Size(1280, 900),
+  }) async {
+    await tester.binding.setSurfaceSize(ventana);
     addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
@@ -88,11 +119,18 @@ void main() {
         home: PantallaInicio(
           controlador: controlador,
           proveedores: proveedores,
-          entradas: ControladorEntradas(controlador),
+          entradas: entradas,
+          salidas: salidas,
+          incidencias: ControladorIncidencias(
+            RepositorioIncidenciasEnMemoria(),
+            controlador,
+          ),
+          movimientos: movimientos,
           listaProductos: ControladorListaProductos(controlador),
-          tasa: ControladorTasa(AlmacenTasaEnMemoria()),
+          tasa: tasa,
           fotos: GestorFotos(AlmacenImagenesEnMemoria()),
           onBloquear: () => bloqueos++,
+          onCambiarPin: () => cambiosPin++,
         ),
       ),
     );
@@ -108,21 +146,25 @@ void main() {
     await tester.pump();
   }
 
+  Finder enTarjeta(String texto) => find.descendant(
+    of: find.byType(TarjetaProducto),
+    matching: find.text(texto),
+  );
+
   testWidgets('shows pieces, the open piece and the brands of a cheese', (
     tester,
   ) async {
     await mostrar(tester);
-    expect(find.text('3 piezas'), findsOneWidget);
-    expect(find.text('+1 abierta'), findsOneWidget);
-    expect(find.text('Marca F: 3 + 1 abierta'), findsOneWidget);
+    expect(enTarjeta('3 piezas  +1 abierta · 16,4 kg'), findsOneWidget);
+    expect(enTarjeta('Marca F: 3 + 1 abierta'), findsOneWidget);
   });
 
   testWidgets('lists every product with its stock and alert', (tester) async {
     await mostrar(tester);
     expect(find.byType(TarjetaProducto), findsNWidgets(3));
-    expect(find.text('18,5 kg'), findsOneWidget);
-    expect(find.text('Stock bajo'), findsOneWidget);
-    expect(find.text('Agotado'), findsOneWidget);
+    expect(enTarjeta('18,5 kg'), findsOneWidget);
+    expect(enTarjeta('Stock bajo'), findsOneWidget);
+    expect(enTarjeta('Agotado'), findsOneWidget);
   });
 
   testWidgets('search narrows the list ignoring accents', (tester) async {
@@ -130,7 +172,7 @@ void main() {
     await tester.enterText(find.byType(TextField), 'jamon');
     await tester.pump();
     expect(find.byType(TarjetaProducto), findsOneWidget);
-    expect(find.text('Jamón de pierna'), findsOneWidget);
+    expect(enTarjeta('Jamón de pierna'), findsOneWidget);
   });
 
   testWidgets('Esc clears the search', (tester) async {
@@ -153,7 +195,7 @@ void main() {
     await tester.tap(find.widgetWithText(ChoiceChip, 'Quesos'));
     await tester.pump();
     expect(find.byType(TarjetaProducto), findsOneWidget);
-    expect(find.text('Queso guayanés'), findsOneWidget);
+    expect(enTarjeta('Queso guayanés'), findsOneWidget);
   });
 
   testWidgets('Ctrl+K moves the focus to the search box', (tester) async {
@@ -163,17 +205,118 @@ void main() {
     expect(campo.focusNode?.hasFocus, isTrue);
   });
 
-  testWidgets('F1 triggers the sale action', (tester) async {
+  testWidgets('a sale shows up in the latest sales and the day total', (
+    tester,
+  ) async {
+    await mostrar(tester);
+    expect(find.text('Aún no hay ventas hoy. Registra una con F1.'), findsOne);
+    await tester.runAsync(
+      () =>
+          salidas.registrar('1', const Salida(marca: 'Propia', cantidad: 2000)),
+    );
+    await tester.pump();
+    expect(find.text('Bistec de res'), findsWidgets);
+    expect(find.text('Propia · 2 kg'), findsOneWidget);
+    expect(find.text('2 kg'), findsOneWidget);
+  });
+
+  testWidgets('sold-out products are listed to restock', (tester) async {
+    await mostrar(tester);
+    final reponer = find.ancestor(
+      of: find.text('Hay que reponer'),
+      matching: find.byType(Card),
+    );
+    expect(
+      find.descendant(of: reponer.last, matching: find.text('Queso guayanés')),
+      findsOneWidget,
+    );
+    expect(
+      find.descendant(of: reponer.last, matching: find.text('Bistec de res')),
+      findsNothing,
+    );
+  });
+
+  testWidgets('F1 opens the sale window', (tester) async {
     await mostrar(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoSalida), findsOneWidget);
+  });
+
+  testWidgets('F3 is not built yet and says so', (tester) async {
+    await mostrar(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
     await tester.pump();
-    expect(find.text('Próximamente: Registrar salida'), findsOneWidget);
+    expect(find.text('Próximamente: Registrar merma'), findsOneWidget);
+  });
+
+  testWidgets('Ctrl+Z undoes the last sale, not an older entry', (
+    tester,
+  ) async {
+    await mostrar(tester);
+    final jamon = controlador.productos.firstWhere((p) => p.id == '2');
+    await entradas.registrar(
+      '2',
+      const Entrada(marca: 'Marca F', piezas: 1, cantidad: 4000),
+    );
+    await salidas.registrar('1', const Salida(marca: 'Propia', cantidad: 500));
+    await pulsarConControl(tester, LogicalKeyboardKey.keyZ);
+    await tester.pumpAndSettle();
+    expect(find.text('Salida deshecha'), findsOneWidget);
+    expect(
+      controlador.productos.firstWhere((p) => p.id == '1').cantidad,
+      18500,
+    );
+    expect(
+      controlador.productos.firstWhere((p) => p.id == '2').piezas,
+      jamon.piezas + 1,
+    );
+  });
+
+  testWidgets('a narrow window folds the header links into a menu', (
+    tester,
+  ) async {
+    await mostrar(tester, ventana: const Size(920, 760));
+    expect(find.text('Cambiar PIN'), findsNothing);
+    await tester.tap(find.text('Menú'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Cambiar PIN'));
+    await tester.pumpAndSettle();
+    expect(cambiosPin, 1);
+  });
+
+  testWidgets('a wide window shows the header links side by side', (
+    tester,
+  ) async {
+    await mostrar(tester, ventana: const Size(1600, 900));
+    expect(find.text('Menú'), findsNothing);
+    expect(find.text('Cambiar PIN'), findsOneWidget);
   });
 
   testWidgets('Ctrl+L locks the session', (tester) async {
     await mostrar(tester);
     await pulsarConControl(tester, LogicalKeyboardKey.keyL);
     expect(bloqueos, 1);
+  });
+
+  testWidgets('Ctrl+Shift+L changes the PIN instead of locking', (
+    tester,
+  ) async {
+    await mostrar(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyL);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    expect(cambiosPin, 1);
+    expect(bloqueos, 0);
+  });
+
+  testWidgets('F7 opens today\'s sales to cancel one', (tester) async {
+    await mostrar(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f7);
+    await tester.pumpAndSettle();
+    expect(find.text('Ventas de hoy'), findsOneWidget);
   });
 
   testWidgets('F5 opens the suppliers and Esc comes back', (tester) async {
@@ -186,6 +329,45 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(PantallaProveedores), findsNothing);
     expect(find.text('Existencias'), findsOneWidget);
+  });
+
+  testWidgets("the header shows today's BCV rate and how much it moved", (
+    tester,
+  ) async {
+    tasa = ControladorTasa(
+      AlmacenTasaEnMemoria(),
+      fuente: const _FuenteFija(TasaObtenida(88623, anterior: 88475)),
+    );
+    await tasa.actualizarDesdeInternet();
+    await mostrar(tester);
+    expect(find.text('BCV hoy'), findsOneWidget);
+    expect(find.text('1 \$ = 886,23 Bs'), findsOneWidget);
+    expect(find.text('0,17 %'), findsOneWidget);
+    expect(find.byIcon(Icons.arrow_upward), findsOneWidget);
+  });
+
+  testWidgets('without internet the rate can be typed in with Ctrl+T', (
+    tester,
+  ) async {
+    tasa = ControladorTasa(
+      AlmacenTasaEnMemoria(),
+      fuente: const _FuenteFija(TasaNoDisponible()),
+    );
+    await tasa.actualizarDesdeInternet();
+    await mostrar(tester);
+    expect(find.textContaining('¿sin internet?'), findsOneWidget);
+
+    await pulsarConControl(tester, LogicalKeyboardKey.keyT);
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Bolívares por 1 dólar'),
+      '890',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(find.text('Tasa de hoy'), findsOneWidget);
+    expect(find.text('1 \$ = 890,00 Bs'), findsOneWidget);
+    expect(find.textContaining('¿sin internet?'), findsNothing);
   });
 
   testWidgets('F4 opens the products and Esc comes back', (tester) async {
@@ -213,10 +395,10 @@ void main() {
     await pulsarConControl(tester, LogicalKeyboardKey.keyN);
     await tester.pumpAndSettle();
     await pulsarConControl(tester, LogicalKeyboardKey.keyN);
-    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
     await tester.pumpAndSettle();
     expect(find.byType(DialogoNuevoProducto), findsOneWidget);
-    expect(find.text('Próximamente: Registrar salida'), findsNothing);
+    expect(find.text('Próximamente: Registrar merma'), findsNothing);
   });
 
   testWidgets('home shortcuts work while typing in the search box', (
@@ -224,9 +406,9 @@ void main() {
   ) async {
     await mostrar(tester);
     await tester.enterText(find.byType(TextField), 'jam');
-    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
     await tester.pump();
-    expect(find.text('Próximamente: Registrar salida'), findsOneWidget);
+    expect(find.text('Próximamente: Registrar merma'), findsOneWidget);
   });
 
   testWidgets('a product created from home appears in the grid', (
@@ -239,9 +421,21 @@ void main() {
       find.widgetWithText(TextFormField, 'Nombre'),
       'Queso de año',
     );
-    await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
+    final crear = find.widgetWithText(FilledButton, 'Crear');
+    await tester.ensureVisible(crear);
     await tester.pumpAndSettle();
-    expect(find.byType(TarjetaProducto), findsNWidgets(4));
-    expect(find.text('Queso de año'), findsOneWidget);
+    await tester.tap(crear);
+    await tester.pumpAndSettle();
+    // The grid builds lazily under the day panel, so scroll down to it.
+    expect(
+      controlador.productos.map((p) => p.nombre),
+      contains('Queso de año'),
+    );
+    await tester.dragUntilVisible(
+      enTarjeta('Queso de año'),
+      find.byType(CustomScrollView),
+      const Offset(0, -200),
+    );
+    expect(enTarjeta('Queso de año'), findsOneWidget);
   });
 }
