@@ -4,6 +4,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/presentation/boton_borrar_producto.dart';
 import 'package:inventario/features/productos/presentation/elegir_imagen.dart';
 import 'package:inventario/features/productos/presentation/formulario_producto.dart';
 
@@ -127,6 +128,12 @@ class DialogoNuevoProducto extends StatelessWidget {
                 alGuardar: (guardado, {required otro}) =>
                     _guardado(context, guardado, otro: otro),
               ),
+              if (producto case final editado?)
+                BotonBorrarProducto(
+                  producto: editado,
+                  controlador: controlador,
+                  fotos: fotos,
+                ),
             ],
           ),
         ),

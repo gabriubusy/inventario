@@ -36,6 +36,10 @@ class RepositorioProductosEnMemoria implements RepositorioProductos {
     return ProductoGuardado(producto);
   }
 
+  @override
+  Future<void> borrar(String id) async =>
+      _productos.removeWhere((p) => p.id == id);
+
   bool _nombreUsado(String nombre, {String? excepto}) {
     final clave = normalizarParaBusqueda(nombre);
     return _productos.any(

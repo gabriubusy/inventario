@@ -21,14 +21,17 @@ class LoteEditable {
       lote.cantidad,
       decimales: forma.unidad.decimales,
     );
-    if (lote.precio case final valor?) {
-      precio.text = formatDecimal(
-        valor,
-        decimales: decimalesDinero,
-        minDecimales: decimalesDinero,
-      );
-    }
+    precio.text = _dinero(lote.precio);
+    costo.text = _dinero(lote.costo);
   }
+
+  static String _dinero(int? valor) => valor == null
+      ? ''
+      : formatDecimal(
+          valor,
+          decimales: decimalesDinero,
+          minDecimales: decimalesDinero,
+        );
 
   /// The saved brand this row edits; null for a new row.
   final LoteMarca? original;
@@ -38,6 +41,7 @@ class LoteEditable {
   final piezas = TextEditingController();
   final cantidad = TextEditingController();
   final precio = TextEditingController();
+  final costo = TextEditingController();
   final focoMarca = FocusNode();
   final focoProveedor = FocusNode();
 
@@ -47,6 +51,7 @@ class LoteEditable {
     piezas,
     cantidad,
     precio,
+    costo,
   ];
 
   Listenable get cambios => Listenable.merge(_campos);
@@ -67,9 +72,14 @@ class LoteEditable {
       CampoCantidad.leer(cantidad, forma.unidad.decimales);
 
   /// Null when left empty: the brand simply has no price yet.
-  int? leerPrecio() => precio.text.trim().isEmpty
+  int? leerPrecio() => _leerDinero(precio);
+
+  int? leerCosto() => _leerDinero(costo);
+
+  static int? _leerDinero(TextEditingController campo) =>
+      campo.text.trim().isEmpty
       ? null
-      : CampoCantidad.leer(precio, decimalesDinero);
+      : CampoCantidad.leer(campo, decimalesDinero);
 
   LoteMarca leer(FormaConteo forma) => LoteMarca(
     marca: marca.text.trim(),
@@ -78,6 +88,7 @@ class LoteEditable {
     piezaAbierta: forma.cuentaPiezas && (original?.piezaAbierta ?? false),
     cantidad: leerCantidad(forma),
     precio: leerPrecio(),
+    costo: leerCosto(),
   );
 
   void limpiar() {

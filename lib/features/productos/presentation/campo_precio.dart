@@ -10,10 +10,12 @@ class CampoPrecio extends StatelessWidget {
     super.key,
     required this.controller,
     required this.unidad,
+    this.etiqueta = 'Precio',
     this.aBolivares,
   });
 
   final TextEditingController controller;
+  final String etiqueta;
   final UnidadBase unidad;
 
   /// Null hides the bolívares line, e.g. before any rate is saved.
@@ -34,7 +36,7 @@ class CampoPrecio extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         CampoCantidad(
-          etiqueta: 'Precio',
+          etiqueta: etiqueta,
           controller: controller,
           decimales: decimalesDinero,
           sufijo: '\$/${unidad.simbolo}',

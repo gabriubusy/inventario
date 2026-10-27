@@ -158,12 +158,14 @@ void main() {
     await escribirYEnter(tester, 'Propia');
     await escribirYEnter(tester, 'Frigorífico 1');
     await escribirYEnter(tester, '3,8');
+    await escribirYEnter(tester, '4,10');
     await escribirYEnter(tester, '6,20');
     await escribirYEnter(tester, '8');
 
     final producto = creado('Carne molida');
     expect(producto?.forma, FormaConteo.porKilo);
     expect(producto?.cantidad, 3800);
+    expect(producto?.lotes.single.costo, 410);
     expect(producto?.lotes.single.precio, 620);
     expect(producto?.minimo, 8000);
   });
@@ -183,9 +185,16 @@ void main() {
       LogicalKeyboardKey.controlLeft,
       LogicalKeyboardKey.keyM,
     );
-    await tester.enterText(campo('Marca').last, 'Marca B');
-    await tester.enterText(campo('Cantidad').last, '11');
-    await tester.enterText(campo('Precio').last, '5,60');
+    // The new row may land below the fold of the window.
+    for (final (etiqueta, texto) in [
+      ('Marca', 'Marca B'),
+      ('Cantidad', '11'),
+      ('Precio', '5,60'),
+    ]) {
+      await tester.ensureVisible(campo(etiqueta).last);
+      await tester.pumpAndSettle();
+      await tester.enterText(campo(etiqueta).last, texto);
+    }
     await crear(tester);
 
     expect(creado('Queso de año')?.lotes.map((l) => l.precio), [520, 560]);

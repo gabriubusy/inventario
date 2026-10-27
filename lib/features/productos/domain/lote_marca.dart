@@ -7,6 +7,7 @@ class LoteMarca {
     this.piezaAbierta = false,
     required this.cantidad,
     this.precio,
+    this.costo,
   });
 
   final String marca;
@@ -25,6 +26,10 @@ class LoteMarca {
   /// Each brand has its own because suppliers sell at different prices.
   final int? precio;
 
+  /// What the supplier charges, like [precio]; null if not set. Needed to
+  /// know the profit of a sale.
+  final int? costo;
+
   bool get tieneExistencia => piezas > 0 || piezaAbierta || cantidad > 0;
 
   LoteMarca copyWith({
@@ -34,6 +39,7 @@ class LoteMarca {
     bool? piezaAbierta,
     int? cantidad,
     int? precio,
+    int? costo,
   }) {
     return LoteMarca(
       marca: marca ?? this.marca,
@@ -42,6 +48,7 @@ class LoteMarca {
       piezaAbierta: piezaAbierta ?? this.piezaAbierta,
       cantidad: cantidad ?? this.cantidad,
       precio: precio ?? this.precio,
+      costo: costo ?? this.costo,
     );
   }
 
@@ -53,9 +60,17 @@ class LoteMarca {
       other.piezas == piezas &&
       other.piezaAbierta == piezaAbierta &&
       other.cantidad == cantidad &&
-      other.precio == precio;
+      other.precio == precio &&
+      other.costo == costo;
 
   @override
-  int get hashCode =>
-      Object.hash(marca, proveedor, piezas, piezaAbierta, cantidad, precio);
+  int get hashCode => Object.hash(
+    marca,
+    proveedor,
+    piezas,
+    piezaAbierta,
+    cantidad,
+    precio,
+    costo,
+  );
 }

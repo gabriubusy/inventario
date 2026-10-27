@@ -9,6 +9,9 @@ abstract interface class RepositorioProductos {
 
   Future<ResultadoGuardarProducto> actualizar(String id, DatosProducto datos);
 
+  /// Past sales keep their own copy of the name, so history survives.
+  Future<void> borrar(String id);
+
   /// Keeps brand lots linked when a supplier changes its name.
   Future<void> renombrarProveedor(String anterior, String nuevo);
 }

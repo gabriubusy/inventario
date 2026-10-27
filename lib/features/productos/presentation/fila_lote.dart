@@ -106,6 +106,15 @@ class FilaLote extends StatelessWidget {
       Expanded(
         flex: 10,
         child: CampoPrecio(
+          etiqueta: 'Costo',
+          controller: lote.costo,
+          unidad: unidad,
+          aBolivares: aBolivares,
+        ),
+      ),
+      Expanded(
+        flex: 10,
+        child: CampoPrecio(
           controller: lote.precio,
           unidad: unidad,
           aBolivares: aBolivares,

@@ -67,6 +67,15 @@ class ControladorExistencias extends ChangeNotifier {
     return resultado;
   }
 
+  Future<void> borrarProducto(String id) async {
+    await _repositorio.borrar(id);
+    _estado = ExistenciasCargadas([
+      for (final p in productos)
+        if (p.id != id) p,
+    ]);
+    notifyListeners();
+  }
+
   Future<void> renombrarProveedor(String anterior, String nuevo) async {
     await _repositorio.renombrarProveedor(anterior, nuevo);
     await cargar();
