@@ -6,6 +6,11 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/presentation/dialogo_entrada.dart';
+import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
+import 'package:inventario/features/incidencias/domain/incidencia.dart';
+import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
+import 'package:inventario/features/incidencias/presentation/aviso_incidencia.dart';
+import 'package:inventario/features/incidencias/presentation/dialogo_incidencia.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/presentation/barra_proveedores.dart';
@@ -20,6 +25,7 @@ class PantallaProveedores extends StatefulWidget {
     required this.controlador,
     required this.existencias,
     required this.entradas,
+    required this.incidencias,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -30,6 +36,7 @@ class PantallaProveedores extends StatefulWidget {
   /// Brands and products shown in the card come from the stock.
   final ControladorExistencias existencias;
   final ControladorEntradas entradas;
+  final ControladorIncidencias incidencias;
 
   @override
   State<PantallaProveedores> createState() => _PantallaProveedoresState();
@@ -72,7 +79,29 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
     ),
   );
 
+  void _registrarIncidencia() => unawaited(
+    mostrarDialogoIncidencia(
+      context,
+      incidencias: widget.incidencias,
+      existencias: widget.existencias,
+      proveedores: widget.controlador.nombres,
+      proveedorInicial: widget.controlador.elegido?.nombre ?? '',
+    ),
+  );
+
+  void _responder(Incidencia incidencia, RespuestaProveedor? respuesta) =>
+      unawaited(
+        responderIncidencia(
+          ScaffoldMessenger.of(context),
+          widget.incidencias,
+          incidencia,
+          respuesta,
+        ),
+      );
+
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    const SingleActivator(LogicalKeyboardKey.keyI, control: true):
+        _registrarIncidencia,
     const SingleActivator(LogicalKeyboardKey.escape): _volver,
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): _nuevo,
     const SingleActivator(LogicalKeyboardKey.keyE, control: true): _editar,
@@ -107,6 +136,7 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                       listenable: Listenable.merge([
                         widget.controlador,
                         widget.existencias,
+                        widget.incidencias,
                       ]),
                       builder: (context, _) {
                         final elegido = widget.controlador.elegido;
@@ -119,6 +149,8 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                               child: ListaProveedores(
                                 controlador: widget.controlador,
                                 focoBusqueda: _focoBusqueda,
+                                abiertasDe: (p) =>
+                                    widget.incidencias.abiertasDe(p.nombre),
                               ),
                             ),
                             Expanded(
@@ -130,6 +162,13 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                                           .suministros(elegido),
                                       onEditar: _editar,
                                       onRegistrarEntrada: _registrarEntrada,
+                                      incidencias: widget.incidencias.de(
+                                        elegido.nombre,
+                                      ),
+                                      hoy: widget.incidencias.hoy,
+                                      onRegistrarIncidencia:
+                                          _registrarIncidencia,
+                                      onResponder: _responder,
                                     ),
                             ),
                           ],

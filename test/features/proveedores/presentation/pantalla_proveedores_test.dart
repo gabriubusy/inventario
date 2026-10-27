@@ -4,6 +4,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/presentation/dialogo_entrada.dart';
+import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
+import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
+import 'package:inventario/features/incidencias/presentation/dialogo_incidencia.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
@@ -73,6 +76,10 @@ void main() {
           controlador: controlador,
           existencias: existencias,
           entradas: ControladorEntradas(existencias),
+          incidencias: ControladorIncidencias(
+            RepositorioIncidenciasEnMemoria(),
+            existencias,
+          ),
         ),
       ),
     );
@@ -198,5 +205,41 @@ void main() {
       find.widgetWithText(OpcionSeleccionable, 'Marca A'),
     );
     expect(elegida.elegida, isTrue);
+  });
+
+  testWidgets('Ctrl+I registers an incident shown in the card and list', (
+    tester,
+  ) async {
+    await mostrar(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowDown);
+    await tester.pump();
+    await conControl(tester, LogicalKeyboardKey.keyI);
+    expect(find.byType(DialogoIncidencia), findsOneWidget);
+
+    await tester.tap(
+      find.descendant(
+        of: find.byType(DialogoIncidencia),
+        matching: find.text('Queso blanco duro'),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Piezas afectadas'),
+      '1',
+    );
+    await tester.enterText(find.widgetWithText(TextFormField, 'Peso'), '0,8');
+    await tester.tap(find.widgetWithText(FilledButton, 'Registrar incidencia'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1 abierta'), findsOneWidget);
+    expect(enFicha('Llegó en mal estado'), findsOneWidget);
+    expect(enFicha('9 piezas · 7,4 kg'), findsOneWidget);
+
+    await tester.tap(enFicha('Llegó en mal estado'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Repuso'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 abierta'), findsNothing);
+    expect(enFicha('Repuso'), findsOneWidget);
   });
 }

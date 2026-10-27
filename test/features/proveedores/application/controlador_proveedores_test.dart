@@ -101,6 +101,22 @@ void main() {
     expect(controlador.suministros(renombrado), hasLength(1));
   });
 
+  test('renaming also tells other records that keep the name', () async {
+    final avisados = <(String, String)>[];
+    final conAviso = ControladorProveedores(
+      RepositorioProveedoresEnMemoria([distribuidora]),
+      existencias,
+      alRenombrar: [(anterior, nuevo) async => avisados.add((anterior, nuevo))],
+    );
+    addTearDown(conAviso.dispose);
+    await conAviso.cargar();
+    await conAviso.actualizar(
+      distribuidora,
+      const DatosProveedor(nombre: 'Distribuidora Uno'),
+    );
+    expect(avisados, [('Distribuidora 1', 'Distribuidora Uno')]);
+  });
+
   test('a repeated name changes nothing', () async {
     final resultado = await controlador.actualizar(
       distribuidora,

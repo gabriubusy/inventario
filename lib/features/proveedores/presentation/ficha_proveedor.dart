@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
+import 'package:inventario/features/incidencias/domain/incidencia.dart';
+import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
+import 'package:inventario/features/incidencias/presentation/seccion_incidencias.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
 import 'package:inventario/features/proveedores/domain/suministro.dart';
 import 'package:inventario/features/proveedores/presentation/dato_proveedor.dart';
@@ -13,12 +16,22 @@ class FichaProveedor extends StatelessWidget {
     required this.suministros,
     required this.onEditar,
     required this.onRegistrarEntrada,
+    required this.incidencias,
+    required this.hoy,
+    required this.onRegistrarIncidencia,
+    required this.onResponder,
   });
 
   final Proveedor proveedor;
   final List<Suministro> suministros;
   final VoidCallback onEditar;
   final VoidCallback onRegistrarEntrada;
+
+  /// This supplier's incidents, newest first.
+  final List<Incidencia> incidencias;
+  final DateTime hoy;
+  final VoidCallback onRegistrarIncidencia;
+  final void Function(Incidencia, RespuestaProveedor?) onResponder;
 
   @override
   Widget build(BuildContext context) {
@@ -59,24 +72,55 @@ class FichaProveedor extends StatelessWidget {
                     ],
                   ),
                 ),
-                OutlinedButton(
-                  onPressed: onEditar,
-                  child: Row(
+                // Buttons wrap to a second line before squeezing the name.
+                Flexible(
+                  child: Wrap(
+                    alignment: WrapAlignment.end,
                     spacing: espaciado.sm,
+                    runSpacing: espaciado.sm,
                     children: [
-                      const Text('Editar'),
-                      TeclaAtajo('Ctrl+E', color: colores.onSurfaceVariant),
-                    ],
-                  ),
-                ),
-                FilledButton(
-                  onPressed: onRegistrarEntrada,
-                  style: FilledButton.styleFrom(minimumSize: const Size(0, 40)),
-                  child: Row(
-                    spacing: espaciado.sm,
-                    children: [
-                      const Text('Registrar entrada'),
-                      TeclaAtajo('F2', color: colores.onPrimary),
+                      OutlinedButton(
+                        onPressed: onEditar,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: espaciado.sm,
+                          children: [
+                            const Text('Editar'),
+                            TeclaAtajo(
+                              'Ctrl+E',
+                              color: colores.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                      OutlinedButton(
+                        onPressed: onRegistrarIncidencia,
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: espaciado.sm,
+                          children: [
+                            const Text('Incidencia'),
+                            TeclaAtajo(
+                              'Ctrl+I',
+                              color: colores.onSurfaceVariant,
+                            ),
+                          ],
+                        ),
+                      ),
+                      FilledButton(
+                        onPressed: onRegistrarEntrada,
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 40),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          spacing: espaciado.sm,
+                          children: [
+                            const Text('Registrar entrada'),
+                            TeclaAtajo('F2', color: colores.onPrimary),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -105,6 +149,11 @@ class FichaProveedor extends StatelessWidget {
                   ),
                 ),
               ],
+            ),
+            SeccionIncidencias(
+              incidencias: incidencias,
+              hoy: hoy,
+              onResponder: onResponder,
             ),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,

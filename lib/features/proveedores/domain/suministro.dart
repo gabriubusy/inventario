@@ -7,8 +7,15 @@ import 'package:inventario/features/proveedores/domain/proveedor.dart';
 typedef Suministro = ({Producto producto, LoteMarca lote});
 
 /// What [proveedor] brings, found through the brand lots of each product.
-List<Suministro> suministrosDe(Proveedor proveedor, List<Producto> productos) {
-  final clave = normalizarParaBusqueda(proveedor.nombre);
+List<Suministro> suministrosDe(Proveedor proveedor, List<Producto> productos) =>
+    suministrosDelNombre(proveedor.nombre, productos);
+
+/// Same as [suministrosDe] for a supplier name typed in a form.
+List<Suministro> suministrosDelNombre(
+  String proveedor,
+  List<Producto> productos,
+) {
+  final clave = normalizarParaBusqueda(proveedor);
   return [
     for (final producto in productos)
       for (final lote in producto.lotes)

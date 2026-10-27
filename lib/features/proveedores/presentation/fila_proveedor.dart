@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:inventario/app/colores_estado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
 import 'package:inventario/features/proveedores/domain/suministro.dart';
@@ -10,6 +11,7 @@ class FilaProveedor extends StatelessWidget {
     required this.suministros,
     required this.elegido,
     required this.onElegir,
+    this.abiertas = 0,
   });
 
   static const _alto = 64.0;
@@ -18,6 +20,9 @@ class FilaProveedor extends StatelessWidget {
   final List<Suministro> suministros;
   final bool elegido;
   final VoidCallback onElegir;
+
+  /// Open incidents, flagged so they are chased up.
+  final int abiertas;
 
   String get _contacto => [
     proveedor.telefono,
@@ -88,11 +93,48 @@ class FilaProveedor extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Text(_resumen, style: tema.textTheme.bodySmall),
+                  // The badge sits under the summary so the name keeps its room.
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    spacing: espaciado.xs,
+                    children: [
+                      Text(_resumen, style: tema.textTheme.bodySmall),
+                      if (abiertas > 0) _Abiertas(abiertas),
+                    ],
+                  ),
                 ],
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _Abiertas extends StatelessWidget {
+  const _Abiertas(this.total);
+
+  final int total;
+
+  @override
+  Widget build(BuildContext context) {
+    final colores = context.coloresEstado;
+    final espaciado = context.espaciado;
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: colores.fondoBajo,
+        borderRadius: BorderRadius.circular(espaciado.xxl),
+      ),
+      child: Padding(
+        padding: EdgeInsets.symmetric(
+          horizontal: espaciado.sm,
+          vertical: espaciado.xs / 2,
+        ),
+        child: Text(
+          total == 1 ? '1 abierta' : '$total abiertas',
+          style: Theme.of(context).textTheme.labelSmall
+              ?.copyWith(color: colores.textoBajo, fontWeight: FontWeight.w600),
         ),
       ),
     );

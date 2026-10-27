@@ -10,6 +10,7 @@ class CampoProveedor extends StatelessWidget {
     required this.controller,
     required this.focusNode,
     required this.sugerencias,
+    this.autofocus = false,
   });
 
   static const _altoLista = 220.0;
@@ -18,10 +19,12 @@ class CampoProveedor extends StatelessWidget {
   final TextEditingController controller;
   final FocusNode focusNode;
   final List<String> sugerencias;
+  final bool autofocus;
 
+  /// Every saved supplier while empty, so the field works as a picker.
   Iterable<String> _opciones(TextEditingValue valor) {
     final buscado = normalizarParaBusqueda(valor.text);
-    if (buscado.isEmpty) return const [];
+    if (buscado.isEmpty) return sugerencias;
     return sugerencias.where((nombre) {
       final clave = normalizarParaBusqueda(nombre);
       return clave.contains(buscado) && clave != buscado;
@@ -38,9 +41,21 @@ class CampoProveedor extends StatelessWidget {
           TextFormField(
             controller: controller,
             focusNode: focusNode,
+            autofocus: autofocus,
             textCapitalization: TextCapitalization.words,
             textInputAction: TextInputAction.next,
-            decoration: const InputDecoration(labelText: 'Proveedor'),
+            decoration: InputDecoration(
+              labelText: 'Proveedor',
+              suffixIcon: sugerencias.isEmpty
+                  ? null
+                  : ExcludeFocus(
+                      child: IconButton(
+                        tooltip: 'Ver proveedores',
+                        icon: const Icon(Icons.arrow_drop_down),
+                        onPressed: focusNode.requestFocus,
+                      ),
+                    ),
+            ),
             // Enter takes the highlighted suggestion before moving on.
             onFieldSubmitted: (_) => alEnviar(),
           ),

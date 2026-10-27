@@ -8,13 +8,25 @@ import 'package:inventario/features/proveedores/domain/repositorio_proveedores.d
 import 'package:inventario/features/proveedores/domain/resultado_guardar_proveedor.dart';
 import 'package:inventario/features/proveedores/domain/suministro.dart';
 
+typedef RenombrarProveedor = Future<void> Function(
+  String anterior,
+  String nuevo,
+);
+
 /// Suppliers list, search and selection. Brands and products come from
 /// the stock, so screens should also listen to [ControladorExistencias].
 class ControladorProveedores extends ChangeNotifier {
-  ControladorProveedores(this._repositorio, this._existencias);
+  ControladorProveedores(
+    this._repositorio,
+    this._existencias, {
+    this._alRenombrar = const [],
+  });
 
   final RepositorioProveedores _repositorio;
   final ControladorExistencias _existencias;
+
+  /// Other records that store the supplier by name, like incidents.
+  final List<RenombrarProveedor> _alRenombrar;
   EstadoProveedores _estado = const CargandoProveedores();
   String _busqueda = '';
   String? _elegidoId;
@@ -113,6 +125,9 @@ class ControladorProveedores extends ChangeNotifier {
           anterior.nombre,
           proveedor.nombre,
         );
+        for (final renombrar in _alRenombrar) {
+          await renombrar(anterior.nombre, proveedor.nombre);
+        }
       }
     }
     return resultado;

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
+import 'package:inventario/features/proveedores/domain/proveedor.dart';
 import 'package:inventario/features/proveedores/presentation/fila_proveedor.dart';
 
 class ListaProveedores extends StatelessWidget {
@@ -8,10 +9,14 @@ class ListaProveedores extends StatelessWidget {
     super.key,
     required this.controlador,
     required this.focoBusqueda,
+    required this.abiertasDe,
   });
 
   final ControladorProveedores controlador;
   final FocusNode focoBusqueda;
+
+  /// Open incidents of a supplier, flagged on its row.
+  final int Function(Proveedor) abiertasDe;
 
   @override
   Widget build(BuildContext context) {
@@ -45,6 +50,7 @@ class ListaProveedores extends StatelessWidget {
                         proveedor: proveedor,
                         suministros: controlador.suministros(proveedor),
                         elegido: proveedor == elegido,
+                        abiertas: abiertasDe(proveedor),
                         onElegir: () => controlador.elegir(proveedor.id),
                       );
                     },
