@@ -1,7 +1,10 @@
 import 'package:drift/drift.dart';
 import 'package:flutter/foundation.dart';
 import 'package:inventario/core/medio_pago.dart';
+import 'package:inventario/features/caja/data/tabla_cajas.dart';
 import 'package:inventario/features/compras/data/tabla_compras.dart';
+import 'package:inventario/features/gastos/data/tabla_gastos.dart';
+import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
 import 'package:inventario/features/incidencias/data/tabla_incidencias.dart';
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
 import 'package:inventario/features/incidencias/domain/tipo_incidencia.dart';
@@ -30,13 +33,15 @@ part 'base_datos.g.dart';
     Pagos,
     Ventas,
     PagosVenta,
+    Cajas,
+    Gastos,
   ],
 )
 class BaseDatos extends _$BaseDatos {
   BaseDatos(super.ejecutor);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -53,6 +58,11 @@ class BaseDatos extends _$BaseDatos {
         await m.createTable(ventas);
         await m.createTable(pagosVenta);
         await m.addColumn(movimientos, movimientos.ventaId);
+      }
+      // 4: the till and the business's expenses and other income.
+      if (desde < 4) {
+        await m.createTable(cajas);
+        await m.createTable(gastos);
       }
     },
     beforeOpen: (_) async {

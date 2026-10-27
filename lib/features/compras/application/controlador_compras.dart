@@ -54,6 +54,9 @@ class ControladorCompras extends ChangeNotifier {
   /// Newest first.
   List<Compra> get compras => _compras;
 
+  /// Every payment made to suppliers.
+  List<Pago> get pagos => _pagos;
+
   /// Every invoice on credit with its payments, the soonest due first.
   List<CuentaPorPagar> get cuentas => [
     for (final compra in _compras)
