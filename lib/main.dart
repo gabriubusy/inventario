@@ -10,10 +10,14 @@ import 'package:inventario/features/autenticacion/application/controlador_sesion
 import 'package:inventario/features/autenticacion/data/almacen_sesion_preferencias.dart';
 import 'package:inventario/features/autenticacion/data/cuentas_de_desarrollo.dart';
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_preferencias.dart';
+import 'package:inventario/features/caja/application/controlador_caja.dart';
+import 'package:inventario/features/caja/data/repositorio_cajas_drift.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_drift.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
+import 'package:inventario/features/gastos/application/controlador_gastos.dart';
+import 'package:inventario/features/gastos/data/repositorio_gastos_drift.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_drift.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
@@ -76,6 +80,18 @@ Future<void> main() async {
     transacciones: transacciones,
     tasaDeHoy: () => controladorTasa.tasaDeHoy,
   );
+  final controladorGastos = ControladorGastos(
+    RepositorioGastosDrift(baseDatos),
+    tasaDeHoy: () => controladorTasa.tasaDeHoy,
+  );
+  final controladorCaja = ControladorCaja(
+    RepositorioCajasDrift(baseDatos),
+    ventas,
+    movimientos: controladorMovimientos,
+    compras: controladorCompras,
+    gastos: controladorGastos,
+    tasaDeHoy: () => controladorTasa.tasaDeHoy,
+  );
   final controladorProveedores = ControladorProveedores(
     proveedores,
     controladorExistencias,
@@ -95,6 +111,8 @@ Future<void> main() async {
   unawaited(controladorIncidencias.cargar());
   unawaited(controladorMovimientos.cargar());
   unawaited(controladorCompras.cargar());
+  unawaited(controladorGastos.cargar());
+  unawaited(controladorCaja.cargar());
   // Today's BCV rate is fetched once, after reading the saved one.
   unawaited(
     controladorTasa.cargar().then(
@@ -117,6 +135,8 @@ Future<void> main() async {
       controladorIncidencias: controladorIncidencias,
       controladorMovimientos: controladorMovimientos,
       controladorCompras: controladorCompras,
+      controladorGastos: controladorGastos,
+      controladorCaja: controladorCaja,
       controladorAjustes: ControladorAjustes(
         controladorExistencias,
         movimientos: controladorMovimientos,

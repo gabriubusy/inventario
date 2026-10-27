@@ -7,6 +7,8 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/caja/application/controlador_caja.dart';
+import 'package:inventario/features/caja/presentation/pantalla_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/compras/presentation/pantalla_cuentas.dart';
@@ -14,6 +16,8 @@ import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/presentation/aviso_entrada.dart';
+import 'package:inventario/features/gastos/application/controlador_gastos.dart';
+import 'package:inventario/features/gastos/presentation/dialogo_gasto.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/presentation/dialogo_incidencia.dart';
 import 'package:inventario/features/incidencias/presentation/pantalla_incidencias.dart';
@@ -32,6 +36,9 @@ import 'package:inventario/features/productos/presentation/grilla_productos.dart
 import 'package:inventario/features/productos/presentation/pantalla_productos.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/presentation/pantalla_proveedores.dart';
+import 'package:inventario/features/reportes/data/exportador_archivos.dart';
+import 'package:inventario/features/reportes/domain/exportador_reportes.dart';
+import 'package:inventario/features/reportes/presentation/pantalla_reportes.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/presentation/aviso_salida.dart';
@@ -53,6 +60,9 @@ class PantallaInicio extends StatefulWidget {
     required this.incidencias,
     required this.movimientos,
     required this.compras,
+    required this.gastos,
+    required this.caja,
+    this.exportador = const ExportadorArchivos(),
     required this.ajustes,
     required this.conteo,
     required this.devoluciones,
@@ -72,6 +82,9 @@ class PantallaInicio extends StatefulWidget {
   final ControladorIncidencias incidencias;
   final ControladorMovimientos movimientos;
   final ControladorCompras compras;
+  final ControladorGastos gastos;
+  final ControladorCaja caja;
+  final ExportadorReportes exportador;
   final ControladorAjustes ajustes;
   final ControladorConteo conteo;
   final ControladorDevoluciones devoluciones;
@@ -142,6 +155,31 @@ class _PantallaInicioState extends State<PantallaInicio> {
       aBolivares: widget.tasa.aBolivares,
     ),
   );
+
+  void _abrirCaja() => unawaited(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PantallaCaja(caja: widget.caja, gastos: widget.gastos),
+      ),
+    ),
+  );
+
+  void _abrirReportes() => unawaited(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PantallaReportes(
+          movimientos: widget.movimientos,
+          existencias: widget.controlador,
+          compras: widget.compras,
+          gastos: widget.gastos,
+          exportador: widget.exportador,
+        ),
+      ),
+    ),
+  );
+
+  void _registrarGasto() =>
+      unawaited(mostrarDialogoGasto(context, gastos: widget.gastos));
 
   void _abrirCuentas() => unawaited(
     Navigator.of(context).push(
@@ -294,6 +332,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
     const SingleActivator(LogicalKeyboardKey.f8): _abrirKardex,
     const SingleActivator(LogicalKeyboardKey.f9): _abrirConteo,
     const SingleActivator(LogicalKeyboardKey.f10): _abrirCuentas,
+    const SingleActivator(LogicalKeyboardKey.f11): _abrirCaja,
+    const SingleActivator(LogicalKeyboardKey.f12): _abrirReportes,
+    const SingleActivator(LogicalKeyboardKey.keyG, control: true):
+        _registrarGasto,
     const SingleActivator(LogicalKeyboardKey.keyL, control: true, shift: true):
         widget.onCambiarPin,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true):
@@ -321,6 +363,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 onKardex: _abrirKardex,
                 onConteo: _abrirConteo,
                 onCuentas: _abrirCuentas,
+                onCaja: _abrirCaja,
+                onReportes: _abrirReportes,
                 onBloquear: widget.onBloquear,
                 onCambiarPin: widget.onCambiarPin,
               ),

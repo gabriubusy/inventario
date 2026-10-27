@@ -8,10 +8,14 @@ import 'package:inventario/features/autenticacion/data/almacen_sesion_en_memoria
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_en_memoria.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/domain/usuario.dart';
+import 'package:inventario/features/caja/application/controlador_caja.dart';
+import 'package:inventario/features/caja/data/repositorio_cajas_en_memoria.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
+import 'package:inventario/features/gastos/application/controlador_gastos.dart';
+import 'package:inventario/features/gastos/data/repositorio_gastos_en_memoria.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
@@ -25,6 +29,7 @@ import 'package:inventario/features/proveedores/application/controlador_proveedo
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
+import 'package:inventario/features/salidas/data/repositorio_ventas_en_memoria.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
 
@@ -75,6 +80,11 @@ void main() {
         controladorCompras: ControladorCompras(
           RepositorioComprasEnMemoria(),
           existencias,
+        ),
+        controladorGastos: ControladorGastos(RepositorioGastosEnMemoria()),
+        controladorCaja: ControladorCaja(
+          RepositorioCajasEnMemoria(),
+          RepositorioVentasEnMemoria(),
         ),
         controladorAjustes: ControladorAjustes(existencias),
         controladorConteo: ControladorConteo(existencias),

@@ -4,12 +4,16 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/caja/application/controlador_caja.dart';
+import 'package:inventario/features/caja/data/repositorio_cajas_en_memoria.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/domain/entrada.dart';
+import 'package:inventario/features/gastos/application/controlador_gastos.dart';
+import 'package:inventario/features/gastos/data/repositorio_gastos_en_memoria.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
 import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
@@ -34,6 +38,7 @@ import 'package:inventario/features/proveedores/domain/proveedor.dart';
 import 'package:inventario/features/proveedores/presentation/pantalla_proveedores.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
+import 'package:inventario/features/salidas/data/repositorio_ventas_en_memoria.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
@@ -138,6 +143,11 @@ void main() {
           compras: ControladorCompras(
             RepositorioComprasEnMemoria(),
             controlador,
+          ),
+          gastos: ControladorGastos(RepositorioGastosEnMemoria()),
+          caja: ControladorCaja(
+            RepositorioCajasEnMemoria(),
+            RepositorioVentasEnMemoria(),
           ),
           ajustes: ControladorAjustes(controlador, movimientos: movimientos),
           conteo: ControladorConteo(controlador, movimientos: movimientos),

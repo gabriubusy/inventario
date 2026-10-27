@@ -6,9 +6,11 @@ import 'package:inventario/features/autenticacion/application/controlador_sesion
 import 'package:inventario/features/autenticacion/application/estado_sesion.dart';
 import 'package:inventario/features/autenticacion/presentation/dialogo_cambiar_pin.dart';
 import 'package:inventario/features/autenticacion/presentation/pantalla_inicio_sesion.dart';
+import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
+import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
@@ -32,6 +34,8 @@ class PuertaSesion extends StatelessWidget {
     required this.controladorIncidencias,
     required this.controladorMovimientos,
     required this.controladorCompras,
+    required this.controladorGastos,
+    required this.controladorCaja,
     required this.controladorAjustes,
     required this.controladorConteo,
     required this.controladorDevoluciones,
@@ -48,6 +52,8 @@ class PuertaSesion extends StatelessWidget {
   final ControladorIncidencias controladorIncidencias;
   final ControladorMovimientos controladorMovimientos;
   final ControladorCompras controladorCompras;
+  final ControladorGastos controladorGastos;
+  final ControladorCaja controladorCaja;
   final ControladorAjustes controladorAjustes;
   final ControladorConteo controladorConteo;
   final ControladorDevoluciones controladorDevoluciones;
@@ -68,6 +74,8 @@ class PuertaSesion extends StatelessWidget {
           incidencias: controladorIncidencias,
           movimientos: controladorMovimientos,
           compras: controladorCompras,
+          gastos: controladorGastos,
+          caja: controladorCaja,
           ajustes: controladorAjustes,
           conteo: controladorConteo,
           devoluciones: controladorDevoluciones,
