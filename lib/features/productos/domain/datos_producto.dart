@@ -2,6 +2,7 @@ import 'package:inventario/core/listas.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
+import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 
 /// What the user fills in to create or edit a product; already validated.
@@ -12,6 +13,7 @@ class DatosProducto {
     required this.forma,
     required this.minimo,
     this.lotes = const [],
+    this.presentaciones = const [],
     this.imagenId,
   });
 
@@ -23,6 +25,7 @@ class DatosProducto {
         forma: producto.forma,
         minimo: producto.minimo,
         lotes: producto.lotes,
+        presentaciones: producto.presentaciones,
         imagenId: producto.imagenId,
       );
 
@@ -36,6 +39,8 @@ class DatosProducto {
   /// Stock in the shop, one entry per brand and supplier.
   final List<LoteMarca> lotes;
 
+  final List<Presentacion> presentaciones;
+
   final String? imagenId;
 
   @override
@@ -46,7 +51,8 @@ class DatosProducto {
       other.forma == forma &&
       other.minimo == minimo &&
       other.imagenId == imagenId &&
-      listasIguales(other.lotes, lotes);
+      listasIguales(other.lotes, lotes) &&
+      listasIguales(other.presentaciones, presentaciones);
 
   @override
   int get hashCode => Object.hash(
@@ -56,5 +62,6 @@ class DatosProducto {
     minimo,
     imagenId,
     Object.hashAll(lotes),
+    Object.hashAll(presentaciones),
   );
 }

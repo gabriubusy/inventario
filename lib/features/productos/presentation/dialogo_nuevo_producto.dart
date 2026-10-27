@@ -27,12 +27,39 @@ Future<void> mostrarDialogoNuevoProducto(
   ),
 );
 
-/// Quick product creation; Ctrl+Enter keeps it open for the next one.
+/// Opens the same window filled with [producto]; it closes on save and
+/// [alEditar] gets the product before and after, for undo.
+Future<void> mostrarDialogoEditarProducto(
+  BuildContext context,
+  ControladorExistencias controlador, {
+  required Producto producto,
+  required GestorFotos fotos,
+  required void Function(Producto anterior, Producto guardado) alEditar,
+  List<String> proveedores = const [],
+  int? Function(int dolares)? aBolivares,
+  ElegirImagen elegirImagen = elegirImagenDelEquipo,
+}) => showDialog<void>(
+  context: context,
+  builder: (_) => DialogoNuevoProducto(
+    controlador: controlador,
+    fotos: fotos,
+    producto: producto,
+    alEditar: alEditar,
+    proveedores: proveedores,
+    aBolivares: aBolivares,
+    elegirImagen: elegirImagen,
+  ),
+);
+
+/// The product window: empty creates (Ctrl+Enter keeps it open for the
+/// next one), with [producto] it edits.
 class DialogoNuevoProducto extends StatelessWidget {
   const DialogoNuevoProducto({
     super.key,
     required this.controlador,
     required this.fotos,
+    this.producto,
+    this.alEditar,
     this.proveedores = const [],
     this.aBolivares,
     this.nombreInicial = '',
@@ -43,16 +70,31 @@ class DialogoNuevoProducto extends StatelessWidget {
 
   final ControladorExistencias controlador;
   final GestorFotos fotos;
+
+  /// Null to create a new product.
+  final Producto? producto;
+  final void Function(Producto anterior, Producto guardado)? alEditar;
+
   final List<String> proveedores;
   final int? Function(int dolares)? aBolivares;
   final String nombreInicial;
   final ElegirImagen elegirImagen;
 
-  void _creado(BuildContext context, Producto producto, {required bool otro}) {
+  void _guardado(
+    BuildContext context,
+    Producto guardado, {
+    required bool otro,
+  }) {
+    final anterior = producto;
+    if (anterior != null) {
+      Navigator.of(context).pop();
+      alEditar?.call(anterior, guardado);
+      return;
+    }
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
-        SnackBar(content: Text('Producto creado · ${producto.nombre}')),
+        SnackBar(content: Text('Producto creado · ${guardado.nombre}')),
       );
     if (!otro) Navigator.of(context).pop();
   }
@@ -71,16 +113,19 @@ class DialogoNuevoProducto extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             spacing: espaciado.lg,
             children: [
-              const EncabezadoDialogo(titulo: 'Nuevo producto'),
+              EncabezadoDialogo(
+                titulo: producto == null ? 'Nuevo producto' : 'Editar producto',
+              ),
               FormularioProducto(
                 controlador: controlador,
                 fotos: fotos,
+                producto: producto,
                 proveedores: proveedores,
                 aBolivares: aBolivares,
                 nombreInicial: nombreInicial,
                 elegirImagen: elegirImagen,
-                alGuardar: (producto, {required otro}) =>
-                    _creado(context, producto, otro: otro),
+                alGuardar: (guardado, {required otro}) =>
+                    _guardado(context, guardado, otro: otro),
               ),
             ],
           ),

@@ -1,9 +1,11 @@
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/core/unidad.dart';
+import 'package:inventario/features/productos/domain/desglose_stock.dart';
 import 'package:inventario/features/productos/domain/estado_stock.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
+import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 
 String textoPiezas(int piezas) =>
@@ -13,6 +15,32 @@ String textoPiezas(int piezas) =>
 String textoPrincipal(Producto producto) => producto.forma.cuentaPiezas
     ? textoPiezas(producto.piezas)
     : producto.forma.unidad.formatear(producto.cantidad);
+
+/// "(1 saco + 11,5 kg)" next to the total; null when no pack fits.
+String? textoDesglose(Producto producto) {
+  final desglose = desglosarStock(producto);
+  if (desglose == null) return null;
+  final paquetes = textoPaquetes(desglose.presentacion, desglose.paquetes);
+  if (desglose.resto == 0) return '($paquetes)';
+  return '($paquetes + ${producto.forma.unidad.formatear(desglose.resto)})';
+}
+
+/// The total with its breakdown: "26,5 kg (1 saco + 11,5 kg)".
+String textoStock(Producto producto) {
+  final desglose = textoDesglose(producto);
+  final total = textoPrincipal(producto);
+  return desglose == null ? total : '$total $desglose';
+}
+
+/// "1 saco", "3 sacos", "2 cajas", formatted like any other quantity.
+String textoPaquetes(Presentacion presentacion, int paquetes) {
+  final nombre = presentacion.nombre.trim().toLowerCase();
+  final plural = RegExp('[aeiouáéíóú]\$').hasMatch(nombre)
+      ? '${nombre}s'
+      : '${nombre}es';
+  return '${formatDecimal(paquetes, decimales: 0)} '
+      '${paquetes == 1 ? nombre : plural}';
+}
 
 /// Total weight and average per piece; null for products without pieces.
 String? textoPeso(Producto producto) {

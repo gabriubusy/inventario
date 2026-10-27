@@ -8,6 +8,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
+import 'package:inventario/features/productos/domain/buscar_por_codigo.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
@@ -19,8 +20,11 @@ import 'package:inventario/features/productos/presentation/elegir_imagen.dart';
 import 'package:inventario/features/productos/presentation/fila_minimo.dart';
 import 'package:inventario/features/productos/presentation/foto_editable.dart';
 import 'package:inventario/features/productos/presentation/lote_editable.dart';
+import 'package:inventario/features/productos/presentation/presentaciones_editables.dart';
 import 'package:inventario/features/productos/presentation/seccion_lotes.dart';
+import 'package:inventario/features/productos/presentation/seccion_presentaciones.dart';
 import 'package:inventario/features/productos/presentation/selector_forma_conteo.dart';
+import 'package:inventario/features/productos/presentation/textos_producto.dart';
 
 const _teclasNumero = [
   LogicalKeyboardKey.digit1,
@@ -37,7 +41,7 @@ typedef AlGuardarProducto = void Function(
   required bool otro,
 });
 
-/// The product form, shared by the new-product window and the edit panel.
+/// The product form, shared by the new-product and edit windows.
 class FormularioProducto extends StatefulWidget {
   const FormularioProducto({
     super.key,
@@ -70,7 +74,7 @@ class FormularioProducto extends StatefulWidget {
 
   final ElegirImagen elegirImagen;
 
-  /// Lets the edit panel's screen jump to the name with Enter.
+  /// Optional focus for the name field, for callers that move to it.
   final FocusNode? focoNombre;
 
   @override
@@ -90,6 +94,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     inicial: widget.producto?.imagenId,
   );
   late final List<LoteEditable> _lotes = _lotesIniciales();
+  late final _presentaciones = PresentacionesEditables.desde(widget.producto);
   late var _categoria = widget.producto?.categoria ?? Categoria.carnes;
   late var _forma = widget.producto?.forma ?? FormaConteo.porKilo;
   FocusNode? _focoPropio;
@@ -130,6 +135,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     _nombre.dispose();
     _minimo.dispose();
     _foto.dispose();
+    _presentaciones.dispose();
     _focoPropio?.dispose();
     for (final lote in _lotes) {
       lote.dispose();
@@ -181,6 +187,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     setState(() => _lotes.removeRange(1, _lotes.length));
     _desecharDespues(sobrantes);
     _lotes.first.limpiar();
+    _presentaciones.limpiar();
     _foto.quitar();
     _formulario.currentState?.reset();
     _focoNombre.requestFocus();
@@ -196,7 +203,21 @@ class _FormularioProductoState extends State<FormularioProducto> {
       for (final lote in _lotes)
         if (!lote.vacio) lote.leer(_forma),
     ],
+    // Pieces have a weight of their own, so they never come in packs.
+    presentaciones: _forma.cuentaPiezas
+        ? const []
+        : _presentaciones.leer(_forma),
   );
+
+  bool _codigoOcupado(String codigo) => codigoEnUso(
+    widget.controlador.productos,
+    codigo,
+    exceptoProductoId: widget.producto?.id,
+  );
+
+  void _agregarPresentacion() {
+    if (!_forma.cuentaPiezas) _presentaciones.agregar();
+  }
 
   Future<void> _guardar({required bool otro}) async {
     if (_guardando || _foto.cargando) return;
@@ -238,6 +259,8 @@ class _FormularioProductoState extends State<FormularioProducto> {
           SingleActivator(teclasFormaConteo[i].$1, alt: true): () =>
               setState(() => _forma = forma),
     const SingleActivator(LogicalKeyboardKey.keyM, control: true): _agregarLote,
+    const SingleActivator(LogicalKeyboardKey.keyP, control: true):
+        _agregarPresentacion,
     const SingleActivator(LogicalKeyboardKey.keyF, alt: true): () =>
         unawaited(_foto.elegir()),
     const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
@@ -289,6 +312,16 @@ class _FormularioProductoState extends State<FormularioProducto> {
               onAgregar: _agregarLote,
               onQuitar: _quitarLote,
             ),
+            if (!_forma.cuentaPiezas)
+              SeccionPresentaciones(
+                presentaciones: _presentaciones,
+                forma: _forma,
+                codigoOcupado: _codigoOcupado,
+                existencias: switch (widget.producto) {
+                  final producto? => textoStock(producto),
+                  null => null,
+                },
+              ),
             FilaMinimo(
               controller: _minimo,
               forma: _forma,
@@ -307,9 +340,10 @@ class _FormularioProductoState extends State<FormularioProducto> {
             Text(
               _editando
                   ? 'Alt+1–4 categoría · Alt+F foto · Ctrl+M otra marca · '
-                        'Ctrl+S guarda'
+                        'Ctrl+P otra presentación · Ctrl+S guarda'
                   : 'Alt+1–4 categoría · Alt+Q W E R cómo se cuenta · '
-                        'Alt+F foto · Ctrl+M otra marca · Esc cierra',
+                        'Alt+F foto · Ctrl+M otra marca · '
+                        'Ctrl+P otra presentación · Esc cierra',
               textAlign: TextAlign.center,
               style: tema.textTheme.bodySmall?.copyWith(
                 color: tema.colorScheme.onSurfaceVariant,

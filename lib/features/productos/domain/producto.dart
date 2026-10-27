@@ -3,6 +3,7 @@ import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/estado_stock.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
+import 'package:inventario/features/productos/domain/presentacion.dart';
 
 typedef RangoPrecio = ({int minimo, int maximo});
 
@@ -14,6 +15,7 @@ class Producto {
     required this.forma,
     required this.minimo,
     this.lotes = const [],
+    this.presentaciones = const [],
     this.imagenId,
   });
 
@@ -25,6 +27,9 @@ class Producto {
   /// Compared with [medida]: pieces, or the quantity in [FormaConteo.unidad].
   final int minimo;
   final List<LoteMarca> lotes;
+
+  /// Fixed packs with their own code and price; empty for pieces products.
+  final List<Presentacion> presentaciones;
 
   /// Photo in the image store; null when the product has none.
   final String? imagenId;
@@ -42,9 +47,21 @@ class Producto {
   /// The way of counting can't change while there is stock measured with it.
   bool get tieneExistencias => lotes.any((lote) => lote.tieneExistencia);
 
-  /// Cheapest and dearest brand price; null when no brand has one.
+  /// The pack offered first when selling: the marked one, else the first.
+  Presentacion? get presentacionPredeterminada {
+    if (presentaciones.isEmpty) return null;
+    return presentaciones.firstWhere(
+      (p) => p.predeterminada,
+      orElse: () => presentaciones.first,
+    );
+  }
+
+  /// Cheapest and dearest price, from the packs if there are any, else
+  /// from the brands; null when nothing has a price.
   RangoPrecio? get rangoPrecio {
-    final precios = [for (final lote in lotes) ?lote.precio];
+    final precios = presentaciones.isNotEmpty
+        ? [for (final p in presentaciones) p.precio]
+        : [for (final lote in lotes) ?lote.precio];
     if (precios.isEmpty) return null;
     return (
       minimo: precios.reduce((a, b) => a < b ? a : b),
@@ -66,6 +83,7 @@ class Producto {
     FormaConteo? forma,
     int? minimo,
     List<LoteMarca>? lotes,
+    List<Presentacion>? presentaciones,
     String? imagenId,
   }) {
     return Producto(
@@ -75,6 +93,7 @@ class Producto {
       forma: forma ?? this.forma,
       minimo: minimo ?? this.minimo,
       lotes: lotes ?? this.lotes,
+      presentaciones: presentaciones ?? this.presentaciones,
       imagenId: imagenId ?? this.imagenId,
     );
   }
@@ -88,7 +107,8 @@ class Producto {
       other.forma == forma &&
       other.minimo == minimo &&
       other.imagenId == imagenId &&
-      listasIguales(other.lotes, lotes);
+      listasIguales(other.lotes, lotes) &&
+      listasIguales(other.presentaciones, presentaciones);
 
   @override
   int get hashCode => Object.hash(
@@ -99,5 +119,6 @@ class Producto {
     minimo,
     imagenId,
     Object.hashAll(lotes),
+    Object.hashAll(presentaciones),
   );
 }

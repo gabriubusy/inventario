@@ -23,7 +23,7 @@ class ProductoElegido extends StatelessWidget {
         : '';
     return '${producto.categoria.etiqueta} · '
         '${producto.forma.etiqueta.toLowerCase()} · '
-        'hay ${textoPrincipal(producto)}$abiertas$peso';
+        'hay ${textoStock(producto)}$abiertas$peso';
   }
 
   @override

@@ -50,6 +50,7 @@ class RepositorioProductosEnMemoria implements RepositorioProductos {
     forma: datos.forma,
     minimo: datos.minimo,
     lotes: List.unmodifiable(datos.lotes),
+    presentaciones: List.unmodifiable(datos.presentaciones),
     imagenId: datos.imagenId,
   );
 

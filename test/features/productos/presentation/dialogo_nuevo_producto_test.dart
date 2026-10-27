@@ -371,6 +371,19 @@ void main() {
       expect(find.widgetWithText(ListTile, 'Avícola 1'), findsNothing);
     });
 
+    testWidgets('an empty field lists every saved supplier to pick one', (
+      tester,
+    ) async {
+      await abrir(tester, proveedores: guardados);
+      await tester.tap(find.byTooltip('Ver proveedores'));
+      await tester.pumpAndSettle();
+      expect(find.byType(ListTile), findsNWidgets(3));
+      await tester.tap(find.widgetWithText(ListTile, 'Distribuidora 2'));
+      await tester.pump();
+      final proveedor = tester.widget<TextFormField>(campo('Proveedor'));
+      expect(proveedor.controller?.text, 'Distribuidora 2');
+    });
+
     testWidgets('a click fills in the exact saved name', (tester) async {
       await abrir(tester, proveedores: guardados);
       await tester.enterText(campo('Proveedor'), 'avicola');
