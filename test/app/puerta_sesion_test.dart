@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/app.dart';
+import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
 import 'package:inventario/features/autenticacion/data/almacen_sesion_en_memoria.dart';
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_en_memoria.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/domain/usuario.dart';
+import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
@@ -19,6 +21,7 @@ import 'package:inventario/features/productos/data/almacen_imagenes_en_memoria.d
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
+import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
@@ -66,6 +69,12 @@ void main() {
         ),
         controladorMovimientos: ControladorMovimientos(
           RepositorioMovimientosEnMemoria(),
+        ),
+        controladorAjustes: ControladorAjustes(existencias),
+        controladorConteo: ControladorConteo(existencias),
+        controladorDevoluciones: ControladorDevoluciones(
+          existencias,
+          ControladorMovimientos(RepositorioMovimientosEnMemoria()),
         ),
         controladorListaProductos: ControladorListaProductos(existencias),
         controladorTasa: ControladorTasa(AlmacenTasaEnMemoria()),

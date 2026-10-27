@@ -2,11 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
+import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
+import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/conteo/application/controlador_conteo.dart';
+import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/domain/entrada.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
 import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
+import 'package:inventario/features/kardex/presentation/pantalla_kardex.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
@@ -25,12 +30,14 @@ import 'package:inventario/features/proveedores/application/controlador_proveedo
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
 import 'package:inventario/features/proveedores/presentation/pantalla_proveedores.dart';
+import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
 import 'package:inventario/features/tasa/domain/fuente_tasa.dart';
+import 'package:inventario/features/tasa/presentation/dialogo_tasa.dart';
 
 class _FuenteFija implements FuenteTasa {
   const _FuenteFija(this._respuesta);
@@ -126,6 +133,9 @@ void main() {
             controlador,
           ),
           movimientos: movimientos,
+          ajustes: ControladorAjustes(controlador, movimientos: movimientos),
+          conteo: ControladorConteo(controlador, movimientos: movimientos),
+          devoluciones: ControladorDevoluciones(controlador, movimientos),
           listaProductos: ControladorListaProductos(controlador),
           tasa: tasa,
           fotos: GestorFotos(AlmacenImagenesEnMemoria()),
@@ -237,17 +247,57 @@ void main() {
   });
 
   testWidgets('F1 opens the sale window', (tester) async {
+    await tester.runAsync(() => tasa.guardar(88730));
     await mostrar(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.f1);
     await tester.pumpAndSettle();
     expect(find.byType(DialogoSalida), findsOneWidget);
   });
 
-  testWidgets('F3 is not built yet and says so', (tester) async {
+  testWidgets('entering without today\'s rate asks for it once', (
+    tester,
+  ) async {
+    await tester.runAsync(tasa.cargar);
+    await mostrar(tester);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoTasa), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoTasa), findsNothing);
+  });
+
+  testWidgets('F1 without today\'s rate asks for it before selling', (
+    tester,
+  ) async {
+    await mostrar(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f1);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoTasa), findsOneWidget);
+    expect(find.byType(DialogoSalida), findsNothing);
+  });
+
+  testWidgets('F3 opens the merma window', (tester) async {
     await mostrar(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.f3);
-    await tester.pump();
-    expect(find.text('Próximamente: Registrar merma'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoAjuste), findsOneWidget);
+  });
+
+  testWidgets('F9 opens the physical count and Esc comes back', (tester) async {
+    await mostrar(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f9);
+    await tester.pumpAndSettle();
+    expect(find.byType(PantallaConteo), findsOneWidget);
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(PantallaConteo), findsNothing);
+  });
+
+  testWidgets('F8 opens the kardex on the product search', (tester) async {
+    await mostrar(tester);
+    await tester.sendKeyEvent(LogicalKeyboardKey.f8);
+    await tester.pumpAndSettle();
+    expect(find.byType(PantallaKardex), findsOneWidget);
   });
 
   testWidgets('Ctrl+Z undoes the last sale, not an older entry', (
@@ -288,7 +338,7 @@ void main() {
   testWidgets('a wide window shows the header links side by side', (
     tester,
   ) async {
-    await mostrar(tester, ventana: const Size(1600, 900));
+    await mostrar(tester, ventana: const Size(1900, 900));
     expect(find.text('Menú'), findsNothing);
     expect(find.text('Cambiar PIN'), findsOneWidget);
   });
@@ -407,8 +457,8 @@ void main() {
     await mostrar(tester);
     await tester.enterText(find.byType(TextField), 'jam');
     await tester.sendKeyEvent(LogicalKeyboardKey.f3);
-    await tester.pump();
-    expect(find.text('Próximamente: Registrar merma'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoAjuste), findsOneWidget);
   });
 
   testWidgets('a product created from home appears in the grid', (

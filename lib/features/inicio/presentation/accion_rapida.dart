@@ -20,7 +20,7 @@ enum AccionRapida {
   ),
   merma(
     'Registrar merma',
-    'Recortes, vencidos, pérdidas',
+    'Merma, robo o pérdida',
     Icons.delete_outline,
     LogicalKeyboardKey.f3,
     'F3',

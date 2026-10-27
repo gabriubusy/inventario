@@ -2,26 +2,27 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:inventario/app/app.dart';
+import 'package:inventario/app/base_datos/abrir_base_datos.dart';
+import 'package:inventario/app/base_datos/sembrar_ejemplos.dart';
+import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
 import 'package:inventario/features/autenticacion/data/almacen_sesion_preferencias.dart';
 import 'package:inventario/features/autenticacion/data/cuentas_de_desarrollo.dart';
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_preferencias.dart';
+import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
-import 'package:inventario/features/incidencias/data/incidencias_de_ejemplo.dart';
-import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
+import 'package:inventario/features/incidencias/data/repositorio_incidencias_drift.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
-import 'package:inventario/features/movimientos/data/movimientos_de_ejemplo.dart';
-import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
+import 'package:inventario/features/movimientos/data/repositorio_movimientos_drift.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/productos/data/almacen_imagenes_local.dart';
-import 'package:inventario/features/productos/data/productos_de_ejemplo.dart';
-import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
+import 'package:inventario/features/productos/data/repositorio_productos_drift.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
-import 'package:inventario/features/proveedores/data/proveedores_de_ejemplo.dart';
-import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
+import 'package:inventario/features/proveedores/data/repositorio_proveedores_drift.dart';
+import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_preferencias.dart';
@@ -38,20 +39,28 @@ Future<void> main() async {
   );
   // Restored before the first frame so the PIN screen doesn't flash.
   await controladorSesion.restaurar();
-  final controladorExistencias = ControladorExistencias(
-    RepositorioProductosEnMemoria(productosDeEjemplo),
+  final baseDatos = abrirBaseDatos();
+  final productos = RepositorioProductosDrift(baseDatos);
+  final proveedores = RepositorioProveedoresDrift(baseDatos);
+  final incidencias = RepositorioIncidenciasDrift(baseDatos);
+  final movimientos = RepositorioMovimientosDrift(baseDatos);
+  await sembrarEjemplos(
+    productos: productos,
+    proveedores: proveedores,
+    incidencias: incidencias,
+    movimientos: movimientos,
   );
+  final controladorExistencias = ControladorExistencias(productos);
+  final controladorMovimientos = ControladorMovimientos(movimientos);
   final controladorIncidencias = ControladorIncidencias(
-    RepositorioIncidenciasEnMemoria(incidenciasDeEjemplo(DateTime.now())),
+    incidencias,
     controladorExistencias,
+    movimientos: controladorMovimientos,
   );
   final controladorProveedores = ControladorProveedores(
-    RepositorioProveedoresEnMemoria(proveedoresDeEjemplo),
+    proveedores,
     controladorExistencias,
     alRenombrar: [controladorIncidencias.renombrarProveedor],
-  );
-  final controladorMovimientos = ControladorMovimientos(
-    RepositorioMovimientosEnMemoria(movimientosDeEjemplo(DateTime.now())),
   );
   final controladorEntradas = ControladorEntradas(
     controladorExistencias,
@@ -81,9 +90,22 @@ Future<void> main() async {
       controladorSalidas: ControladorSalidas(
         controladorExistencias,
         movimientos: controladorMovimientos,
+        tasaDeHoy: () => controladorTasa.tasaDeHoy,
       ),
       controladorIncidencias: controladorIncidencias,
       controladorMovimientos: controladorMovimientos,
+      controladorAjustes: ControladorAjustes(
+        controladorExistencias,
+        movimientos: controladorMovimientos,
+      ),
+      controladorConteo: ControladorConteo(
+        controladorExistencias,
+        movimientos: controladorMovimientos,
+      ),
+      controladorDevoluciones: ControladorDevoluciones(
+        controladorExistencias,
+        controladorMovimientos,
+      ),
       controladorListaProductos: ControladorListaProductos(
         controladorExistencias,
       ),

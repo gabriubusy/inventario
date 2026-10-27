@@ -12,17 +12,21 @@ class BarraSuperior extends StatelessWidget {
     required this.onTasa,
     required this.onProveedores,
     required this.onIncidencias,
+    required this.onKardex,
+    required this.onConteo,
     required this.onBloquear,
     required this.onCambiarPin,
   });
 
   /// Below this width the links fold into a menu instead of shrinking.
-  static const _anchoEnlaces = 1360.0;
+  static const _anchoEnlaces = 1700.0;
 
   final ControladorTasa tasa;
   final VoidCallback onTasa;
   final VoidCallback onProveedores;
   final VoidCallback onIncidencias;
+  final VoidCallback onKardex;
+  final VoidCallback onConteo;
   final VoidCallback onBloquear;
   final VoidCallback onCambiarPin;
 
@@ -87,6 +91,8 @@ class BarraSuperior extends StatelessWidget {
                 enlaces: [
                   (texto: 'Proveedores', atajo: 'F5', onPressed: onProveedores),
                   (texto: 'Incidencias', atajo: 'F6', onPressed: onIncidencias),
+                  (texto: 'Kardex', atajo: 'F8', onPressed: onKardex),
+                  (texto: 'Conteo', atajo: 'F9', onPressed: onConteo),
                   (
                     texto: 'Cambiar PIN',
                     atajo: 'Ctrl+Shift+L',

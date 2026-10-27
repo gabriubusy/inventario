@@ -1,10 +1,12 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
 import 'package:inventario/features/autenticacion/application/estado_sesion.dart';
 import 'package:inventario/features/autenticacion/presentation/dialogo_cambiar_pin.dart';
 import 'package:inventario/features/autenticacion/presentation/pantalla_inicio_sesion.dart';
+import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
@@ -13,6 +15,7 @@ import 'package:inventario/features/productos/application/controlador_existencia
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
+import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 
@@ -27,6 +30,9 @@ class PuertaSesion extends StatelessWidget {
     required this.controladorSalidas,
     required this.controladorIncidencias,
     required this.controladorMovimientos,
+    required this.controladorAjustes,
+    required this.controladorConteo,
+    required this.controladorDevoluciones,
     required this.controladorListaProductos,
     required this.controladorTasa,
     required this.gestorFotos,
@@ -39,6 +45,9 @@ class PuertaSesion extends StatelessWidget {
   final ControladorSalidas controladorSalidas;
   final ControladorIncidencias controladorIncidencias;
   final ControladorMovimientos controladorMovimientos;
+  final ControladorAjustes controladorAjustes;
+  final ControladorConteo controladorConteo;
+  final ControladorDevoluciones controladorDevoluciones;
   final ControladorListaProductos controladorListaProductos;
   final ControladorTasa controladorTasa;
   final GestorFotos gestorFotos;
@@ -55,6 +64,9 @@ class PuertaSesion extends StatelessWidget {
           salidas: controladorSalidas,
           incidencias: controladorIncidencias,
           movimientos: controladorMovimientos,
+          ajustes: controladorAjustes,
+          conteo: controladorConteo,
+          devoluciones: controladorDevoluciones,
           listaProductos: controladorListaProductos,
           tasa: controladorTasa,
           fotos: gestorFotos,

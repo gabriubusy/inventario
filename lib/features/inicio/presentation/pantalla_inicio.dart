@@ -5,6 +5,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
+import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/conteo/application/controlador_conteo.dart';
+import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/presentation/aviso_entrada.dart';
 import 'package:inventario/features/entradas/presentation/dialogo_entrada.dart';
@@ -15,6 +19,7 @@ import 'package:inventario/features/inicio/presentation/accion_rapida.dart';
 import 'package:inventario/features/inicio/presentation/acciones_rapidas.dart';
 import 'package:inventario/features/inicio/presentation/barra_superior.dart';
 import 'package:inventario/features/inicio/presentation/panel_del_dia.dart';
+import 'package:inventario/features/kardex/presentation/pantalla_kardex.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
@@ -25,6 +30,7 @@ import 'package:inventario/features/productos/presentation/grilla_productos.dart
 import 'package:inventario/features/productos/presentation/pantalla_productos.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/presentation/pantalla_proveedores.dart';
+import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/presentation/aviso_salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
@@ -32,6 +38,7 @@ import 'package:inventario/features/salidas/presentation/dialogo_ventas_hoy.dart
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/presentation/aviso_tasa.dart';
 import 'package:inventario/features/tasa/presentation/dialogo_tasa.dart';
+import 'package:inventario/features/tasa/presentation/pedir_tasa_si_falta.dart';
 
 /// Counter home: quick actions, the day at a glance, then live stock.
 class PantallaInicio extends StatefulWidget {
@@ -43,6 +50,9 @@ class PantallaInicio extends StatefulWidget {
     required this.salidas,
     required this.incidencias,
     required this.movimientos,
+    required this.ajustes,
+    required this.conteo,
+    required this.devoluciones,
     required this.listaProductos,
     required this.tasa,
     required this.fotos,
@@ -58,6 +68,9 @@ class PantallaInicio extends StatefulWidget {
   final ControladorSalidas salidas;
   final ControladorIncidencias incidencias;
   final ControladorMovimientos movimientos;
+  final ControladorAjustes ajustes;
+  final ControladorConteo conteo;
+  final ControladorDevoluciones devoluciones;
   final ControladorListaProductos listaProductos;
   final ControladorTasa tasa;
   final GestorFotos fotos;
@@ -105,13 +118,14 @@ class _PantallaInicioState extends State<PantallaInicio> {
         _registrarEntrada();
       case AccionRapida.productos:
         _abrirProductos();
-      // Not built yet; say so instead of failing silently.
       case AccionRapida.merma:
-        ScaffoldMessenger.of(context)
-          ..hideCurrentSnackBar()
-          ..showSnackBar(
-            SnackBar(content: Text('Próximamente: ${accion.titulo}')),
-          );
+        unawaited(
+          mostrarDialogoAjuste(
+            context,
+            ajustes: widget.ajustes,
+            existencias: widget.controlador,
+          ),
+        );
     }
   }
 
@@ -124,14 +138,21 @@ class _PantallaInicioState extends State<PantallaInicio> {
     ),
   );
 
-  void _registrarSalida() => unawaited(
-    mostrarDialogoSalida(
+  void _registrarSalida() => unawaited(_venderConTasa());
+
+  /// Without today's rate there is no selling: ask for it first, then sell.
+  Future<void> _venderConTasa() async {
+    if (!widget.tasa.esDeHoy) {
+      await mostrarDialogoTasa(context, widget.tasa);
+      if (!mounted || !widget.tasa.esDeHoy) return;
+    }
+    await mostrarDialogoSalida(
       context,
       salidas: widget.salidas,
       existencias: widget.controlador,
       aBolivares: widget.tasa.aBolivares,
-    ),
-  );
+    );
+  }
 
   void _deshacerMovimiento() {
     // Inside a text field Ctrl+Z undoes the typing, not the movement.
@@ -165,6 +186,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
           tasa: widget.tasa,
           fotos: widget.fotos,
           proveedores: widget.proveedores.nombres,
+          onKardex: (producto) => _abrirKardex(producto.id),
         ),
       ),
     ),
@@ -176,6 +198,31 @@ class _PantallaInicioState extends State<PantallaInicio> {
       movimientos: widget.movimientos,
       salidas: widget.salidas,
       existencias: widget.controlador,
+      devoluciones: widget.devoluciones,
+      aBolivares: widget.tasa.aBolivares,
+    ),
+  );
+
+  void _abrirKardex([String? productoId]) => unawaited(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PantallaKardex(
+          movimientos: widget.movimientos,
+          existencias: widget.controlador,
+          productoId: productoId,
+        ),
+      ),
+    ),
+  );
+
+  void _abrirConteo() => unawaited(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PantallaConteo(
+          conteo: widget.conteo,
+          existencias: widget.controlador,
+        ),
+      ),
     ),
   );
 
@@ -227,6 +274,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
     const SingleActivator(LogicalKeyboardKey.f5): _abrirProveedores,
     const SingleActivator(LogicalKeyboardKey.f6): _abrirIncidencias,
     const SingleActivator(LogicalKeyboardKey.f7): _verVentasDeHoy,
+    const SingleActivator(LogicalKeyboardKey.f8): _abrirKardex,
+    const SingleActivator(LogicalKeyboardKey.f9): _abrirConteo,
     const SingleActivator(LogicalKeyboardKey.keyL, control: true, shift: true):
         widget.onCambiarPin,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true):
@@ -239,83 +288,88 @@ class _PantallaInicioState extends State<PantallaInicio> {
   @override
   Widget build(BuildContext context) {
     final espaciado = context.espaciado;
-    return AtajosDeTeclado(
-      atajos: _atajos,
-      child: Scaffold(
-        body: Column(
-          children: [
-            BarraSuperior(
-              tasa: widget.tasa,
-              onTasa: _ponerTasa,
-              onProveedores: _abrirProveedores,
-              onIncidencias: _abrirIncidencias,
-              onBloquear: widget.onBloquear,
-              onCambiarPin: widget.onCambiarPin,
-            ),
-            ListenableBuilder(
-              listenable: widget.tasa,
-              builder: (context, _) => widget.tasa.esDeHoy
-                  ? const SizedBox.shrink()
-                  : AvisoTasa(controlador: widget.tasa, onPoner: _ponerTasa),
-            ),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, limites) {
-                  final lateral = math.max(
-                    espaciado.xl,
-                    (limites.maxWidth - PantallaInicio._anchoMaximo) / 2,
-                  );
-                  return ListenableBuilder(
-                    listenable: widget.controlador,
-                    builder: (context, _) => CustomScrollView(
-                      slivers: [
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            lateral,
-                            espaciado.xl,
-                            lateral,
-                            espaciado.xl,
-                          ),
-                          sliver: SliverToBoxAdapter(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              spacing: espaciado.xl,
-                              children: [
-                                AccionesRapidas(onAccion: _ejecutar),
-                                PanelDelDia(
-                                  movimientos: widget.movimientos,
-                                  existencias: widget.controlador,
-                                  tasa: widget.tasa,
-                                  onVerVentas: _verVentasDeHoy,
-                                ),
-                                CabeceraExistencias(
-                                  controlador: widget.controlador,
-                                  focoBusqueda: _focoBusqueda,
-                                  onNuevoProducto: _nuevoProducto,
-                                ),
-                              ],
+    return PedirTasaSiFalta(
+      tasa: widget.tasa,
+      child: AtajosDeTeclado(
+        atajos: _atajos,
+        child: Scaffold(
+          body: Column(
+            children: [
+              BarraSuperior(
+                tasa: widget.tasa,
+                onTasa: _ponerTasa,
+                onProveedores: _abrirProveedores,
+                onIncidencias: _abrirIncidencias,
+                onKardex: _abrirKardex,
+                onConteo: _abrirConteo,
+                onBloquear: widget.onBloquear,
+                onCambiarPin: widget.onCambiarPin,
+              ),
+              ListenableBuilder(
+                listenable: widget.tasa,
+                builder: (context, _) => widget.tasa.esDeHoy
+                    ? const SizedBox.shrink()
+                    : AvisoTasa(controlador: widget.tasa, onPoner: _ponerTasa),
+              ),
+              Expanded(
+                child: LayoutBuilder(
+                  builder: (context, limites) {
+                    final lateral = math.max(
+                      espaciado.xl,
+                      (limites.maxWidth - PantallaInicio._anchoMaximo) / 2,
+                    );
+                    return ListenableBuilder(
+                      listenable: widget.controlador,
+                      builder: (context, _) => CustomScrollView(
+                        slivers: [
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              lateral,
+                              espaciado.xl,
+                              lateral,
+                              espaciado.xl,
+                            ),
+                            sliver: SliverToBoxAdapter(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                spacing: espaciado.xl,
+                                children: [
+                                  AccionesRapidas(onAccion: _ejecutar),
+                                  PanelDelDia(
+                                    movimientos: widget.movimientos,
+                                    existencias: widget.controlador,
+                                    tasa: widget.tasa,
+                                    onVerVentas: _verVentasDeHoy,
+                                  ),
+                                  CabeceraExistencias(
+                                    controlador: widget.controlador,
+                                    focoBusqueda: _focoBusqueda,
+                                    onNuevoProducto: _nuevoProducto,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                        SliverPadding(
-                          padding: EdgeInsets.fromLTRB(
-                            lateral,
-                            0,
-                            lateral,
-                            espaciado.xl,
+                          SliverPadding(
+                            padding: EdgeInsets.fromLTRB(
+                              lateral,
+                              0,
+                              lateral,
+                              espaciado.xl,
+                            ),
+                            sliver: GrillaProductos(
+                              estado: widget.controlador.estado,
+                              productos: widget.controlador.visibles,
+                            ),
                           ),
-                          sliver: GrillaProductos(
-                            estado: widget.controlador.estado,
-                            productos: widget.controlador.visibles,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+                        ],
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
