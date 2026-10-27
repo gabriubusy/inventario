@@ -10,10 +10,12 @@ import 'package:inventario/features/movimientos/application/controlador_movimien
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/presentation/textos_producto.dart';
+import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/domain/devolver_venta.dart';
 import 'package:inventario/features/salidas/domain/resultado_anulacion.dart';
 import 'package:inventario/features/salidas/presentation/confirmar_anulacion.dart';
+import 'package:inventario/features/salidas/presentation/dialogo_devolucion.dart';
 import 'package:inventario/features/salidas/presentation/fila_venta_hoy.dart';
 
 Future<void> mostrarVentasDeHoy(
@@ -21,12 +23,16 @@ Future<void> mostrarVentasDeHoy(
   required ControladorMovimientos movimientos,
   required ControladorSalidas salidas,
   required ControladorExistencias existencias,
+  ControladorDevoluciones? devoluciones,
+  int? Function(int)? aBolivares,
 }) => showDialog<void>(
   context: context,
   builder: (_) => DialogoVentasHoy(
     movimientos: movimientos,
     salidas: salidas,
     existencias: existencias,
+    devoluciones: devoluciones,
+    aBolivares: aBolivares,
   ),
 );
 
@@ -37,6 +43,8 @@ class DialogoVentasHoy extends StatefulWidget {
     required this.movimientos,
     required this.salidas,
     required this.existencias,
+    this.devoluciones,
+    this.aBolivares,
   });
 
   static const _ancho = 760.0;
@@ -45,6 +53,10 @@ class DialogoVentasHoy extends StatefulWidget {
   final ControladorMovimientos movimientos;
   final ControladorSalidas salidas;
   final ControladorExistencias existencias;
+
+  /// Customer returns with Alt+D; left out where returns are not offered.
+  final ControladorDevoluciones? devoluciones;
+  final int? Function(int)? aBolivares;
 
   @override
   State<DialogoVentasHoy> createState() => _DialogoVentasHoyState();
@@ -103,6 +115,9 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
                   '${venta.forma.unidad.formatear(venta.cantidad)} '
                   'de ${venta.producto}',
             YaAnulada() => 'Esa venta ya estaba anulada',
+            AnulacionConDevolucion() =>
+              'No se puede anular: ya tiene una devolución. Devuelve el '
+                  'resto con Alt+D',
             AnulacionSinProducto() =>
               'No se pudo anular: el producto ya no existe',
           }),
@@ -115,7 +130,24 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
     if (_elegida < ventas.length) unawaited(_anular(ventas[_elegida]));
   }
 
+  void _devolverElegida() {
+    final devoluciones = widget.devoluciones;
+    final ventas = _ventas;
+    if (devoluciones == null || _elegida >= ventas.length) return;
+    final venta = ventas[_elegida];
+    if (devoluciones.devolvibleDe(venta) <= 0) return;
+    unawaited(
+      mostrarDialogoDevolucion(
+        context,
+        devoluciones: devoluciones,
+        venta: venta,
+        aBolivares: widget.aBolivares,
+      ),
+    );
+  }
+
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    const SingleActivator(LogicalKeyboardKey.keyD, alt: true): _devolverElegida,
     const SingleActivator(LogicalKeyboardKey.arrowUp): () => _mover(-1),
     const SingleActivator(LogicalKeyboardKey.arrowDown): () => _mover(1),
     const SingleActivator(LogicalKeyboardKey.delete): _anularElegida,
@@ -152,7 +184,8 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
                     ),
                     Text(
                       '${validas.length} ventas · ${formatearDolares(total)} · '
-                      '↑ ↓ elegir · Supr anular',
+                      '↑ ↓ elegir · Supr anular'
+                      '${widget.devoluciones == null ? '' : ' · Alt+D devolver'}',
                       style: tema.textTheme.bodyMedium?.copyWith(
                         color: colores.onSurfaceVariant,
                       ),

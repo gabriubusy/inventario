@@ -6,6 +6,7 @@ import 'package:inventario/features/productos/application/controlador_existencia
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
+import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/devolver_venta.dart';
 import 'package:inventario/features/salidas/domain/modo_venta.dart';
 import 'package:inventario/features/salidas/domain/resultado_anulacion.dart';
@@ -16,12 +17,16 @@ import 'package:inventario/features/salidas/domain/vender.dart';
 /// Takes sold goods out of the stock and remembers the last sale so it can
 /// be undone. Also remembers how each product was last sold, to offer it.
 class ControladorSalidas extends ChangeNotifier {
-  ControladorSalidas(this._existencias, {this._movimientos});
+  ControladorSalidas(this._existencias, {this._movimientos, this._tasaDeHoy});
 
   final ControladorExistencias _existencias;
 
   /// Where each sale is noted for the day's history; optional in tests.
   final ControladorMovimientos? _movimientos;
+
+  /// Today's Bs per dollar, null while missing; each sale keeps the one it
+  /// used. Without it (tests) sales go through with no rate.
+  final int? Function()? _tasaDeHoy;
   final _ultimoModo = <String, ModoVenta>{};
   ({Producto antes, Producto despues, Movimiento? anotado})? _ultima;
 
@@ -32,6 +37,8 @@ class ControladorSalidas extends ChangeNotifier {
       _ultimoModo[productoId] ?? ModoVenta.piezaEntera;
 
   Future<ResultadoSalida> registrar(String productoId, Salida salida) async {
+    final tasa = _tasaDeHoy?.call();
+    if (_tasaDeHoy != null && tasa == null) return const SinTasaDelDia();
     final antes = _buscar(productoId);
     if (antes == null) return const SalidaSinProducto();
     final despues = vender(antes, salida);
@@ -62,6 +69,8 @@ class ControladorSalidas extends ChangeNotifier {
               presentacion: salida.presentacion,
             ),
             abrioPieza: abrePieza(lote, salida.modo),
+            costo: costoDeSalida(antes, lote, salida.cantidad),
+            tasa: tasa,
           ),
         );
         _ultima = (antes: antes, despues: producto, anotado: anotado);
@@ -95,6 +104,9 @@ class ControladorSalidas extends ChangeNotifier {
   /// day's list, crossed out. Unlike undo, it works on any sale of the day.
   Future<ResultadoAnulacion> anular(Movimiento venta) async {
     if (venta.anulada) return const YaAnulada();
+    if (yaDevuelto(venta, _movimientos?.todos ?? const []) > 0) {
+      return const AnulacionConDevolucion();
+    }
     final producto = _buscar(venta.productoId);
     if (producto == null) return const AnulacionSinProducto();
     final devuelto = devolverVenta(
