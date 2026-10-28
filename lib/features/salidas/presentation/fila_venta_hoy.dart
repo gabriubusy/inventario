@@ -5,25 +5,34 @@ import 'package:inventario/core/dinero.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/presentation/textos_movimiento.dart';
 
-/// Time · product and detail · amount; crossed out once cancelled.
+/// Product and detail · amount, with Devolver and Anular when chosen;
+/// crossed out once cancelled.
 class FilaVentaHoy extends StatelessWidget {
   const FilaVentaHoy({
     super.key,
     required this.venta,
     required this.elegida,
     required this.onElegir,
-    required this.onAnular,
+    this.devuelto = 0,
+    this.onDevolver,
+    this.onAnular,
   });
 
   static const _alto = 60.0;
-  static const _anchoHora = 52.0;
   static const _anchoImporte = 96.0;
-  static const _anchoAccion = 110.0;
 
   final Movimiento venta;
   final bool elegida;
   final VoidCallback onElegir;
-  final VoidCallback onAnular;
+
+  /// Already brought back, scaled like the sale's quantity.
+  final int devuelto;
+
+  /// Null when nothing more can come back.
+  final VoidCallback? onDevolver;
+
+  /// Null where cancelling is not offered (other days).
+  final VoidCallback? onAnular;
 
   @override
   Widget build(BuildContext context) {
@@ -32,20 +41,23 @@ class FilaVentaHoy extends StatelessWidget {
     final alertas = context.coloresEstado;
     final espaciado = context.espaciado;
     const cifras = [FontFeature.tabularFigures()];
-    final tachado = venta.anulada
-        ? TextDecoration.lineThrough
-        : TextDecoration.none;
     final suave = tema.textTheme.bodySmall?.copyWith(
       color: colores.onSurfaceVariant,
       fontFeatures: cifras,
     );
     final fuerte = tema.textTheme.bodyLarge?.copyWith(
       fontWeight: FontWeight.w600,
-      decoration: tachado,
+      decoration: venta.anulada ? TextDecoration.lineThrough : null,
       color: venta.anulada ? colores.onSurfaceVariant : null,
       fontFeatures: cifras,
     );
     final importe = venta.importe;
+    final detalle = [
+      textoDetalleMovimiento(venta),
+      if (devuelto > 0) 'devuelto ${venta.forma.unidad.formatear(devuelto)}',
+    ].join(' · ');
+    final onDevolver = this.onDevolver;
+    final onAnular = this.onAnular;
     return Semantics(
       selected: elegida,
       button: true,
@@ -63,17 +75,13 @@ class FilaVentaHoy extends StatelessWidget {
               child: Row(
                 spacing: espaciado.md,
                 children: [
-                  SizedBox(
-                    width: _anchoHora,
-                    child: Text(textoHora(venta.fecha), style: suave),
-                  ),
                   Expanded(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(venta.producto, style: fuerte),
-                        Text(textoDetalleMovimiento(venta), style: suave),
+                        Text(detalle, style: suave),
                       ],
                     ),
                   ),
@@ -85,30 +93,29 @@ class FilaVentaHoy extends StatelessWidget {
                       style: fuerte,
                     ),
                   ),
-                  SizedBox(
-                    width: _anchoAccion,
-                    child: venta.anulada
-                        ? Text(
-                            'Anulada',
-                            textAlign: TextAlign.right,
-                            style: tema.textTheme.labelLarge?.copyWith(
-                              color: alertas.textoAgotado,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          )
-                        : elegida
-                        ? Align(
-                            alignment: Alignment.centerRight,
-                            child: TextButton(
-                              onPressed: onAnular,
-                              style: TextButton.styleFrom(
-                                foregroundColor: alertas.textoAgotado,
-                              ),
-                              child: const Text('Anular · Supr'),
-                            ),
-                          )
-                        : null,
-                  ),
+                  if (venta.anulada)
+                    Text(
+                      'Anulada',
+                      style: tema.textTheme.labelLarge?.copyWith(
+                        color: alertas.textoAgotado,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    )
+                  else if (elegida) ...[
+                    if (onDevolver != null)
+                      TextButton(
+                        onPressed: onDevolver,
+                        child: const Text('Devolver · Alt+D'),
+                      ),
+                    if (onAnular != null)
+                      TextButton(
+                        onPressed: onAnular,
+                        style: TextButton.styleFrom(
+                          foregroundColor: alertas.textoAgotado,
+                        ),
+                        child: const Text('Anular · Supr'),
+                      ),
+                  ],
                 ],
               ),
             ),

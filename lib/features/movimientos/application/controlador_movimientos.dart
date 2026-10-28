@@ -38,7 +38,13 @@ class ControladorMovimientos extends ChangeNotifier {
   }
 
   /// Today's sales, newest first, cancelled ones included.
-  List<Movimiento> get ventasDeHoy => ultimasVentas(limite: _todos.length);
+  List<Movimiento> get ventasDeHoy => ventasDelDia(hoy);
+
+  /// Sales of the calendar day of [dia], newest first, cancelled included.
+  List<Movimiento> ventasDelDia(DateTime dia) => [
+    for (final m in _todos)
+      if (m.tipo == TipoMovimiento.venta && diasEntre(m.fecha, dia) == 0) m,
+  ];
 
   /// Keeps the sale in the list, crossed out; the stock goes back elsewhere.
   Future<void> anular(String id) async {

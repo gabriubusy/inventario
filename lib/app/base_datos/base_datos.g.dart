@@ -2936,6 +2936,15 @@ class $MovimientosTable extends Movimientos
     requiredDuringInsert: false,
   );
   @override
+  late final GeneratedColumnWithTypeConverter<MedioPago?, String>
+  medioReembolso = GeneratedColumn<String>(
+    'medio_reembolso',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  ).withConverter<MedioPago?>($MovimientosTable.$convertermedioReembolson);
+  @override
   List<GeneratedColumn> get $columns => [
     id,
     fecha,
@@ -2955,6 +2964,7 @@ class $MovimientosTable extends Movimientos
     nota,
     origenId,
     ventaId,
+    medioReembolso,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3168,6 +3178,12 @@ class $MovimientosTable extends Movimientos
         DriftSqlType.string,
         data['${effectivePrefix}venta_id'],
       ),
+      medioReembolso: $MovimientosTable.$convertermedioReembolson.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}medio_reembolso'],
+        ),
+      ),
     );
   }
 
@@ -3180,6 +3196,14 @@ class $MovimientosTable extends Movimientos
       const EnumNameConverter<TipoMovimiento>(TipoMovimiento.values);
   static JsonTypeConverter2<FormaConteo, String, String> $converterforma =
       const EnumNameConverter<FormaConteo>(FormaConteo.values);
+  static JsonTypeConverter2<MedioPago, String, String>
+  $convertermedioReembolso = const EnumNameConverter<MedioPago>(
+    MedioPago.values,
+  );
+  static JsonTypeConverter2<MedioPago?, String?, String?>
+  $convertermedioReembolson = JsonTypeConverter2.asNullable(
+    $convertermedioReembolso,
+  );
 }
 
 class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
@@ -3203,6 +3227,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
 
   /// The paid ticket a sale line belongs to (schema 3).
   final String? ventaId;
+
+  /// How a customer return's money went back (schema 5).
+  final MedioPago? medioReembolso;
   const FilaMovimiento({
     required this.id,
     required this.fecha,
@@ -3222,6 +3249,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     required this.nota,
     this.origenId,
     this.ventaId,
+    this.medioReembolso,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -3262,6 +3290,11 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     if (!nullToAbsent || ventaId != null) {
       map['venta_id'] = Variable<String>(ventaId);
     }
+    if (!nullToAbsent || medioReembolso != null) {
+      map['medio_reembolso'] = Variable<String>(
+        $MovimientosTable.$convertermedioReembolson.toSql(medioReembolso),
+      );
+    }
     return map;
   }
 
@@ -3293,6 +3326,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
       ventaId: ventaId == null && nullToAbsent
           ? const Value.absent()
           : Value(ventaId),
+      medioReembolso: medioReembolso == null && nullToAbsent
+          ? const Value.absent()
+          : Value(medioReembolso),
     );
   }
 
@@ -3324,6 +3360,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
       nota: serializer.fromJson<String>(json['nota']),
       origenId: serializer.fromJson<String?>(json['origenId']),
       ventaId: serializer.fromJson<String?>(json['ventaId']),
+      medioReembolso: $MovimientosTable.$convertermedioReembolson.fromJson(
+        serializer.fromJson<String?>(json['medioReembolso']),
+      ),
     );
   }
   @override
@@ -3352,6 +3391,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
       'nota': serializer.toJson<String>(nota),
       'origenId': serializer.toJson<String?>(origenId),
       'ventaId': serializer.toJson<String?>(ventaId),
+      'medioReembolso': serializer.toJson<String?>(
+        $MovimientosTable.$convertermedioReembolson.toJson(medioReembolso),
+      ),
     };
   }
 
@@ -3374,6 +3416,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     String? nota,
     Value<String?> origenId = const Value.absent(),
     Value<String?> ventaId = const Value.absent(),
+    Value<MedioPago?> medioReembolso = const Value.absent(),
   }) => FilaMovimiento(
     id: id ?? this.id,
     fecha: fecha ?? this.fecha,
@@ -3393,6 +3436,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     nota: nota ?? this.nota,
     origenId: origenId.present ? origenId.value : this.origenId,
     ventaId: ventaId.present ? ventaId.value : this.ventaId,
+    medioReembolso: medioReembolso.present
+        ? medioReembolso.value
+        : this.medioReembolso,
   );
   FilaMovimiento copyWithCompanion(MovimientosCompanion data) {
     return FilaMovimiento(
@@ -3418,6 +3464,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
       nota: data.nota.present ? data.nota.value : this.nota,
       origenId: data.origenId.present ? data.origenId.value : this.origenId,
       ventaId: data.ventaId.present ? data.ventaId.value : this.ventaId,
+      medioReembolso: data.medioReembolso.present
+          ? data.medioReembolso.value
+          : this.medioReembolso,
     );
   }
 
@@ -3441,7 +3490,8 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
           ..write('tasa: $tasa, ')
           ..write('nota: $nota, ')
           ..write('origenId: $origenId, ')
-          ..write('ventaId: $ventaId')
+          ..write('ventaId: $ventaId, ')
+          ..write('medioReembolso: $medioReembolso')
           ..write(')'))
         .toString();
   }
@@ -3466,6 +3516,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     nota,
     origenId,
     ventaId,
+    medioReembolso,
   );
   @override
   bool operator ==(Object other) =>
@@ -3488,7 +3539,8 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
           other.tasa == this.tasa &&
           other.nota == this.nota &&
           other.origenId == this.origenId &&
-          other.ventaId == this.ventaId);
+          other.ventaId == this.ventaId &&
+          other.medioReembolso == this.medioReembolso);
 }
 
 class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
@@ -3510,6 +3562,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
   final Value<String> nota;
   final Value<String?> origenId;
   final Value<String?> ventaId;
+  final Value<MedioPago?> medioReembolso;
   final Value<int> rowid;
   const MovimientosCompanion({
     this.id = const Value.absent(),
@@ -3530,6 +3583,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     this.nota = const Value.absent(),
     this.origenId = const Value.absent(),
     this.ventaId = const Value.absent(),
+    this.medioReembolso = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   MovimientosCompanion.insert({
@@ -3551,6 +3605,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     required String nota,
     this.origenId = const Value.absent(),
     this.ventaId = const Value.absent(),
+    this.medioReembolso = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        fecha = Value(fecha),
@@ -3584,6 +3639,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     Expression<String>? nota,
     Expression<String>? origenId,
     Expression<String>? ventaId,
+    Expression<String>? medioReembolso,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -3605,6 +3661,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
       if (nota != null) 'nota': nota,
       if (origenId != null) 'origen_id': origenId,
       if (ventaId != null) 'venta_id': ventaId,
+      if (medioReembolso != null) 'medio_reembolso': medioReembolso,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -3628,6 +3685,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     Value<String>? nota,
     Value<String?>? origenId,
     Value<String?>? ventaId,
+    Value<MedioPago?>? medioReembolso,
     Value<int>? rowid,
   }) {
     return MovimientosCompanion(
@@ -3649,6 +3707,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
       nota: nota ?? this.nota,
       origenId: origenId ?? this.origenId,
       ventaId: ventaId ?? this.ventaId,
+      medioReembolso: medioReembolso ?? this.medioReembolso,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -3714,6 +3773,11 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     if (ventaId.present) {
       map['venta_id'] = Variable<String>(ventaId.value);
     }
+    if (medioReembolso.present) {
+      map['medio_reembolso'] = Variable<String>(
+        $MovimientosTable.$convertermedioReembolson.toSql(medioReembolso.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -3741,6 +3805,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
           ..write('nota: $nota, ')
           ..write('origenId: $origenId, ')
           ..write('ventaId: $ventaId, ')
+          ..write('medioReembolso: $medioReembolso, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8848,6 +8913,7 @@ typedef $$MovimientosTableCreateCompanionBuilder =
       required String nota,
       Value<String?> origenId,
       Value<String?> ventaId,
+      Value<MedioPago?> medioReembolso,
       Value<int> rowid,
     });
 typedef $$MovimientosTableUpdateCompanionBuilder =
@@ -8870,6 +8936,7 @@ typedef $$MovimientosTableUpdateCompanionBuilder =
       Value<String> nota,
       Value<String?> origenId,
       Value<String?> ventaId,
+      Value<MedioPago?> medioReembolso,
       Value<int> rowid,
     });
 
@@ -8973,6 +9040,12 @@ class $$MovimientosTableFilterComposer
     column: $table.ventaId,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<MedioPago?, MedioPago, String>
+  get medioReembolso => $composableBuilder(
+    column: $table.medioReembolso,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
 }
 
 class $$MovimientosTableOrderingComposer
@@ -9073,6 +9146,11 @@ class $$MovimientosTableOrderingComposer
     column: $table.ventaId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get medioReembolso => $composableBuilder(
+    column: $table.medioReembolso,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$MovimientosTableAnnotationComposer
@@ -9141,6 +9219,12 @@ class $$MovimientosTableAnnotationComposer
 
   GeneratedColumn<String> get ventaId =>
       $composableBuilder(column: $table.ventaId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<MedioPago?, String> get medioReembolso =>
+      $composableBuilder(
+        column: $table.medioReembolso,
+        builder: (column) => column,
+      );
 }
 
 class $$MovimientosTableTableManager
@@ -9192,6 +9276,7 @@ class $$MovimientosTableTableManager
                 Value<String> nota = const Value.absent(),
                 Value<String?> origenId = const Value.absent(),
                 Value<String?> ventaId = const Value.absent(),
+                Value<MedioPago?> medioReembolso = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MovimientosCompanion(
                 id: id,
@@ -9212,6 +9297,7 @@ class $$MovimientosTableTableManager
                 nota: nota,
                 origenId: origenId,
                 ventaId: ventaId,
+                medioReembolso: medioReembolso,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -9234,6 +9320,7 @@ class $$MovimientosTableTableManager
                 required String nota,
                 Value<String?> origenId = const Value.absent(),
                 Value<String?> ventaId = const Value.absent(),
+                Value<MedioPago?> medioReembolso = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => MovimientosCompanion.insert(
                 id: id,
@@ -9254,6 +9341,7 @@ class $$MovimientosTableTableManager
                 nota: nota,
                 origenId: origenId,
                 ventaId: ventaId,
+                medioReembolso: medioReembolso,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

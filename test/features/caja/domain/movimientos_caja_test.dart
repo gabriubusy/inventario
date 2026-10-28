@@ -134,6 +134,25 @@ void main() {
     expect(movimientos.last.tipo, TipoMovimientoCaja.apertura);
   });
 
+  test('a return is paid back the way it was recorded, at its rate', () {
+    final devolucion = Movimiento(
+      id: 'd1',
+      fecha: a(11),
+      tipo: TipoMovimiento.devolucionCliente,
+      productoId: 'p',
+      producto: 'Queso',
+      forma: FormaConteo.porKilo,
+      marca: 'A',
+      cantidad: 500,
+      importe: 325,
+      tasa: 88623,
+      medioReembolso: MedioPago.pagoMovil,
+    );
+    final movimientos = movimientosDeCaja(caja: caja, lineas: [devolucion]);
+    expect(saldosDeCaja(movimientos)[MedioPago.pagoMovil], -288025);
+    expect(saldosDeCaja(movimientos)[MedioPago.efectivoDolares], 2000);
+  });
+
   test('only what happened while the till was open counts', () {
     final cerrada = caja.cerradaCon(fecha: a(12), contado: const {});
     final gastos = [

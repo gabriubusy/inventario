@@ -41,6 +41,7 @@ import 'package:inventario/features/salidas/application/controlador_salidas.dart
 import 'package:inventario/features/salidas/data/repositorio_ventas_en_memoria.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
+import 'package:inventario/features/salidas/presentation/dialogo_ventas_hoy.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/data/almacen_tasa_en_memoria.dart';
 import 'package:inventario/features/tasa/domain/fuente_tasa.dart';
@@ -378,11 +379,11 @@ void main() {
     expect(bloqueos, 0);
   });
 
-  testWidgets('F7 opens today\'s sales to cancel one', (tester) async {
+  testWidgets('F7 opens the day\'s sales', (tester) async {
     await mostrar(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.f7);
     await tester.pumpAndSettle();
-    expect(find.text('Ventas de hoy'), findsOneWidget);
+    expect(find.byType(DialogoVentasHoy), findsOneWidget);
   });
 
   testWidgets('F5 opens the suppliers and Esc comes back', (tester) async {

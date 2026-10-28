@@ -41,7 +41,7 @@ class BaseDatos extends _$BaseDatos {
   BaseDatos(super.ejecutor);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -63,6 +63,10 @@ class BaseDatos extends _$BaseDatos {
       if (desde < 4) {
         await m.createTable(cajas);
         await m.createTable(gastos);
+      }
+      // 5: how a customer return's money was handed back.
+      if (desde < 5) {
+        await m.addColumn(movimientos, movimientos.medioReembolso);
       }
     },
     beforeOpen: (_) async {

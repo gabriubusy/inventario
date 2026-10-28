@@ -63,12 +63,20 @@ List<MovimientoCaja> movimientosDeCaja({
     final importe = linea.importe;
     if (!devuelta || importe == null || !caja.incluye(linea.fecha)) continue;
     final montos = <MedioPago, int>{};
-    // Returns are paid back in dollar cash until they record how.
-    _restarEfectivo(
-      montos,
-      importe,
-      linea.tipo == TipoMovimiento.venta ? porVenta[linea.ventaId] : null,
-    );
+    final medio = linea.medioReembolso;
+    final reembolso = medio == null
+        ? null
+        : enMoneda(importe, medio.moneda, linea.tasa);
+    if (medio != null && reembolso != null) {
+      montos[medio] = -reembolso;
+    } else {
+      // Older returns didn't record how: taken as dollar cash.
+      _restarEfectivo(
+        montos,
+        importe,
+        linea.tipo == TipoMovimiento.venta ? porVenta[linea.ventaId] : null,
+      );
+    }
     movimientos.add(
       MovimientoCaja(
         fecha: linea.fecha,

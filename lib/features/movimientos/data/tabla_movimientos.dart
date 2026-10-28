@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 
@@ -28,6 +29,9 @@ class Movimientos extends Table {
 
   /// The paid ticket a sale line belongs to (schema 3).
   TextColumn get ventaId => text().nullable()();
+
+  /// How a customer return's money went back (schema 5).
+  TextColumn get medioReembolso => textEnum<MedioPago>().nullable()();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

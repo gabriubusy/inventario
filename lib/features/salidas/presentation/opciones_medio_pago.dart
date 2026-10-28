@@ -20,6 +20,7 @@ class OpcionesMedioPago extends StatelessWidget {
     super.key,
     required this.elegido,
     required this.onElegir,
+    this.medios = MedioPago.values,
   });
 
   static const _anchoMinimo = 180.0;
@@ -27,6 +28,9 @@ class OpcionesMedioPago extends StatelessWidget {
 
   final MedioPago elegido;
   final ValueChanged<MedioPago> onElegir;
+
+  /// The ways offered; each keeps its Alt+number from [MedioPago.values].
+  final List<MedioPago> medios;
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +40,7 @@ class OpcionesMedioPago extends StatelessWidget {
       anchoMinimo: _anchoMinimo,
       espacio: espaciado.sm,
       children: [
-        for (final (i, medio) in MedioPago.values.indexed)
+        for (final medio in medios)
           ExcludeFocus(
             child: OutlinedButton(
               onPressed: () => onElegir(medio),
@@ -66,7 +70,10 @@ class OpcionesMedioPago extends StatelessWidget {
                       ),
                     ),
                   ),
-                  TeclaAtajo('Alt+${i + 1}', color: colores.onSurfaceVariant),
+                  TeclaAtajo(
+                    'Alt+${medio.index + 1}',
+                    color: colores.onSurfaceVariant,
+                  ),
                 ],
               ),
             ),

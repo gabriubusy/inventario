@@ -68,6 +68,12 @@ class ControladorSalidas extends ChangeNotifier {
 
   int? get tasaDeHoy => _tasaDeHoy?.call();
 
+  /// Paid tickets by id, to show how each sale was paid.
+  Future<Map<String, Venta>> ventasRegistradas() async => {
+    for (final venta in await _ventas?.obtenerTodas() ?? const <Venta>[])
+      venta.id: venta,
+  };
+
   /// Whole piece unless this product was last sold by weight.
   ModoVenta modoPara(String productoId) =>
       _ultimoModo[productoId] ?? ModoVenta.piezaEntera;

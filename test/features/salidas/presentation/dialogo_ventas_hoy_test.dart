@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
+import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
@@ -88,6 +89,8 @@ void main() {
   testWidgets('Alt+D returns part of the sale to the stock', (tester) async {
     final devoluciones = ControladorDevoluciones(existencias, movimientos);
     addTearDown(devoluciones.dispose);
+    await tester.binding.setSurfaceSize(const Size(1280, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
     await tester.pumpWidget(
       MaterialApp(
         theme: TemaApp.claro(),
@@ -119,5 +122,53 @@ void main() {
     await tester.pumpAndSettle();
     expect(existencias.productos.single.lotes.single.cantidad, 8500);
     expect(movimientos.resumenDeHoy.vendido, 930);
+  });
+
+  testWidgets('the refund is recorded the way it is handed back', (
+    tester,
+  ) async {
+    final devoluciones = ControladorDevoluciones(existencias, movimientos);
+    addTearDown(devoluciones.dispose);
+    await tester.binding.setSurfaceSize(const Size(1280, 1100));
+    addTearDown(() => tester.binding.setSurfaceSize(null));
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: TemaApp.claro(),
+        home: Scaffold(
+          body: DialogoVentasHoy(
+            movimientos: movimientos,
+            salidas: salidas,
+            existencias: existencias,
+            devoluciones: devoluciones,
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+    Future<void> conAlt(LogicalKeyboardKey tecla) async {
+      await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+      await tester.sendKeyEvent(tecla);
+      await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+      await tester.pumpAndSettle();
+    }
+
+    await conAlt(LogicalKeyboardKey.keyD);
+    await conAlt(LogicalKeyboardKey.digit3);
+    await tester.tap(find.widgetWithText(FilledButton, 'Registrar devolución'));
+    await tester.pumpAndSettle();
+    final devolucion = movimientos.todos.firstWhere((m) => m.origenId != null);
+    expect(devolucion.medioReembolso, MedioPago.pagoMovil);
+  });
+
+  testWidgets('Alt+← shows the day before, where nothing is cancelled', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.arrowLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.altLeft);
+    await tester.pumpAndSettle();
+    expect(find.text('No hubo ventas ese día.'), findsOneWidget);
+    expect(find.textContaining('Supr anular'), findsNothing);
   });
 }

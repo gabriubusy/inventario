@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
@@ -10,7 +11,7 @@ import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/devolver_venta.dart';
 import 'package:inventario/features/salidas/domain/resultado_devolucion.dart';
 
-/// Customer returns of today's sales. Goods that are fine go back to their
+/// Customer returns of any day's sales. Goods that are fine go back to their
 /// brand lot; damaged ones are noted as returned and then lost (merma).
 class ControladorDevoluciones extends ChangeNotifier {
   ControladorDevoluciones(
@@ -34,6 +35,7 @@ class ControladorDevoluciones extends ChangeNotifier {
     Movimiento venta, {
     required int cantidad,
     required DestinoDevolucion destino,
+    MedioPago medio = MedioPago.efectivoDolares,
     String nota = '',
   }) async {
     final queda = devolvibleDe(venta);
@@ -43,20 +45,27 @@ class ControladorDevoluciones extends ChangeNotifier {
     // A whole piece only comes back as a piece when it returns untouched.
     final entera = queda == venta.cantidad && cantidad == venta.cantidad;
     final importe = importeDevuelto(venta, cantidad);
-    Movimiento base(TipoMovimiento tipo, String texto) => Movimiento(
-      fecha: DateTime.now(),
-      tipo: tipo,
-      productoId: venta.productoId,
-      producto: venta.producto,
-      forma: venta.forma,
-      marca: venta.marca,
-      proveedor: venta.proveedor,
-      piezas: entera ? venta.piezas : 0,
-      cantidad: cantidad,
-      importe: tipo == TipoMovimiento.devolucionCliente ? importe : null,
-      nota: texto,
-      origenId: tipo == TipoMovimiento.devolucionCliente ? venta.id : null,
-    );
+    Movimiento base(TipoMovimiento tipo, String texto) {
+      final esDevolucion = tipo == TipoMovimiento.devolucionCliente;
+      return Movimiento(
+        fecha: DateTime.now(),
+        tipo: tipo,
+        productoId: venta.productoId,
+        producto: venta.producto,
+        forma: venta.forma,
+        marca: venta.marca,
+        proveedor: venta.proveedor,
+        piezas: entera ? venta.piezas : 0,
+        cantidad: cantidad,
+        importe: esDevolucion ? importe : null,
+        // The refund in Bs uses the sale's rate, not today's.
+        tasa: esDevolucion ? venta.tasa : null,
+        nota: texto,
+        origenId: esDevolucion ? venta.id : null,
+        medioReembolso: esDevolucion ? medio : null,
+      );
+    }
+
     final detalle = [destino.etiqueta, if (nota.isNotEmpty) nota].join(' · ');
     final (:despues, :anotados) = await _transacciones.enUna(() async {
       Producto? despues;

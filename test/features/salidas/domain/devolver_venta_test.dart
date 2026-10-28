@@ -1,9 +1,13 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/devolver_venta.dart';
+import 'package:inventario/features/salidas/domain/pago_venta.dart';
+import 'package:inventario/features/salidas/domain/venta.dart';
 
 void main() {
   const queso = Producto(
@@ -59,6 +63,33 @@ void main() {
     expect(devuelto.lotes.single.piezas, 9);
     expect(devuelto.lotes.single.piezaAbierta, isTrue);
     expect(devuelto.lotes.single.cantidad, 7850);
+  });
+
+  test('the refund is offered the way the sale was paid', () {
+    Venta pagadaCon(List<MedioPago> medios) => Venta(
+      fecha: DateTime(2026),
+      total: 100,
+      pagos: [for (final m in medios) PagoVenta(medio: m, monto: 100)],
+    );
+    expect(
+      medioSugerido(pagadaCon([MedioPago.pagoMovil])),
+      MedioPago.pagoMovil,
+    );
+    expect(
+      medioSugerido(pagadaCon([MedioPago.puntoDeVenta])),
+      MedioPago.efectivoBolivares,
+    );
+    expect(
+      medioSugerido(pagadaCon([MedioPago.zelle, MedioPago.efectivoBolivares])),
+      MedioPago.efectivoDolares,
+    );
+    expect(medioSugerido(null), MedioPago.efectivoDolares);
+  });
+
+  test('a refund in bolívares uses the rate of the sale', () {
+    expect(reembolsoEnMoneda(620, MedioPago.efectivoDolares, 88623), 620);
+    expect(reembolsoEnMoneda(620, MedioPago.pagoMovil, 88623), 549463);
+    expect(reembolsoEnMoneda(620, MedioPago.pagoMovil, null), isNull);
   });
 
   test('a lot that is gone comes back as a new one', () {

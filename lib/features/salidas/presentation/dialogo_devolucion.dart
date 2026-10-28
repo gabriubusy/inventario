@@ -7,14 +7,19 @@ import 'package:inventario/app/botones_crear.dart';
 import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/dinero.dart';
+import 'package:inventario/core/fechas.dart';
+import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/presentation/textos_movimiento.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/resultado_devolucion.dart';
+import 'package:inventario/features/salidas/domain/venta.dart';
+import 'package:inventario/features/salidas/presentation/opciones_medio_pago.dart';
 
 /// Alt+Q back to the stock, Alt+W to merma.
 const _teclasDestino = [LogicalKeyboardKey.keyQ, LogicalKeyboardKey.keyW];
@@ -23,29 +28,38 @@ Future<void> mostrarDialogoDevolucion(
   BuildContext context, {
   required ControladorDevoluciones devoluciones,
   required Movimiento venta,
+  Venta? pagada,
   int? Function(int)? aBolivares,
 }) => showDialog<void>(
   context: context,
   builder: (_) => DialogoDevolucion(
     devoluciones: devoluciones,
     venta: venta,
+    pagada: pagada,
     aBolivares: aBolivares,
   ),
 );
 
-/// A customer brings back all or part of one of today's sales.
+/// A customer brings back all or part of a sale of any day, and says how
+/// the money goes back (Alt+1…, offered as the sale was paid).
 class DialogoDevolucion extends StatefulWidget {
   const DialogoDevolucion({
     super.key,
     required this.devoluciones,
     required this.venta,
+    this.pagada,
     this.aBolivares,
   });
 
-  static const _ancho = 560.0;
+  static const _ancho = 640.0;
 
   final ControladorDevoluciones devoluciones;
   final Movimiento venta;
+
+  /// The ticket the line belongs to, to know how it was paid.
+  final Venta? pagada;
+
+  /// Today's rate, only for sales that kept none.
   final int? Function(int)? aBolivares;
 
   @override
@@ -61,6 +75,7 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
   final _nota = TextEditingController();
   final _focoCantidad = FocusNode();
   var _destino = DestinoDevolucion.stock;
+  late var _medio = medioSugerido(widget.pagada);
   var _guardando = false;
 
   int get _decimales => widget.venta.forma.unidad.decimales;
@@ -87,16 +102,26 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
     super.dispose();
   }
 
-  /// "Se le devuelven $ 37,80 · Bs 33.499,49" for what is typed.
+  /// "Se le devuelven 5.494,63 Bs ($ 6,20 a la tasa de esa venta)", in the
+  /// currency of the chosen way, for what is typed.
   String? get _reembolso {
     final cantidad = CampoCantidadRecibida.leer(_cantidad, _decimales);
     if (cantidad <= 0 || cantidad > _maximo) return null;
     final importe = importeDevuelto(widget.venta, cantidad);
     if (importe == null) return 'La venta no tenía precio';
-    final bolivares = widget.aBolivares?.call(importe);
-    return 'Se le devuelven ${formatearDolares(importe)}'
-        '${bolivares == null ? '' : ' · ${formatearBolivares(bolivares)}'}';
+    final tasa = widget.venta.tasa;
+    final monto =
+        reembolsoEnMoneda(importe, _medio, tasa) ??
+        widget.aBolivares?.call(importe);
+    if (_medio.moneda == Moneda.dolares || monto == null) {
+      return 'Se le devuelven ${formatearDolares(importe)}';
+    }
+    final aTasa = tasa == null ? 'a la tasa de hoy' : 'a la tasa de esa venta';
+    return 'Se le devuelven ${formatearBolivares(monto)} '
+        '(${formatearDolares(importe)} $aTasa)';
   }
+
+  void _elegirMedio(MedioPago medio) => setState(() => _medio = medio);
 
   Future<void> _registrar() async {
     if (_guardando || !(_formulario.currentState?.validate() ?? false)) return;
@@ -108,6 +133,7 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
       widget.venta,
       cantidad: cantidad,
       destino: _destino,
+      medio: _medio,
       nota: _nota.text.trim(),
     );
     if (!mounted) return;
@@ -148,6 +174,9 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
     for (final (i, tecla) in _teclasDestino.indexed)
       SingleActivator(tecla, alt: true): () =>
           setState(() => _destino = DestinoDevolucion.values[i]),
+    for (final medio in mediosReembolso)
+      SingleActivator(teclasMedioPago[medio.index], alt: true): () =>
+          _elegirMedio(medio),
   };
 
   @override
@@ -184,10 +213,15 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                           style: const TextStyle(fontWeight: FontWeight.w600),
                         ),
                         TextSpan(
-                          text:
-                              'Vendido a las ${textoHora(venta.fecha)} · '
-                              '${textoDetalleMovimiento(venta)}'
-                              '${venta.importe == null ? '' : ' · ${formatearDolares(venta.importe!)}'}',
+                          text: [
+                            'Vendido ${formatearFechaCorta(venta.fecha, DateTime.now())} '
+                                'a las ${textoHora(venta.fecha)}',
+                            textoDetalleMovimiento(venta),
+                            if (venta.importe case final importe?)
+                              formatearDolares(importe),
+                            if (widget.pagada case final pagada?)
+                              'pagó en ${pagada.pagos.map((p) => p.medio.etiqueta).toSet().join(' + ')}',
+                          ].join(' · '),
                           style: TextStyle(color: colores.onSurfaceVariant),
                         ),
                       ],
@@ -200,16 +234,6 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                     decimales: _decimales,
                     sufijo: unidad.simbolo,
                     maximo: _maximo,
-                  ),
-                  ListenableBuilder(
-                    listenable: _cantidad,
-                    builder: (context, _) => Text(
-                      _reembolso ?? '',
-                      style: tema.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: const [FontFeature.tabularFigures()],
-                      ),
-                    ),
                   ),
                   ExcludeFocus(
                     child: Row(
@@ -228,6 +252,24 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                       ],
                     ),
                   ),
+                  ConEtiqueta(
+                    etiqueta: 'Cómo se le devuelve el dinero',
+                    child: OpcionesMedioPago(
+                      elegido: _medio,
+                      onElegir: _elegirMedio,
+                      medios: mediosReembolso,
+                    ),
+                  ),
+                  ListenableBuilder(
+                    listenable: _cantidad,
+                    builder: (context, _) => Text(
+                      _reembolso ?? '',
+                      style: tema.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        fontFeatures: const [FontFeature.tabularFigures()],
+                      ),
+                    ),
+                  ),
                   TextFormField(
                     controller: _nota,
                     textCapitalization: TextCapitalization.sentences,
@@ -244,8 +286,8 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                     onCrear: () => unawaited(_registrar()),
                   ),
                   Text(
-                    'Alt+Q vuelve al stock · Alt+W va a merma · Enter '
-                    'registra · Esc cierra',
+                    'Alt+Q vuelve al stock · Alt+W va a merma · Alt+1… '
+                    'cómo se devuelve · Enter registra · Esc cierra',
                     textAlign: TextAlign.center,
                     style: tema.textTheme.bodySmall?.copyWith(
                       color: colores.onSurfaceVariant,

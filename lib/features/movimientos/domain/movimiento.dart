@@ -1,3 +1,4 @@
+import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 
@@ -22,6 +23,7 @@ class Movimiento {
     this.nota = '',
     this.origenId,
     this.ventaId,
+    this.medioReembolso,
   });
 
   /// Empty until the repository stores it.
@@ -69,6 +71,10 @@ class Movimiento {
   /// The paid ticket a sale line belongs to; null for one-product sales.
   final String? ventaId;
 
+  /// How a customer return's money was handed back; null for everything
+  /// else and for returns made before it was asked (taken as dollar cash).
+  final MedioPago? medioReembolso;
+
   Movimiento _con({String? id, DateTime? fecha, bool? anulada}) => Movimiento(
     id: id ?? this.id,
     fecha: fecha ?? this.fecha,
@@ -88,6 +94,7 @@ class Movimiento {
     nota: nota,
     origenId: origenId,
     ventaId: ventaId,
+    medioReembolso: medioReembolso,
   );
 
   Movimiento conId(String id) => _con(id: id);
@@ -116,7 +123,8 @@ class Movimiento {
       other.tasa == tasa &&
       other.nota == nota &&
       other.origenId == origenId &&
-      other.ventaId == ventaId;
+      other.ventaId == ventaId &&
+      other.medioReembolso == medioReembolso;
 
   @override
   int get hashCode => Object.hash(
@@ -138,5 +146,6 @@ class Movimiento {
     nota,
     origenId,
     ventaId,
+    medioReembolso,
   );
 }
