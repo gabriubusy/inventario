@@ -22,6 +22,7 @@ class FichaProveedor extends StatelessWidget {
     required this.hoy,
     required this.onRegistrarIncidencia,
     required this.onResponder,
+    this.onDevolver,
     this.deuda = 0,
   });
 
@@ -35,6 +36,9 @@ class FichaProveedor extends StatelessWidget {
   final DateTime hoy;
   final VoidCallback onRegistrarIncidencia;
   final void Function(Incidencia, RespuestaProveedor?) onResponder;
+
+  /// Ctrl+D: sends goods back to this supplier; hidden when null.
+  final VoidCallback? onDevolver;
 
   /// What is still owed to this supplier, in dollar hundredths.
   final int deuda;
@@ -51,6 +55,7 @@ class FichaProveedor extends StatelessWidget {
       color: colores.onSurfaceVariant,
     );
     final marcas = marcasDe(suministros);
+    final onDevolver = this.onDevolver;
     return Card(
       child: SingleChildScrollView(
         padding: EdgeInsets.all(espaciado.xl),
@@ -113,6 +118,21 @@ class FichaProveedor extends StatelessWidget {
                           ],
                         ),
                       ),
+                      if (onDevolver != null)
+                        OutlinedButton(
+                          onPressed: onDevolver,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: espaciado.sm,
+                            children: [
+                              const Text('Devolver'),
+                              TeclaAtajo(
+                                'Ctrl+D',
+                                color: colores.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
+                        ),
                       FilledButton(
                         onPressed: onRegistrarEntrada,
                         style: FilledButton.styleFrom(

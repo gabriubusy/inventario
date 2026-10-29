@@ -6,6 +6,9 @@ import 'package:inventario/features/caja/domain/movimientos_caja.dart';
 import 'package:inventario/features/compras/domain/compra.dart';
 import 'package:inventario/features/compras/domain/linea_compra.dart';
 import 'package:inventario/features/compras/domain/pago.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/compensacion.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/devolucion_proveedor.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/motivo_devolucion.dart';
 import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
 import 'package:inventario/features/gastos/domain/gasto.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
@@ -151,6 +154,42 @@ void main() {
     final movimientos = movimientosDeCaja(caja: caja, lineas: [devolucion]);
     expect(saldosDeCaja(movimientos)[MedioPago.pagoMovil], -288025);
     expect(saldosDeCaja(movimientos)[MedioPago.efectivoDolares], 2000);
+  });
+
+  test('money a supplier hands back for returned goods comes in', () {
+    final devolucion = DevolucionProveedor(
+      fecha: a(15),
+      proveedor: 'Frigorífico 1',
+      motivo: MotivoDevolucion.danado,
+      lineas: const [
+        LineaCompra(
+          productoId: 'p',
+          producto: 'Chuleta',
+          forma: FormaConteo.porKilo,
+          marca: 'Propia',
+          cantidad: 3200,
+          costo: 700,
+        ),
+      ],
+      compensacion: Compensacion.dinero,
+      medio: MedioPago.efectivoDolares,
+      entregado: 2240,
+    );
+    final descuento = DevolucionProveedor(
+      fecha: a(15),
+      proveedor: 'Frigorífico 1',
+      motivo: MotivoDevolucion.danado,
+      lineas: devolucion.lineas,
+      compensacion: Compensacion.descuento,
+      compraId: 'c1',
+    );
+    final saldos = saldosDeCaja(
+      movimientosDeCaja(
+        caja: caja,
+        devolucionesProveedor: [devolucion, descuento],
+      ),
+    );
+    expect(saldos[MedioPago.efectivoDolares], 2000 + 2240);
   });
 
   test('only what happened while the till was open counts', () {

@@ -6,6 +6,8 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
+import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
+import 'package:inventario/features/devoluciones_proveedor/presentation/dialogo_devolucion_proveedor.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/domain/incidencia.dart';
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
@@ -26,6 +28,7 @@ class PantallaProveedores extends StatefulWidget {
     required this.existencias,
     required this.compras,
     required this.incidencias,
+    this.devoluciones,
     this.aBolivares,
   });
 
@@ -38,6 +41,9 @@ class PantallaProveedores extends StatefulWidget {
   final ControladorExistencias existencias;
   final ControladorCompras compras;
   final ControladorIncidencias incidencias;
+
+  /// Ctrl+D sends goods back to the chosen supplier; optional in tests.
+  final ControladorDevolucionesProveedor? devoluciones;
   final int? Function(int)? aBolivares;
 
   @override
@@ -92,6 +98,21 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
     ),
   );
 
+  void _devolver() {
+    final devoluciones = widget.devoluciones;
+    if (devoluciones == null) return;
+    unawaited(
+      mostrarDialogoDevolucionProveedor(
+        context,
+        devoluciones: devoluciones,
+        existencias: widget.existencias,
+        proveedores: widget.controlador.nombres,
+        proveedorInicial: widget.controlador.elegido?.nombre ?? '',
+        aBolivares: widget.aBolivares,
+      ),
+    );
+  }
+
   void _responder(Incidencia incidencia, RespuestaProveedor? respuesta) =>
       unawaited(
         responderIncidencia(
@@ -105,6 +126,7 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
   Map<ShortcutActivator, VoidCallback> get _atajos => {
     const SingleActivator(LogicalKeyboardKey.keyI, control: true):
         _registrarIncidencia,
+    const SingleActivator(LogicalKeyboardKey.keyD, control: true): _devolver,
     const SingleActivator(LogicalKeyboardKey.escape): _volver,
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): _nuevo,
     const SingleActivator(LogicalKeyboardKey.keyE, control: true): _editar,
@@ -173,6 +195,9 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                                       onRegistrarIncidencia:
                                           _registrarIncidencia,
                                       onResponder: _responder,
+                                      onDevolver: widget.devoluciones == null
+                                          ? null
+                                          : _devolver,
                                       deuda: widget.compras.deudaDe(
                                         elegido.nombre,
                                       ),

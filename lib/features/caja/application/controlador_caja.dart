@@ -5,6 +5,7 @@ import 'package:inventario/features/caja/domain/movimiento_caja.dart';
 import 'package:inventario/features/caja/domain/movimientos_caja.dart';
 import 'package:inventario/features/caja/domain/repositorio_cajas.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
 import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/salidas/domain/repositorio_ventas.dart';
@@ -19,6 +20,7 @@ class ControladorCaja extends ChangeNotifier {
     this._movimientos,
     this._compras,
     this._gastos,
+    this._devolucionesProveedor,
     this._tasaDeHoy,
     this._ahora = DateTime.now,
   });
@@ -28,6 +30,7 @@ class ControladorCaja extends ChangeNotifier {
   final ControladorMovimientos? _movimientos;
   final ControladorCompras? _compras;
   final ControladorGastos? _gastos;
+  final ControladorDevolucionesProveedor? _devolucionesProveedor;
   final int? Function()? _tasaDeHoy;
   final DateTime Function() _ahora;
   List<Caja> _cajas = const [];
@@ -66,6 +69,7 @@ class ControladorCaja extends ChangeNotifier {
     compras: _compras?.compras ?? const [],
     pagos: _compras?.pagos ?? const [],
     gastos: _gastos?.todos ?? const [],
+    devolucionesProveedor: _devolucionesProveedor?.todas ?? const [],
   );
 
   Map<MedioPago, int> saldosDe(Caja caja) => saldosDeCaja(movimientosDe(caja));

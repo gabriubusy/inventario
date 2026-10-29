@@ -18,7 +18,11 @@ enum EstadoCuenta {
 
 /// An invoice on credit with what was paid so far.
 class CuentaPorPagar {
-  const CuentaPorPagar({required this.compra, required this.pagos});
+  const CuentaPorPagar({
+    required this.compra,
+    required this.pagos,
+    this.devuelto = 0,
+  });
 
   /// Days ahead in which an invoice counts as "vence pronto".
   static const diasAviso = 7;
@@ -26,10 +30,14 @@ class CuentaPorPagar {
   final Compra compra;
   final List<Pago> pagos;
 
+  /// Goods sent back that the supplier took off this invoice, in dollar
+  /// hundredths.
+  final int devuelto;
+
   /// In dollar hundredths.
   int get abonado => pagos.fold(0, (suma, p) => suma + p.monto);
 
-  int get debe => compra.total - abonado;
+  int get debe => compra.total - abonado - devuelto;
 
   /// Negative once it is overdue.
   int diasParaVencer(DateTime hoy) => diasEntre(hoy, compra.vence ?? hoy);

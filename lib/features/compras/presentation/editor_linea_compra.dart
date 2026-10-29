@@ -21,9 +21,13 @@ class EditorLineaCompra extends StatefulWidget {
     required this.productos,
     required this.proveedor,
     required this.onAgregar,
+    this.conOtraMarca = true,
   });
 
   final List<Producto> productos;
+
+  /// False to only offer brands already in stock, as when sending back.
+  final bool conOtraMarca;
 
   /// The invoice's supplier, whose brands are offered.
   final String proveedor;
@@ -98,7 +102,8 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
 
   /// Alt+1… from the window; the last number is "Otra marca".
   void elegirMarca(int indice) {
-    if (_producto == null || indice > _lotes.length) return;
+    final limite = widget.conOtraMarca ? _lotes.length : _lotes.length - 1;
+    if (_producto == null || indice > limite) return;
     _elegirLote(indice == _lotes.length ? null : indice);
   }
 
@@ -169,6 +174,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                 lotes: _lotes,
                 elegido: _lote,
                 onElegir: _elegirLote,
+                conOtraMarca: widget.conOtraMarca,
               ),
             ),
             Row(

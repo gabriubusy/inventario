@@ -14,6 +14,9 @@ import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/compras/presentation/pantalla_cuentas.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
+import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
+import 'package:inventario/features/devoluciones_proveedor/presentation/dialogo_devolucion_proveedor.dart';
+import 'package:inventario/features/devoluciones_proveedor/presentation/pantalla_devoluciones_proveedor.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/entradas/presentation/aviso_entrada.dart';
 import 'package:inventario/features/gastos/application/controlador_gastos.dart';
@@ -66,6 +69,7 @@ class PantallaInicio extends StatefulWidget {
     required this.ajustes,
     required this.conteo,
     required this.devoluciones,
+    this.devolucionesProveedor,
     required this.listaProductos,
     required this.tasa,
     required this.fotos,
@@ -88,6 +92,9 @@ class PantallaInicio extends StatefulWidget {
   final ControladorAjustes ajustes;
   final ControladorConteo conteo;
   final ControladorDevoluciones devoluciones;
+
+  /// Goods sent back to suppliers (Ctrl+D); optional in tests.
+  final ControladorDevolucionesProveedor? devolucionesProveedor;
   final ControladorListaProductos listaProductos;
   final ControladorTasa tasa;
   final GestorFotos fotos;
@@ -290,23 +297,73 @@ class _PantallaInicioState extends State<PantallaInicio> {
           existencias: widget.controlador,
           compras: widget.compras,
           incidencias: widget.incidencias,
+          devoluciones: widget.devolucionesProveedor,
           aBolivares: widget.tasa.aBolivares,
         ),
       ),
     ),
   );
 
-  void _abrirIncidencias() => unawaited(
-    Navigator.of(context).push(
+  void _abrirIncidencias() {
+    final devoluciones = widget.devolucionesProveedor;
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (contexto) => PantallaIncidencias(
+            incidencias: widget.incidencias,
+            existencias: widget.controlador,
+            proveedores: widget.proveedores.nombres,
+            onDevoluciones: devoluciones == null
+                ? null
+                : () => _abrirDevolucionesProveedor(contexto, devoluciones),
+            onDevolver: devoluciones == null
+                ? null
+                : (incidencia) => unawaited(
+                    mostrarDialogoDevolucionProveedor(
+                      contexto,
+                      devoluciones: devoluciones,
+                      existencias: widget.controlador,
+                      proveedores: widget.proveedores.nombres,
+                      incidencia: incidencia,
+                      aBolivares: widget.tasa.aBolivares,
+                    ),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// Opened from F6, so Esc goes back to the incidents.
+  void _abrirDevolucionesProveedor(
+    BuildContext contexto,
+    ControladorDevolucionesProveedor devoluciones,
+  ) => unawaited(
+    Navigator.of(contexto).push(
       MaterialPageRoute<void>(
-        builder: (_) => PantallaIncidencias(
-          incidencias: widget.incidencias,
+        builder: (_) => PantallaDevolucionesProveedor(
+          devoluciones: devoluciones,
           existencias: widget.controlador,
           proveedores: widget.proveedores.nombres,
+          aBolivares: widget.tasa.aBolivares,
         ),
       ),
     ),
   );
+
+  void _devolverAProveedor() {
+    final devoluciones = widget.devolucionesProveedor;
+    if (devoluciones == null) return;
+    unawaited(
+      mostrarDialogoDevolucionProveedor(
+        context,
+        devoluciones: devoluciones,
+        existencias: widget.controlador,
+        proveedores: widget.proveedores.nombres,
+        aBolivares: widget.tasa.aBolivares,
+      ),
+    );
+  }
 
   void _registrarIncidencia() => unawaited(
     mostrarDialogoIncidencia(
@@ -340,6 +397,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
         widget.onCambiarPin,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true):
         _registrarIncidencia,
+    const SingleActivator(LogicalKeyboardKey.keyD, control: true):
+        _devolverAProveedor,
     const SingleActivator(LogicalKeyboardKey.keyT, control: true): _ponerTasa,
     const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
         _deshacerMovimiento,

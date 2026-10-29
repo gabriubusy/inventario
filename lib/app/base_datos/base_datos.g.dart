@@ -6991,6 +6991,1401 @@ class GastosCompanion extends UpdateCompanion<FilaGasto> {
   }
 }
 
+class $DevolucionesProveedorTable extends DevolucionesProveedor
+    with TableInfo<$DevolucionesProveedorTable, FilaDevolucionProveedor> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $DevolucionesProveedorTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<String> id = GeneratedColumn<String>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _fechaMeta = const VerificationMeta('fecha');
+  @override
+  late final GeneratedColumn<DateTime> fecha = GeneratedColumn<DateTime>(
+    'fecha',
+    aliasedName,
+    false,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _proveedorMeta = const VerificationMeta(
+    'proveedor',
+  );
+  @override
+  late final GeneratedColumn<String> proveedor = GeneratedColumn<String>(
+    'proveedor',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<MotivoDevolucion, String> motivo =
+      GeneratedColumn<String>(
+        'motivo',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<MotivoDevolucion>(
+        $DevolucionesProveedorTable.$convertermotivo,
+      );
+  @override
+  late final GeneratedColumnWithTypeConverter<Compensacion, String>
+  compensacion =
+      GeneratedColumn<String>(
+        'compensacion',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<Compensacion>(
+        $DevolucionesProveedorTable.$convertercompensacion,
+      );
+  static const VerificationMeta _compraIdMeta = const VerificationMeta(
+    'compraId',
+  );
+  @override
+  late final GeneratedColumn<String> compraId = GeneratedColumn<String>(
+    'compra_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<MedioPago?, String> medio =
+      GeneratedColumn<String>(
+        'medio',
+        aliasedName,
+        true,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+      ).withConverter<MedioPago?>($DevolucionesProveedorTable.$convertermedion);
+  static const VerificationMeta _entregadoMeta = const VerificationMeta(
+    'entregado',
+  );
+  @override
+  late final GeneratedColumn<int> entregado = GeneratedColumn<int>(
+    'entregado',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _tasaMeta = const VerificationMeta('tasa');
+  @override
+  late final GeneratedColumn<int> tasa = GeneratedColumn<int>(
+    'tasa',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _repuestaMeta = const VerificationMeta(
+    'repuesta',
+  );
+  @override
+  late final GeneratedColumn<DateTime> repuesta = GeneratedColumn<DateTime>(
+    'repuesta',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _notaMeta = const VerificationMeta('nota');
+  @override
+  late final GeneratedColumn<String> nota = GeneratedColumn<String>(
+    'nota',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _incidenciaIdMeta = const VerificationMeta(
+    'incidenciaId',
+  );
+  @override
+  late final GeneratedColumn<String> incidenciaId = GeneratedColumn<String>(
+    'incidencia_id',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _sacadaMeta = const VerificationMeta('sacada');
+  @override
+  late final GeneratedColumn<bool> sacada = GeneratedColumn<bool>(
+    'sacada',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("sacada" IN (0, 1))',
+    ),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    fecha,
+    proveedor,
+    motivo,
+    compensacion,
+    compraId,
+    medio,
+    entregado,
+    tasa,
+    repuesta,
+    nota,
+    incidenciaId,
+    sacada,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'devoluciones_proveedor';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FilaDevolucionProveedor> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    } else if (isInserting) {
+      context.missing(_idMeta);
+    }
+    if (data.containsKey('fecha')) {
+      context.handle(
+        _fechaMeta,
+        fecha.isAcceptableOrUnknown(data['fecha']!, _fechaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_fechaMeta);
+    }
+    if (data.containsKey('proveedor')) {
+      context.handle(
+        _proveedorMeta,
+        proveedor.isAcceptableOrUnknown(data['proveedor']!, _proveedorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_proveedorMeta);
+    }
+    if (data.containsKey('compra_id')) {
+      context.handle(
+        _compraIdMeta,
+        compraId.isAcceptableOrUnknown(data['compra_id']!, _compraIdMeta),
+      );
+    }
+    if (data.containsKey('entregado')) {
+      context.handle(
+        _entregadoMeta,
+        entregado.isAcceptableOrUnknown(data['entregado']!, _entregadoMeta),
+      );
+    }
+    if (data.containsKey('tasa')) {
+      context.handle(
+        _tasaMeta,
+        tasa.isAcceptableOrUnknown(data['tasa']!, _tasaMeta),
+      );
+    }
+    if (data.containsKey('repuesta')) {
+      context.handle(
+        _repuestaMeta,
+        repuesta.isAcceptableOrUnknown(data['repuesta']!, _repuestaMeta),
+      );
+    }
+    if (data.containsKey('nota')) {
+      context.handle(
+        _notaMeta,
+        nota.isAcceptableOrUnknown(data['nota']!, _notaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_notaMeta);
+    }
+    if (data.containsKey('incidencia_id')) {
+      context.handle(
+        _incidenciaIdMeta,
+        incidenciaId.isAcceptableOrUnknown(
+          data['incidencia_id']!,
+          _incidenciaIdMeta,
+        ),
+      );
+    }
+    if (data.containsKey('sacada')) {
+      context.handle(
+        _sacadaMeta,
+        sacada.isAcceptableOrUnknown(data['sacada']!, _sacadaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_sacadaMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FilaDevolucionProveedor map(
+    Map<String, dynamic> data, {
+    String? tablePrefix,
+  }) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FilaDevolucionProveedor(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}id'],
+      )!,
+      fecha: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}fecha'],
+      )!,
+      proveedor: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}proveedor'],
+      )!,
+      motivo: $DevolucionesProveedorTable.$convertermotivo.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}motivo'],
+        )!,
+      ),
+      compensacion: $DevolucionesProveedorTable.$convertercompensacion.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}compensacion'],
+        )!,
+      ),
+      compraId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}compra_id'],
+      ),
+      medio: $DevolucionesProveedorTable.$convertermedion.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}medio'],
+        ),
+      ),
+      entregado: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}entregado'],
+      ),
+      tasa: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}tasa'],
+      ),
+      repuesta: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}repuesta'],
+      ),
+      nota: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nota'],
+      )!,
+      incidenciaId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}incidencia_id'],
+      ),
+      sacada: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}sacada'],
+      )!,
+    );
+  }
+
+  @override
+  $DevolucionesProveedorTable createAlias(String alias) {
+    return $DevolucionesProveedorTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<MotivoDevolucion, String, String> $convertermotivo =
+      const EnumNameConverter<MotivoDevolucion>(MotivoDevolucion.values);
+  static JsonTypeConverter2<Compensacion, String, String>
+  $convertercompensacion = const EnumNameConverter<Compensacion>(
+    Compensacion.values,
+  );
+  static JsonTypeConverter2<MedioPago, String, String> $convertermedio =
+      const EnumNameConverter<MedioPago>(MedioPago.values);
+  static JsonTypeConverter2<MedioPago?, String?, String?> $convertermedion =
+      JsonTypeConverter2.asNullable($convertermedio);
+}
+
+class FilaDevolucionProveedor extends DataClass
+    implements Insertable<FilaDevolucionProveedor> {
+  final String id;
+  final DateTime fecha;
+  final String proveedor;
+  final MotivoDevolucion motivo;
+  final Compensacion compensacion;
+  final String? compraId;
+  final MedioPago? medio;
+  final int? entregado;
+  final int? tasa;
+  final DateTime? repuesta;
+  final String nota;
+  final String? incidenciaId;
+  final bool sacada;
+  const FilaDevolucionProveedor({
+    required this.id,
+    required this.fecha,
+    required this.proveedor,
+    required this.motivo,
+    required this.compensacion,
+    this.compraId,
+    this.medio,
+    this.entregado,
+    this.tasa,
+    this.repuesta,
+    required this.nota,
+    this.incidenciaId,
+    required this.sacada,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<String>(id);
+    map['fecha'] = Variable<DateTime>(fecha);
+    map['proveedor'] = Variable<String>(proveedor);
+    {
+      map['motivo'] = Variable<String>(
+        $DevolucionesProveedorTable.$convertermotivo.toSql(motivo),
+      );
+    }
+    {
+      map['compensacion'] = Variable<String>(
+        $DevolucionesProveedorTable.$convertercompensacion.toSql(compensacion),
+      );
+    }
+    if (!nullToAbsent || compraId != null) {
+      map['compra_id'] = Variable<String>(compraId);
+    }
+    if (!nullToAbsent || medio != null) {
+      map['medio'] = Variable<String>(
+        $DevolucionesProveedorTable.$convertermedion.toSql(medio),
+      );
+    }
+    if (!nullToAbsent || entregado != null) {
+      map['entregado'] = Variable<int>(entregado);
+    }
+    if (!nullToAbsent || tasa != null) {
+      map['tasa'] = Variable<int>(tasa);
+    }
+    if (!nullToAbsent || repuesta != null) {
+      map['repuesta'] = Variable<DateTime>(repuesta);
+    }
+    map['nota'] = Variable<String>(nota);
+    if (!nullToAbsent || incidenciaId != null) {
+      map['incidencia_id'] = Variable<String>(incidenciaId);
+    }
+    map['sacada'] = Variable<bool>(sacada);
+    return map;
+  }
+
+  DevolucionesProveedorCompanion toCompanion(bool nullToAbsent) {
+    return DevolucionesProveedorCompanion(
+      id: Value(id),
+      fecha: Value(fecha),
+      proveedor: Value(proveedor),
+      motivo: Value(motivo),
+      compensacion: Value(compensacion),
+      compraId: compraId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(compraId),
+      medio: medio == null && nullToAbsent
+          ? const Value.absent()
+          : Value(medio),
+      entregado: entregado == null && nullToAbsent
+          ? const Value.absent()
+          : Value(entregado),
+      tasa: tasa == null && nullToAbsent ? const Value.absent() : Value(tasa),
+      repuesta: repuesta == null && nullToAbsent
+          ? const Value.absent()
+          : Value(repuesta),
+      nota: Value(nota),
+      incidenciaId: incidenciaId == null && nullToAbsent
+          ? const Value.absent()
+          : Value(incidenciaId),
+      sacada: Value(sacada),
+    );
+  }
+
+  factory FilaDevolucionProveedor.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FilaDevolucionProveedor(
+      id: serializer.fromJson<String>(json['id']),
+      fecha: serializer.fromJson<DateTime>(json['fecha']),
+      proveedor: serializer.fromJson<String>(json['proveedor']),
+      motivo: $DevolucionesProveedorTable.$convertermotivo.fromJson(
+        serializer.fromJson<String>(json['motivo']),
+      ),
+      compensacion: $DevolucionesProveedorTable.$convertercompensacion.fromJson(
+        serializer.fromJson<String>(json['compensacion']),
+      ),
+      compraId: serializer.fromJson<String?>(json['compraId']),
+      medio: $DevolucionesProveedorTable.$convertermedion.fromJson(
+        serializer.fromJson<String?>(json['medio']),
+      ),
+      entregado: serializer.fromJson<int?>(json['entregado']),
+      tasa: serializer.fromJson<int?>(json['tasa']),
+      repuesta: serializer.fromJson<DateTime?>(json['repuesta']),
+      nota: serializer.fromJson<String>(json['nota']),
+      incidenciaId: serializer.fromJson<String?>(json['incidenciaId']),
+      sacada: serializer.fromJson<bool>(json['sacada']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<String>(id),
+      'fecha': serializer.toJson<DateTime>(fecha),
+      'proveedor': serializer.toJson<String>(proveedor),
+      'motivo': serializer.toJson<String>(
+        $DevolucionesProveedorTable.$convertermotivo.toJson(motivo),
+      ),
+      'compensacion': serializer.toJson<String>(
+        $DevolucionesProveedorTable.$convertercompensacion.toJson(compensacion),
+      ),
+      'compraId': serializer.toJson<String?>(compraId),
+      'medio': serializer.toJson<String?>(
+        $DevolucionesProveedorTable.$convertermedion.toJson(medio),
+      ),
+      'entregado': serializer.toJson<int?>(entregado),
+      'tasa': serializer.toJson<int?>(tasa),
+      'repuesta': serializer.toJson<DateTime?>(repuesta),
+      'nota': serializer.toJson<String>(nota),
+      'incidenciaId': serializer.toJson<String?>(incidenciaId),
+      'sacada': serializer.toJson<bool>(sacada),
+    };
+  }
+
+  FilaDevolucionProveedor copyWith({
+    String? id,
+    DateTime? fecha,
+    String? proveedor,
+    MotivoDevolucion? motivo,
+    Compensacion? compensacion,
+    Value<String?> compraId = const Value.absent(),
+    Value<MedioPago?> medio = const Value.absent(),
+    Value<int?> entregado = const Value.absent(),
+    Value<int?> tasa = const Value.absent(),
+    Value<DateTime?> repuesta = const Value.absent(),
+    String? nota,
+    Value<String?> incidenciaId = const Value.absent(),
+    bool? sacada,
+  }) => FilaDevolucionProveedor(
+    id: id ?? this.id,
+    fecha: fecha ?? this.fecha,
+    proveedor: proveedor ?? this.proveedor,
+    motivo: motivo ?? this.motivo,
+    compensacion: compensacion ?? this.compensacion,
+    compraId: compraId.present ? compraId.value : this.compraId,
+    medio: medio.present ? medio.value : this.medio,
+    entregado: entregado.present ? entregado.value : this.entregado,
+    tasa: tasa.present ? tasa.value : this.tasa,
+    repuesta: repuesta.present ? repuesta.value : this.repuesta,
+    nota: nota ?? this.nota,
+    incidenciaId: incidenciaId.present ? incidenciaId.value : this.incidenciaId,
+    sacada: sacada ?? this.sacada,
+  );
+  FilaDevolucionProveedor copyWithCompanion(
+    DevolucionesProveedorCompanion data,
+  ) {
+    return FilaDevolucionProveedor(
+      id: data.id.present ? data.id.value : this.id,
+      fecha: data.fecha.present ? data.fecha.value : this.fecha,
+      proveedor: data.proveedor.present ? data.proveedor.value : this.proveedor,
+      motivo: data.motivo.present ? data.motivo.value : this.motivo,
+      compensacion: data.compensacion.present
+          ? data.compensacion.value
+          : this.compensacion,
+      compraId: data.compraId.present ? data.compraId.value : this.compraId,
+      medio: data.medio.present ? data.medio.value : this.medio,
+      entregado: data.entregado.present ? data.entregado.value : this.entregado,
+      tasa: data.tasa.present ? data.tasa.value : this.tasa,
+      repuesta: data.repuesta.present ? data.repuesta.value : this.repuesta,
+      nota: data.nota.present ? data.nota.value : this.nota,
+      incidenciaId: data.incidenciaId.present
+          ? data.incidenciaId.value
+          : this.incidenciaId,
+      sacada: data.sacada.present ? data.sacada.value : this.sacada,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FilaDevolucionProveedor(')
+          ..write('id: $id, ')
+          ..write('fecha: $fecha, ')
+          ..write('proveedor: $proveedor, ')
+          ..write('motivo: $motivo, ')
+          ..write('compensacion: $compensacion, ')
+          ..write('compraId: $compraId, ')
+          ..write('medio: $medio, ')
+          ..write('entregado: $entregado, ')
+          ..write('tasa: $tasa, ')
+          ..write('repuesta: $repuesta, ')
+          ..write('nota: $nota, ')
+          ..write('incidenciaId: $incidenciaId, ')
+          ..write('sacada: $sacada')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    fecha,
+    proveedor,
+    motivo,
+    compensacion,
+    compraId,
+    medio,
+    entregado,
+    tasa,
+    repuesta,
+    nota,
+    incidenciaId,
+    sacada,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FilaDevolucionProveedor &&
+          other.id == this.id &&
+          other.fecha == this.fecha &&
+          other.proveedor == this.proveedor &&
+          other.motivo == this.motivo &&
+          other.compensacion == this.compensacion &&
+          other.compraId == this.compraId &&
+          other.medio == this.medio &&
+          other.entregado == this.entregado &&
+          other.tasa == this.tasa &&
+          other.repuesta == this.repuesta &&
+          other.nota == this.nota &&
+          other.incidenciaId == this.incidenciaId &&
+          other.sacada == this.sacada);
+}
+
+class DevolucionesProveedorCompanion
+    extends UpdateCompanion<FilaDevolucionProveedor> {
+  final Value<String> id;
+  final Value<DateTime> fecha;
+  final Value<String> proveedor;
+  final Value<MotivoDevolucion> motivo;
+  final Value<Compensacion> compensacion;
+  final Value<String?> compraId;
+  final Value<MedioPago?> medio;
+  final Value<int?> entregado;
+  final Value<int?> tasa;
+  final Value<DateTime?> repuesta;
+  final Value<String> nota;
+  final Value<String?> incidenciaId;
+  final Value<bool> sacada;
+  final Value<int> rowid;
+  const DevolucionesProveedorCompanion({
+    this.id = const Value.absent(),
+    this.fecha = const Value.absent(),
+    this.proveedor = const Value.absent(),
+    this.motivo = const Value.absent(),
+    this.compensacion = const Value.absent(),
+    this.compraId = const Value.absent(),
+    this.medio = const Value.absent(),
+    this.entregado = const Value.absent(),
+    this.tasa = const Value.absent(),
+    this.repuesta = const Value.absent(),
+    this.nota = const Value.absent(),
+    this.incidenciaId = const Value.absent(),
+    this.sacada = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  DevolucionesProveedorCompanion.insert({
+    required String id,
+    required DateTime fecha,
+    required String proveedor,
+    required MotivoDevolucion motivo,
+    required Compensacion compensacion,
+    this.compraId = const Value.absent(),
+    this.medio = const Value.absent(),
+    this.entregado = const Value.absent(),
+    this.tasa = const Value.absent(),
+    this.repuesta = const Value.absent(),
+    required String nota,
+    this.incidenciaId = const Value.absent(),
+    required bool sacada,
+    this.rowid = const Value.absent(),
+  }) : id = Value(id),
+       fecha = Value(fecha),
+       proveedor = Value(proveedor),
+       motivo = Value(motivo),
+       compensacion = Value(compensacion),
+       nota = Value(nota),
+       sacada = Value(sacada);
+  static Insertable<FilaDevolucionProveedor> custom({
+    Expression<String>? id,
+    Expression<DateTime>? fecha,
+    Expression<String>? proveedor,
+    Expression<String>? motivo,
+    Expression<String>? compensacion,
+    Expression<String>? compraId,
+    Expression<String>? medio,
+    Expression<int>? entregado,
+    Expression<int>? tasa,
+    Expression<DateTime>? repuesta,
+    Expression<String>? nota,
+    Expression<String>? incidenciaId,
+    Expression<bool>? sacada,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (fecha != null) 'fecha': fecha,
+      if (proveedor != null) 'proveedor': proveedor,
+      if (motivo != null) 'motivo': motivo,
+      if (compensacion != null) 'compensacion': compensacion,
+      if (compraId != null) 'compra_id': compraId,
+      if (medio != null) 'medio': medio,
+      if (entregado != null) 'entregado': entregado,
+      if (tasa != null) 'tasa': tasa,
+      if (repuesta != null) 'repuesta': repuesta,
+      if (nota != null) 'nota': nota,
+      if (incidenciaId != null) 'incidencia_id': incidenciaId,
+      if (sacada != null) 'sacada': sacada,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  DevolucionesProveedorCompanion copyWith({
+    Value<String>? id,
+    Value<DateTime>? fecha,
+    Value<String>? proveedor,
+    Value<MotivoDevolucion>? motivo,
+    Value<Compensacion>? compensacion,
+    Value<String?>? compraId,
+    Value<MedioPago?>? medio,
+    Value<int?>? entregado,
+    Value<int?>? tasa,
+    Value<DateTime?>? repuesta,
+    Value<String>? nota,
+    Value<String?>? incidenciaId,
+    Value<bool>? sacada,
+    Value<int>? rowid,
+  }) {
+    return DevolucionesProveedorCompanion(
+      id: id ?? this.id,
+      fecha: fecha ?? this.fecha,
+      proveedor: proveedor ?? this.proveedor,
+      motivo: motivo ?? this.motivo,
+      compensacion: compensacion ?? this.compensacion,
+      compraId: compraId ?? this.compraId,
+      medio: medio ?? this.medio,
+      entregado: entregado ?? this.entregado,
+      tasa: tasa ?? this.tasa,
+      repuesta: repuesta ?? this.repuesta,
+      nota: nota ?? this.nota,
+      incidenciaId: incidenciaId ?? this.incidenciaId,
+      sacada: sacada ?? this.sacada,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<String>(id.value);
+    }
+    if (fecha.present) {
+      map['fecha'] = Variable<DateTime>(fecha.value);
+    }
+    if (proveedor.present) {
+      map['proveedor'] = Variable<String>(proveedor.value);
+    }
+    if (motivo.present) {
+      map['motivo'] = Variable<String>(
+        $DevolucionesProveedorTable.$convertermotivo.toSql(motivo.value),
+      );
+    }
+    if (compensacion.present) {
+      map['compensacion'] = Variable<String>(
+        $DevolucionesProveedorTable.$convertercompensacion.toSql(
+          compensacion.value,
+        ),
+      );
+    }
+    if (compraId.present) {
+      map['compra_id'] = Variable<String>(compraId.value);
+    }
+    if (medio.present) {
+      map['medio'] = Variable<String>(
+        $DevolucionesProveedorTable.$convertermedion.toSql(medio.value),
+      );
+    }
+    if (entregado.present) {
+      map['entregado'] = Variable<int>(entregado.value);
+    }
+    if (tasa.present) {
+      map['tasa'] = Variable<int>(tasa.value);
+    }
+    if (repuesta.present) {
+      map['repuesta'] = Variable<DateTime>(repuesta.value);
+    }
+    if (nota.present) {
+      map['nota'] = Variable<String>(nota.value);
+    }
+    if (incidenciaId.present) {
+      map['incidencia_id'] = Variable<String>(incidenciaId.value);
+    }
+    if (sacada.present) {
+      map['sacada'] = Variable<bool>(sacada.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('DevolucionesProveedorCompanion(')
+          ..write('id: $id, ')
+          ..write('fecha: $fecha, ')
+          ..write('proveedor: $proveedor, ')
+          ..write('motivo: $motivo, ')
+          ..write('compensacion: $compensacion, ')
+          ..write('compraId: $compraId, ')
+          ..write('medio: $medio, ')
+          ..write('entregado: $entregado, ')
+          ..write('tasa: $tasa, ')
+          ..write('repuesta: $repuesta, ')
+          ..write('nota: $nota, ')
+          ..write('incidenciaId: $incidenciaId, ')
+          ..write('sacada: $sacada, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $LineasDevolucionTable extends LineasDevolucion
+    with TableInfo<$LineasDevolucionTable, FilaLineaDevolucion> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $LineasDevolucionTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _devolucionIdMeta = const VerificationMeta(
+    'devolucionId',
+  );
+  @override
+  late final GeneratedColumn<String> devolucionId = GeneratedColumn<String>(
+    'devolucion_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES devoluciones_proveedor (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _ordenMeta = const VerificationMeta('orden');
+  @override
+  late final GeneratedColumn<int> orden = GeneratedColumn<int>(
+    'orden',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productoIdMeta = const VerificationMeta(
+    'productoId',
+  );
+  @override
+  late final GeneratedColumn<String> productoId = GeneratedColumn<String>(
+    'producto_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _productoMeta = const VerificationMeta(
+    'producto',
+  );
+  @override
+  late final GeneratedColumn<String> producto = GeneratedColumn<String>(
+    'producto',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<FormaConteo, String> forma =
+      GeneratedColumn<String>(
+        'forma',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<FormaConteo>($LineasDevolucionTable.$converterforma);
+  static const VerificationMeta _marcaMeta = const VerificationMeta('marca');
+  @override
+  late final GeneratedColumn<String> marca = GeneratedColumn<String>(
+    'marca',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _piezasMeta = const VerificationMeta('piezas');
+  @override
+  late final GeneratedColumn<int> piezas = GeneratedColumn<int>(
+    'piezas',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _cantidadMeta = const VerificationMeta(
+    'cantidad',
+  );
+  @override
+  late final GeneratedColumn<int> cantidad = GeneratedColumn<int>(
+    'cantidad',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _costoMeta = const VerificationMeta('costo');
+  @override
+  late final GeneratedColumn<int> costo = GeneratedColumn<int>(
+    'costo',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    devolucionId,
+    orden,
+    productoId,
+    producto,
+    forma,
+    marca,
+    piezas,
+    cantidad,
+    costo,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'lineas_devolucion';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FilaLineaDevolucion> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('devolucion_id')) {
+      context.handle(
+        _devolucionIdMeta,
+        devolucionId.isAcceptableOrUnknown(
+          data['devolucion_id']!,
+          _devolucionIdMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_devolucionIdMeta);
+    }
+    if (data.containsKey('orden')) {
+      context.handle(
+        _ordenMeta,
+        orden.isAcceptableOrUnknown(data['orden']!, _ordenMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_ordenMeta);
+    }
+    if (data.containsKey('producto_id')) {
+      context.handle(
+        _productoIdMeta,
+        productoId.isAcceptableOrUnknown(data['producto_id']!, _productoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productoIdMeta);
+    }
+    if (data.containsKey('producto')) {
+      context.handle(
+        _productoMeta,
+        producto.isAcceptableOrUnknown(data['producto']!, _productoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productoMeta);
+    }
+    if (data.containsKey('marca')) {
+      context.handle(
+        _marcaMeta,
+        marca.isAcceptableOrUnknown(data['marca']!, _marcaMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_marcaMeta);
+    }
+    if (data.containsKey('piezas')) {
+      context.handle(
+        _piezasMeta,
+        piezas.isAcceptableOrUnknown(data['piezas']!, _piezasMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_piezasMeta);
+    }
+    if (data.containsKey('cantidad')) {
+      context.handle(
+        _cantidadMeta,
+        cantidad.isAcceptableOrUnknown(data['cantidad']!, _cantidadMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_cantidadMeta);
+    }
+    if (data.containsKey('costo')) {
+      context.handle(
+        _costoMeta,
+        costo.isAcceptableOrUnknown(data['costo']!, _costoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_costoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FilaLineaDevolucion map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FilaLineaDevolucion(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      devolucionId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}devolucion_id'],
+      )!,
+      orden: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}orden'],
+      )!,
+      productoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}producto_id'],
+      )!,
+      producto: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}producto'],
+      )!,
+      forma: $LineasDevolucionTable.$converterforma.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}forma'],
+        )!,
+      ),
+      marca: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}marca'],
+      )!,
+      piezas: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}piezas'],
+      )!,
+      cantidad: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cantidad'],
+      )!,
+      costo: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}costo'],
+      )!,
+    );
+  }
+
+  @override
+  $LineasDevolucionTable createAlias(String alias) {
+    return $LineasDevolucionTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<FormaConteo, String, String> $converterforma =
+      const EnumNameConverter<FormaConteo>(FormaConteo.values);
+}
+
+class FilaLineaDevolucion extends DataClass
+    implements Insertable<FilaLineaDevolucion> {
+  final int id;
+  final String devolucionId;
+  final int orden;
+  final String productoId;
+  final String producto;
+  final FormaConteo forma;
+  final String marca;
+  final int piezas;
+  final int cantidad;
+  final int costo;
+  const FilaLineaDevolucion({
+    required this.id,
+    required this.devolucionId,
+    required this.orden,
+    required this.productoId,
+    required this.producto,
+    required this.forma,
+    required this.marca,
+    required this.piezas,
+    required this.cantidad,
+    required this.costo,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['devolucion_id'] = Variable<String>(devolucionId);
+    map['orden'] = Variable<int>(orden);
+    map['producto_id'] = Variable<String>(productoId);
+    map['producto'] = Variable<String>(producto);
+    {
+      map['forma'] = Variable<String>(
+        $LineasDevolucionTable.$converterforma.toSql(forma),
+      );
+    }
+    map['marca'] = Variable<String>(marca);
+    map['piezas'] = Variable<int>(piezas);
+    map['cantidad'] = Variable<int>(cantidad);
+    map['costo'] = Variable<int>(costo);
+    return map;
+  }
+
+  LineasDevolucionCompanion toCompanion(bool nullToAbsent) {
+    return LineasDevolucionCompanion(
+      id: Value(id),
+      devolucionId: Value(devolucionId),
+      orden: Value(orden),
+      productoId: Value(productoId),
+      producto: Value(producto),
+      forma: Value(forma),
+      marca: Value(marca),
+      piezas: Value(piezas),
+      cantidad: Value(cantidad),
+      costo: Value(costo),
+    );
+  }
+
+  factory FilaLineaDevolucion.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FilaLineaDevolucion(
+      id: serializer.fromJson<int>(json['id']),
+      devolucionId: serializer.fromJson<String>(json['devolucionId']),
+      orden: serializer.fromJson<int>(json['orden']),
+      productoId: serializer.fromJson<String>(json['productoId']),
+      producto: serializer.fromJson<String>(json['producto']),
+      forma: $LineasDevolucionTable.$converterforma.fromJson(
+        serializer.fromJson<String>(json['forma']),
+      ),
+      marca: serializer.fromJson<String>(json['marca']),
+      piezas: serializer.fromJson<int>(json['piezas']),
+      cantidad: serializer.fromJson<int>(json['cantidad']),
+      costo: serializer.fromJson<int>(json['costo']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'devolucionId': serializer.toJson<String>(devolucionId),
+      'orden': serializer.toJson<int>(orden),
+      'productoId': serializer.toJson<String>(productoId),
+      'producto': serializer.toJson<String>(producto),
+      'forma': serializer.toJson<String>(
+        $LineasDevolucionTable.$converterforma.toJson(forma),
+      ),
+      'marca': serializer.toJson<String>(marca),
+      'piezas': serializer.toJson<int>(piezas),
+      'cantidad': serializer.toJson<int>(cantidad),
+      'costo': serializer.toJson<int>(costo),
+    };
+  }
+
+  FilaLineaDevolucion copyWith({
+    int? id,
+    String? devolucionId,
+    int? orden,
+    String? productoId,
+    String? producto,
+    FormaConteo? forma,
+    String? marca,
+    int? piezas,
+    int? cantidad,
+    int? costo,
+  }) => FilaLineaDevolucion(
+    id: id ?? this.id,
+    devolucionId: devolucionId ?? this.devolucionId,
+    orden: orden ?? this.orden,
+    productoId: productoId ?? this.productoId,
+    producto: producto ?? this.producto,
+    forma: forma ?? this.forma,
+    marca: marca ?? this.marca,
+    piezas: piezas ?? this.piezas,
+    cantidad: cantidad ?? this.cantidad,
+    costo: costo ?? this.costo,
+  );
+  FilaLineaDevolucion copyWithCompanion(LineasDevolucionCompanion data) {
+    return FilaLineaDevolucion(
+      id: data.id.present ? data.id.value : this.id,
+      devolucionId: data.devolucionId.present
+          ? data.devolucionId.value
+          : this.devolucionId,
+      orden: data.orden.present ? data.orden.value : this.orden,
+      productoId: data.productoId.present
+          ? data.productoId.value
+          : this.productoId,
+      producto: data.producto.present ? data.producto.value : this.producto,
+      forma: data.forma.present ? data.forma.value : this.forma,
+      marca: data.marca.present ? data.marca.value : this.marca,
+      piezas: data.piezas.present ? data.piezas.value : this.piezas,
+      cantidad: data.cantidad.present ? data.cantidad.value : this.cantidad,
+      costo: data.costo.present ? data.costo.value : this.costo,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FilaLineaDevolucion(')
+          ..write('id: $id, ')
+          ..write('devolucionId: $devolucionId, ')
+          ..write('orden: $orden, ')
+          ..write('productoId: $productoId, ')
+          ..write('producto: $producto, ')
+          ..write('forma: $forma, ')
+          ..write('marca: $marca, ')
+          ..write('piezas: $piezas, ')
+          ..write('cantidad: $cantidad, ')
+          ..write('costo: $costo')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(
+    id,
+    devolucionId,
+    orden,
+    productoId,
+    producto,
+    forma,
+    marca,
+    piezas,
+    cantidad,
+    costo,
+  );
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FilaLineaDevolucion &&
+          other.id == this.id &&
+          other.devolucionId == this.devolucionId &&
+          other.orden == this.orden &&
+          other.productoId == this.productoId &&
+          other.producto == this.producto &&
+          other.forma == this.forma &&
+          other.marca == this.marca &&
+          other.piezas == this.piezas &&
+          other.cantidad == this.cantidad &&
+          other.costo == this.costo);
+}
+
+class LineasDevolucionCompanion extends UpdateCompanion<FilaLineaDevolucion> {
+  final Value<int> id;
+  final Value<String> devolucionId;
+  final Value<int> orden;
+  final Value<String> productoId;
+  final Value<String> producto;
+  final Value<FormaConteo> forma;
+  final Value<String> marca;
+  final Value<int> piezas;
+  final Value<int> cantidad;
+  final Value<int> costo;
+  const LineasDevolucionCompanion({
+    this.id = const Value.absent(),
+    this.devolucionId = const Value.absent(),
+    this.orden = const Value.absent(),
+    this.productoId = const Value.absent(),
+    this.producto = const Value.absent(),
+    this.forma = const Value.absent(),
+    this.marca = const Value.absent(),
+    this.piezas = const Value.absent(),
+    this.cantidad = const Value.absent(),
+    this.costo = const Value.absent(),
+  });
+  LineasDevolucionCompanion.insert({
+    this.id = const Value.absent(),
+    required String devolucionId,
+    required int orden,
+    required String productoId,
+    required String producto,
+    required FormaConteo forma,
+    required String marca,
+    required int piezas,
+    required int cantidad,
+    required int costo,
+  }) : devolucionId = Value(devolucionId),
+       orden = Value(orden),
+       productoId = Value(productoId),
+       producto = Value(producto),
+       forma = Value(forma),
+       marca = Value(marca),
+       piezas = Value(piezas),
+       cantidad = Value(cantidad),
+       costo = Value(costo);
+  static Insertable<FilaLineaDevolucion> custom({
+    Expression<int>? id,
+    Expression<String>? devolucionId,
+    Expression<int>? orden,
+    Expression<String>? productoId,
+    Expression<String>? producto,
+    Expression<String>? forma,
+    Expression<String>? marca,
+    Expression<int>? piezas,
+    Expression<int>? cantidad,
+    Expression<int>? costo,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (devolucionId != null) 'devolucion_id': devolucionId,
+      if (orden != null) 'orden': orden,
+      if (productoId != null) 'producto_id': productoId,
+      if (producto != null) 'producto': producto,
+      if (forma != null) 'forma': forma,
+      if (marca != null) 'marca': marca,
+      if (piezas != null) 'piezas': piezas,
+      if (cantidad != null) 'cantidad': cantidad,
+      if (costo != null) 'costo': costo,
+    });
+  }
+
+  LineasDevolucionCompanion copyWith({
+    Value<int>? id,
+    Value<String>? devolucionId,
+    Value<int>? orden,
+    Value<String>? productoId,
+    Value<String>? producto,
+    Value<FormaConteo>? forma,
+    Value<String>? marca,
+    Value<int>? piezas,
+    Value<int>? cantidad,
+    Value<int>? costo,
+  }) {
+    return LineasDevolucionCompanion(
+      id: id ?? this.id,
+      devolucionId: devolucionId ?? this.devolucionId,
+      orden: orden ?? this.orden,
+      productoId: productoId ?? this.productoId,
+      producto: producto ?? this.producto,
+      forma: forma ?? this.forma,
+      marca: marca ?? this.marca,
+      piezas: piezas ?? this.piezas,
+      cantidad: cantidad ?? this.cantidad,
+      costo: costo ?? this.costo,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (devolucionId.present) {
+      map['devolucion_id'] = Variable<String>(devolucionId.value);
+    }
+    if (orden.present) {
+      map['orden'] = Variable<int>(orden.value);
+    }
+    if (productoId.present) {
+      map['producto_id'] = Variable<String>(productoId.value);
+    }
+    if (producto.present) {
+      map['producto'] = Variable<String>(producto.value);
+    }
+    if (forma.present) {
+      map['forma'] = Variable<String>(
+        $LineasDevolucionTable.$converterforma.toSql(forma.value),
+      );
+    }
+    if (marca.present) {
+      map['marca'] = Variable<String>(marca.value);
+    }
+    if (piezas.present) {
+      map['piezas'] = Variable<int>(piezas.value);
+    }
+    if (cantidad.present) {
+      map['cantidad'] = Variable<int>(cantidad.value);
+    }
+    if (costo.present) {
+      map['costo'] = Variable<int>(costo.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('LineasDevolucionCompanion(')
+          ..write('id: $id, ')
+          ..write('devolucionId: $devolucionId, ')
+          ..write('orden: $orden, ')
+          ..write('productoId: $productoId, ')
+          ..write('producto: $producto, ')
+          ..write('forma: $forma, ')
+          ..write('marca: $marca, ')
+          ..write('piezas: $piezas, ')
+          ..write('cantidad: $cantidad, ')
+          ..write('costo: $costo')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BaseDatos extends GeneratedDatabase {
   _$BaseDatos(QueryExecutor e) : super(e);
   $BaseDatosManager get managers => $BaseDatosManager(this);
@@ -7007,6 +8402,11 @@ abstract class _$BaseDatos extends GeneratedDatabase {
   late final $PagosVentaTable pagosVenta = $PagosVentaTable(this);
   late final $CajasTable cajas = $CajasTable(this);
   late final $GastosTable gastos = $GastosTable(this);
+  late final $DevolucionesProveedorTable devolucionesProveedor =
+      $DevolucionesProveedorTable(this);
+  late final $LineasDevolucionTable lineasDevolucion = $LineasDevolucionTable(
+    this,
+  );
   late final Index presentacionesCodigo = Index(
     'presentaciones_codigo',
     'CREATE INDEX presentaciones_codigo ON presentaciones (codigo)',
@@ -7041,6 +8441,8 @@ abstract class _$BaseDatos extends GeneratedDatabase {
     pagosVenta,
     cajas,
     gastos,
+    devolucionesProveedor,
+    lineasDevolucion,
     presentacionesCodigo,
     movimientosFecha,
     movimientosProducto,
@@ -7082,6 +8484,13 @@ abstract class _$BaseDatos extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('pagos_venta', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'devoluciones_proveedor',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('lineas_devolucion', kind: UpdateKind.delete)],
     ),
   ]);
   @override
@@ -11658,6 +13067,920 @@ typedef $$GastosTableProcessedTableManager =
       FilaGasto,
       PrefetchHooks Function()
     >;
+typedef $$DevolucionesProveedorTableCreateCompanionBuilder =
+    DevolucionesProveedorCompanion Function({
+      required String id,
+      required DateTime fecha,
+      required String proveedor,
+      required MotivoDevolucion motivo,
+      required Compensacion compensacion,
+      Value<String?> compraId,
+      Value<MedioPago?> medio,
+      Value<int?> entregado,
+      Value<int?> tasa,
+      Value<DateTime?> repuesta,
+      required String nota,
+      Value<String?> incidenciaId,
+      required bool sacada,
+      Value<int> rowid,
+    });
+typedef $$DevolucionesProveedorTableUpdateCompanionBuilder =
+    DevolucionesProveedorCompanion Function({
+      Value<String> id,
+      Value<DateTime> fecha,
+      Value<String> proveedor,
+      Value<MotivoDevolucion> motivo,
+      Value<Compensacion> compensacion,
+      Value<String?> compraId,
+      Value<MedioPago?> medio,
+      Value<int?> entregado,
+      Value<int?> tasa,
+      Value<DateTime?> repuesta,
+      Value<String> nota,
+      Value<String?> incidenciaId,
+      Value<bool> sacada,
+      Value<int> rowid,
+    });
+
+final class $$DevolucionesProveedorTableReferences
+    extends
+        BaseReferences<
+          _$BaseDatos,
+          $DevolucionesProveedorTable,
+          FilaDevolucionProveedor
+        > {
+  $$DevolucionesProveedorTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<$LineasDevolucionTable, List<FilaLineaDevolucion>>
+  _lineasDevolucionRefsTable(_$BaseDatos db) => MultiTypedResultKey.fromTable(
+    db.lineasDevolucion,
+    aliasName: 'devoluciones_proveedor__id__lineas_devolucion__devolucion_id',
+  );
+
+  $$LineasDevolucionTableProcessedTableManager get lineasDevolucionRefs {
+    final manager = $$LineasDevolucionTableTableManager(
+      $_db,
+      $_db.lineasDevolucion,
+    ).filter((f) => f.devolucionId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _lineasDevolucionRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$DevolucionesProveedorTableFilterComposer
+    extends Composer<_$BaseDatos, $DevolucionesProveedorTable> {
+  $$DevolucionesProveedorTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get fecha => $composableBuilder(
+    column: $table.fecha,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get proveedor => $composableBuilder(
+    column: $table.proveedor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<MotivoDevolucion, MotivoDevolucion, String>
+  get motivo => $composableBuilder(
+    column: $table.motivo,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<Compensacion, Compensacion, String>
+  get compensacion => $composableBuilder(
+    column: $table.compensacion,
+    builder: (column) => ColumnWithTypeConverterFilters(column),
+  );
+
+  ColumnFilters<String> get compraId => $composableBuilder(
+    column: $table.compraId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<MedioPago?, MedioPago, String> get medio =>
+      $composableBuilder(
+        column: $table.medio,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<int> get entregado => $composableBuilder(
+    column: $table.entregado,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get tasa => $composableBuilder(
+    column: $table.tasa,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get repuesta => $composableBuilder(
+    column: $table.repuesta,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nota => $composableBuilder(
+    column: $table.nota,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get incidenciaId => $composableBuilder(
+    column: $table.incidenciaId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get sacada => $composableBuilder(
+    column: $table.sacada,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> lineasDevolucionRefs(
+    Expression<bool> Function($$LineasDevolucionTableFilterComposer f) f,
+  ) {
+    final $$LineasDevolucionTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lineasDevolucion,
+      getReferencedColumn: (t) => t.devolucionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LineasDevolucionTableFilterComposer(
+            $db: $db,
+            $table: $db.lineasDevolucion,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$DevolucionesProveedorTableOrderingComposer
+    extends Composer<_$BaseDatos, $DevolucionesProveedorTable> {
+  $$DevolucionesProveedorTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get fecha => $composableBuilder(
+    column: $table.fecha,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get proveedor => $composableBuilder(
+    column: $table.proveedor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get motivo => $composableBuilder(
+    column: $table.motivo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get compensacion => $composableBuilder(
+    column: $table.compensacion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get compraId => $composableBuilder(
+    column: $table.compraId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get medio => $composableBuilder(
+    column: $table.medio,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get entregado => $composableBuilder(
+    column: $table.entregado,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get tasa => $composableBuilder(
+    column: $table.tasa,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<DateTime> get repuesta => $composableBuilder(
+    column: $table.repuesta,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nota => $composableBuilder(
+    column: $table.nota,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get incidenciaId => $composableBuilder(
+    column: $table.incidenciaId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get sacada => $composableBuilder(
+    column: $table.sacada,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$DevolucionesProveedorTableAnnotationComposer
+    extends Composer<_$BaseDatos, $DevolucionesProveedorTable> {
+  $$DevolucionesProveedorTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<String> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get fecha =>
+      $composableBuilder(column: $table.fecha, builder: (column) => column);
+
+  GeneratedColumn<String> get proveedor =>
+      $composableBuilder(column: $table.proveedor, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<MotivoDevolucion, String> get motivo =>
+      $composableBuilder(column: $table.motivo, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<Compensacion, String> get compensacion =>
+      $composableBuilder(
+        column: $table.compensacion,
+        builder: (column) => column,
+      );
+
+  GeneratedColumn<String> get compraId =>
+      $composableBuilder(column: $table.compraId, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<MedioPago?, String> get medio =>
+      $composableBuilder(column: $table.medio, builder: (column) => column);
+
+  GeneratedColumn<int> get entregado =>
+      $composableBuilder(column: $table.entregado, builder: (column) => column);
+
+  GeneratedColumn<int> get tasa =>
+      $composableBuilder(column: $table.tasa, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get repuesta =>
+      $composableBuilder(column: $table.repuesta, builder: (column) => column);
+
+  GeneratedColumn<String> get nota =>
+      $composableBuilder(column: $table.nota, builder: (column) => column);
+
+  GeneratedColumn<String> get incidenciaId => $composableBuilder(
+    column: $table.incidenciaId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<bool> get sacada =>
+      $composableBuilder(column: $table.sacada, builder: (column) => column);
+
+  Expression<T> lineasDevolucionRefs<T extends Object>(
+    Expression<T> Function($$LineasDevolucionTableAnnotationComposer a) f,
+  ) {
+    final $$LineasDevolucionTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.lineasDevolucion,
+      getReferencedColumn: (t) => t.devolucionId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$LineasDevolucionTableAnnotationComposer(
+            $db: $db,
+            $table: $db.lineasDevolucion,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$DevolucionesProveedorTableTableManager
+    extends
+        RootTableManager<
+          _$BaseDatos,
+          $DevolucionesProveedorTable,
+          FilaDevolucionProveedor,
+          $$DevolucionesProveedorTableFilterComposer,
+          $$DevolucionesProveedorTableOrderingComposer,
+          $$DevolucionesProveedorTableAnnotationComposer,
+          $$DevolucionesProveedorTableCreateCompanionBuilder,
+          $$DevolucionesProveedorTableUpdateCompanionBuilder,
+          (FilaDevolucionProveedor, $$DevolucionesProveedorTableReferences),
+          FilaDevolucionProveedor,
+          PrefetchHooks Function({bool lineasDevolucionRefs})
+        > {
+  $$DevolucionesProveedorTableTableManager(
+    _$BaseDatos db,
+    $DevolucionesProveedorTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$DevolucionesProveedorTableFilterComposer(
+                $db: db,
+                $table: table,
+              ),
+          createOrderingComposer: () =>
+              $$DevolucionesProveedorTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$DevolucionesProveedorTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<String> id = const Value.absent(),
+                Value<DateTime> fecha = const Value.absent(),
+                Value<String> proveedor = const Value.absent(),
+                Value<MotivoDevolucion> motivo = const Value.absent(),
+                Value<Compensacion> compensacion = const Value.absent(),
+                Value<String?> compraId = const Value.absent(),
+                Value<MedioPago?> medio = const Value.absent(),
+                Value<int?> entregado = const Value.absent(),
+                Value<int?> tasa = const Value.absent(),
+                Value<DateTime?> repuesta = const Value.absent(),
+                Value<String> nota = const Value.absent(),
+                Value<String?> incidenciaId = const Value.absent(),
+                Value<bool> sacada = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => DevolucionesProveedorCompanion(
+                id: id,
+                fecha: fecha,
+                proveedor: proveedor,
+                motivo: motivo,
+                compensacion: compensacion,
+                compraId: compraId,
+                medio: medio,
+                entregado: entregado,
+                tasa: tasa,
+                repuesta: repuesta,
+                nota: nota,
+                incidenciaId: incidenciaId,
+                sacada: sacada,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String id,
+                required DateTime fecha,
+                required String proveedor,
+                required MotivoDevolucion motivo,
+                required Compensacion compensacion,
+                Value<String?> compraId = const Value.absent(),
+                Value<MedioPago?> medio = const Value.absent(),
+                Value<int?> entregado = const Value.absent(),
+                Value<int?> tasa = const Value.absent(),
+                Value<DateTime?> repuesta = const Value.absent(),
+                required String nota,
+                Value<String?> incidenciaId = const Value.absent(),
+                required bool sacada,
+                Value<int> rowid = const Value.absent(),
+              }) => DevolucionesProveedorCompanion.insert(
+                id: id,
+                fecha: fecha,
+                proveedor: proveedor,
+                motivo: motivo,
+                compensacion: compensacion,
+                compraId: compraId,
+                medio: medio,
+                entregado: entregado,
+                tasa: tasa,
+                repuesta: repuesta,
+                nota: nota,
+                incidenciaId: incidenciaId,
+                sacada: sacada,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<
+                    $DevolucionesProveedorTable,
+                    FilaDevolucionProveedor
+                  >(table),
+                  $$DevolucionesProveedorTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({lineasDevolucionRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (lineasDevolucionRefs) db.lineasDevolucion,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (lineasDevolucionRefs)
+                    await $_getPrefetchedDataByColumns<
+                      FilaDevolucionProveedor,
+                      $DevolucionesProveedorTable,
+                      FilaLineaDevolucion,
+                      $LineasDevolucionTable
+                    >(
+                      currentTable: table,
+                      referencedTable: $$DevolucionesProveedorTableReferences
+                          ._lineasDevolucionRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$DevolucionesProveedorTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).lineasDevolucionRefs,
+                      currentColumn: 'id',
+                      referencedColumn: 'devolucion_id',
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$DevolucionesProveedorTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BaseDatos,
+      $DevolucionesProveedorTable,
+      FilaDevolucionProveedor,
+      $$DevolucionesProveedorTableFilterComposer,
+      $$DevolucionesProveedorTableOrderingComposer,
+      $$DevolucionesProveedorTableAnnotationComposer,
+      $$DevolucionesProveedorTableCreateCompanionBuilder,
+      $$DevolucionesProveedorTableUpdateCompanionBuilder,
+      (FilaDevolucionProveedor, $$DevolucionesProveedorTableReferences),
+      FilaDevolucionProveedor,
+      PrefetchHooks Function({bool lineasDevolucionRefs})
+    >;
+typedef $$LineasDevolucionTableCreateCompanionBuilder =
+    LineasDevolucionCompanion Function({
+      Value<int> id,
+      required String devolucionId,
+      required int orden,
+      required String productoId,
+      required String producto,
+      required FormaConteo forma,
+      required String marca,
+      required int piezas,
+      required int cantidad,
+      required int costo,
+    });
+typedef $$LineasDevolucionTableUpdateCompanionBuilder =
+    LineasDevolucionCompanion Function({
+      Value<int> id,
+      Value<String> devolucionId,
+      Value<int> orden,
+      Value<String> productoId,
+      Value<String> producto,
+      Value<FormaConteo> forma,
+      Value<String> marca,
+      Value<int> piezas,
+      Value<int> cantidad,
+      Value<int> costo,
+    });
+
+final class $$LineasDevolucionTableReferences
+    extends
+        BaseReferences<
+          _$BaseDatos,
+          $LineasDevolucionTable,
+          FilaLineaDevolucion
+        > {
+  $$LineasDevolucionTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $DevolucionesProveedorTable _devolucionIdTable(_$BaseDatos db) =>
+      db.devolucionesProveedor.createAlias(
+        'lineas_devolucion__devolucion_id__devoluciones_proveedor__id',
+      );
+
+  $$DevolucionesProveedorTableProcessedTableManager get devolucionId {
+    final $_column = $_itemColumn<String>('devolucion_id')!;
+
+    final manager = $$DevolucionesProveedorTableTableManager(
+      $_db,
+      $_db.devolucionesProveedor,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_devolucionIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$LineasDevolucionTableFilterComposer
+    extends Composer<_$BaseDatos, $LineasDevolucionTable> {
+  $$LineasDevolucionTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get orden => $composableBuilder(
+    column: $table.orden,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get productoId => $composableBuilder(
+    column: $table.productoId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get producto => $composableBuilder(
+    column: $table.producto,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnWithTypeConverterFilters<FormaConteo, FormaConteo, String> get forma =>
+      $composableBuilder(
+        column: $table.forma,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get marca => $composableBuilder(
+    column: $table.marca,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get piezas => $composableBuilder(
+    column: $table.piezas,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cantidad => $composableBuilder(
+    column: $table.cantidad,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get costo => $composableBuilder(
+    column: $table.costo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$DevolucionesProveedorTableFilterComposer get devolucionId {
+    final $$DevolucionesProveedorTableFilterComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.devolucionId,
+          referencedTable: $db.devolucionesProveedor,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DevolucionesProveedorTableFilterComposer(
+                $db: $db,
+                $table: $db.devolucionesProveedor,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$LineasDevolucionTableOrderingComposer
+    extends Composer<_$BaseDatos, $LineasDevolucionTable> {
+  $$LineasDevolucionTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get orden => $composableBuilder(
+    column: $table.orden,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get productoId => $composableBuilder(
+    column: $table.productoId,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get producto => $composableBuilder(
+    column: $table.producto,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get forma => $composableBuilder(
+    column: $table.forma,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get marca => $composableBuilder(
+    column: $table.marca,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get piezas => $composableBuilder(
+    column: $table.piezas,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cantidad => $composableBuilder(
+    column: $table.cantidad,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get costo => $composableBuilder(
+    column: $table.costo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$DevolucionesProveedorTableOrderingComposer get devolucionId {
+    final $$DevolucionesProveedorTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.devolucionId,
+          referencedTable: $db.devolucionesProveedor,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DevolucionesProveedorTableOrderingComposer(
+                $db: $db,
+                $table: $db.devolucionesProveedor,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$LineasDevolucionTableAnnotationComposer
+    extends Composer<_$BaseDatos, $LineasDevolucionTable> {
+  $$LineasDevolucionTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<int> get orden =>
+      $composableBuilder(column: $table.orden, builder: (column) => column);
+
+  GeneratedColumn<String> get productoId => $composableBuilder(
+    column: $table.productoId,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get producto =>
+      $composableBuilder(column: $table.producto, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<FormaConteo, String> get forma =>
+      $composableBuilder(column: $table.forma, builder: (column) => column);
+
+  GeneratedColumn<String> get marca =>
+      $composableBuilder(column: $table.marca, builder: (column) => column);
+
+  GeneratedColumn<int> get piezas =>
+      $composableBuilder(column: $table.piezas, builder: (column) => column);
+
+  GeneratedColumn<int> get cantidad =>
+      $composableBuilder(column: $table.cantidad, builder: (column) => column);
+
+  GeneratedColumn<int> get costo =>
+      $composableBuilder(column: $table.costo, builder: (column) => column);
+
+  $$DevolucionesProveedorTableAnnotationComposer get devolucionId {
+    final $$DevolucionesProveedorTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.devolucionId,
+          referencedTable: $db.devolucionesProveedor,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$DevolucionesProveedorTableAnnotationComposer(
+                $db: $db,
+                $table: $db.devolucionesProveedor,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$LineasDevolucionTableTableManager
+    extends
+        RootTableManager<
+          _$BaseDatos,
+          $LineasDevolucionTable,
+          FilaLineaDevolucion,
+          $$LineasDevolucionTableFilterComposer,
+          $$LineasDevolucionTableOrderingComposer,
+          $$LineasDevolucionTableAnnotationComposer,
+          $$LineasDevolucionTableCreateCompanionBuilder,
+          $$LineasDevolucionTableUpdateCompanionBuilder,
+          (FilaLineaDevolucion, $$LineasDevolucionTableReferences),
+          FilaLineaDevolucion,
+          PrefetchHooks Function({bool devolucionId})
+        > {
+  $$LineasDevolucionTableTableManager(
+    _$BaseDatos db,
+    $LineasDevolucionTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$LineasDevolucionTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$LineasDevolucionTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$LineasDevolucionTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> devolucionId = const Value.absent(),
+                Value<int> orden = const Value.absent(),
+                Value<String> productoId = const Value.absent(),
+                Value<String> producto = const Value.absent(),
+                Value<FormaConteo> forma = const Value.absent(),
+                Value<String> marca = const Value.absent(),
+                Value<int> piezas = const Value.absent(),
+                Value<int> cantidad = const Value.absent(),
+                Value<int> costo = const Value.absent(),
+              }) => LineasDevolucionCompanion(
+                id: id,
+                devolucionId: devolucionId,
+                orden: orden,
+                productoId: productoId,
+                producto: producto,
+                forma: forma,
+                marca: marca,
+                piezas: piezas,
+                cantidad: cantidad,
+                costo: costo,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String devolucionId,
+                required int orden,
+                required String productoId,
+                required String producto,
+                required FormaConteo forma,
+                required String marca,
+                required int piezas,
+                required int cantidad,
+                required int costo,
+              }) => LineasDevolucionCompanion.insert(
+                id: id,
+                devolucionId: devolucionId,
+                orden: orden,
+                productoId: productoId,
+                producto: producto,
+                forma: forma,
+                marca: marca,
+                piezas: piezas,
+                cantidad: cantidad,
+                costo: costo,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$LineasDevolucionTable, FilaLineaDevolucion>(
+                    table,
+                  ),
+                  $$LineasDevolucionTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({devolucionId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (devolucionId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.devolucionId,
+                        referencedTable: $$LineasDevolucionTableReferences
+                            ._devolucionIdTable(db),
+                        referencedColumn: $$LineasDevolucionTableReferences
+                            ._devolucionIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$LineasDevolucionTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BaseDatos,
+      $LineasDevolucionTable,
+      FilaLineaDevolucion,
+      $$LineasDevolucionTableFilterComposer,
+      $$LineasDevolucionTableOrderingComposer,
+      $$LineasDevolucionTableAnnotationComposer,
+      $$LineasDevolucionTableCreateCompanionBuilder,
+      $$LineasDevolucionTableUpdateCompanionBuilder,
+      (FilaLineaDevolucion, $$LineasDevolucionTableReferences),
+      FilaLineaDevolucion,
+      PrefetchHooks Function({bool devolucionId})
+    >;
 
 class $BaseDatosManager {
   final _$BaseDatos _db;
@@ -11688,4 +14011,8 @@ class $BaseDatosManager {
       $$CajasTableTableManager(_db, _db.cajas);
   $$GastosTableTableManager get gastos =>
       $$GastosTableTableManager(_db, _db.gastos);
+  $$DevolucionesProveedorTableTableManager get devolucionesProveedor =>
+      $$DevolucionesProveedorTableTableManager(_db, _db.devolucionesProveedor);
+  $$LineasDevolucionTableTableManager get lineasDevolucion =>
+      $$LineasDevolucionTableTableManager(_db, _db.lineasDevolucion);
 }

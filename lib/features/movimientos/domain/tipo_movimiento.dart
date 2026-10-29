@@ -12,7 +12,9 @@ enum TipoMovimiento {
   conteoFalta('Conteo', -1, GrupoMovimiento.perdidas),
   conteoSobra('Conteo', 1, GrupoMovimiento.entradas),
   // Goods taken out over a supplier incident.
-  incidencia('Incidencia', -1, GrupoMovimiento.perdidas);
+  incidencia('Incidencia', -1, GrupoMovimiento.perdidas),
+  // Sent back and made up for by the supplier, so not a loss.
+  devolucionProveedor('Devuelto al proveedor', -1, GrupoMovimiento.entradas);
 
   const TipoMovimiento(this.etiqueta, this.signo, this.grupo);
 

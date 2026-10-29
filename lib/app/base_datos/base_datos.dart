@@ -3,6 +3,9 @@ import 'package:flutter/foundation.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/caja/data/tabla_cajas.dart';
 import 'package:inventario/features/compras/data/tabla_compras.dart';
+import 'package:inventario/features/devoluciones_proveedor/data/tablas_devoluciones_proveedor.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/compensacion.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/motivo_devolucion.dart';
 import 'package:inventario/features/gastos/data/tabla_gastos.dart';
 import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
 import 'package:inventario/features/incidencias/data/tabla_incidencias.dart';
@@ -35,13 +38,15 @@ part 'base_datos.g.dart';
     PagosVenta,
     Cajas,
     Gastos,
+    DevolucionesProveedor,
+    LineasDevolucion,
   ],
 )
 class BaseDatos extends _$BaseDatos {
   BaseDatos(super.ejecutor);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -67,6 +72,11 @@ class BaseDatos extends _$BaseDatos {
       // 5: how a customer return's money was handed back.
       if (desde < 5) {
         await m.addColumn(movimientos, movimientos.medioReembolso);
+      }
+      // 6: goods sent back to suppliers.
+      if (desde < 6) {
+        await m.createTable(devolucionesProveedor);
+        await m.createTable(lineasDevolucion);
       }
     },
     beforeOpen: (_) async {

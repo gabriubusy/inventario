@@ -14,6 +14,7 @@ class OpcionesMarcaCompra extends StatelessWidget {
     required this.lotes,
     required this.elegido,
     required this.onElegir,
+    this.conOtraMarca = true,
   });
 
   static const _columnas = 3;
@@ -26,6 +27,7 @@ class OpcionesMarcaCompra extends StatelessWidget {
   /// Index in [lotes]; null means a new brand.
   final int? elegido;
   final ValueChanged<int?> onElegir;
+  final bool conOtraMarca;
 
   @override
   Widget build(BuildContext context) {
@@ -48,15 +50,16 @@ class OpcionesMarcaCompra extends StatelessWidget {
                   onPulsar: () => onElegir(i),
                 ),
               ),
-            SizedBox(
-              width: ancho,
-              child: OpcionSeleccionable(
-                titulo: '+ Otra marca',
-                detalle: 'Nueva para este proveedor',
-                elegida: elegido == null,
-                onPulsar: () => onElegir(null),
+            if (conOtraMarca)
+              SizedBox(
+                width: ancho,
+                child: OpcionSeleccionable(
+                  titulo: '+ Otra marca',
+                  detalle: 'Nueva para este proveedor',
+                  elegida: elegido == null,
+                  onPulsar: () => onElegir(null),
+                ),
               ),
-            ),
           ],
         );
       },

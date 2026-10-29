@@ -9,6 +9,7 @@ import 'package:inventario/features/autenticacion/presentation/pantalla_inicio_s
 import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
+import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
 import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
@@ -39,6 +40,7 @@ class PuertaSesion extends StatelessWidget {
     required this.controladorAjustes,
     required this.controladorConteo,
     required this.controladorDevoluciones,
+    this.controladorDevolucionesProveedor,
     required this.controladorListaProductos,
     required this.controladorTasa,
     required this.gestorFotos,
@@ -57,6 +59,7 @@ class PuertaSesion extends StatelessWidget {
   final ControladorAjustes controladorAjustes;
   final ControladorConteo controladorConteo;
   final ControladorDevoluciones controladorDevoluciones;
+  final ControladorDevolucionesProveedor? controladorDevolucionesProveedor;
   final ControladorListaProductos controladorListaProductos;
   final ControladorTasa controladorTasa;
   final GestorFotos gestorFotos;
@@ -79,6 +82,7 @@ class PuertaSesion extends StatelessWidget {
           ajustes: controladorAjustes,
           conteo: controladorConteo,
           devoluciones: controladorDevoluciones,
+          devolucionesProveedor: controladorDevolucionesProveedor,
           listaProductos: controladorListaProductos,
           tasa: controladorTasa,
           fotos: gestorFotos,

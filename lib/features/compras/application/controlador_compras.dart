@@ -44,6 +44,7 @@ class ControladorCompras extends ChangeNotifier {
   final DateTime Function() _ahora;
   List<Compra> _compras = const [];
   List<Pago> _pagos = const [];
+  Map<String, int> _devuelto = const {};
   _CambioCompra? _ultimaCompra;
   Pago? _ultimoPago;
 
@@ -67,8 +68,16 @@ class ControladorCompras extends ChangeNotifier {
             for (final p in _pagos)
               if (p.compraId == compra.id) p,
           ],
+          devuelto: _devuelto[compra.id] ?? 0,
         ),
   ]..sort((a, b) => a.compra.vence!.compareTo(b.compra.vence!));
+
+  /// What returns to suppliers took off each invoice; set by whoever keeps
+  /// those returns.
+  void fijarDevuelto(Map<String, int> devuelto) {
+    _devuelto = devuelto;
+    notifyListeners();
+  }
 
   ResumenCuentas get resumen => ResumenCuentas.de(cuentas, hoy);
 

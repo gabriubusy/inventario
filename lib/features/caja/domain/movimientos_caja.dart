@@ -5,6 +5,7 @@ import 'package:inventario/features/caja/domain/movimiento_caja.dart';
 import 'package:inventario/features/compras/domain/compra.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
 import 'package:inventario/features/compras/domain/pago.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/devolucion_proveedor.dart';
 import 'package:inventario/features/gastos/domain/gasto.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
@@ -20,6 +21,7 @@ List<MovimientoCaja> movimientosDeCaja({
   List<Compra> compras = const [],
   List<Pago> pagos = const [],
   List<Gasto> gastos = const [],
+  List<DevolucionProveedor> devolucionesProveedor = const [],
 }) {
   final movimientos = <MovimientoCaja>[
     if (caja.fondo.isNotEmpty)
@@ -130,6 +132,21 @@ List<MovimientoCaja> movimientosDeCaja({
           if (gasto.nota.isNotEmpty) gasto.nota,
         ].join(' · '),
         montos: {gasto.medio: gasto.esIngreso ? gasto.monto : -gasto.monto},
+      ),
+    );
+  }
+  for (final d in devolucionesProveedor) {
+    final medio = d.medio;
+    final entregado = d.entregado;
+    if (medio == null || entregado == null || !caja.incluye(d.fecha)) {
+      continue;
+    }
+    movimientos.add(
+      MovimientoCaja(
+        fecha: d.fecha,
+        tipo: TipoMovimientoCaja.proveedor,
+        detalle: '${d.proveedor} · devolvió dinero por mercancía',
+        montos: {medio: entregado},
       ),
     );
   }

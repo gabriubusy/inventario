@@ -10,10 +10,14 @@ class TablaLineasCompra extends StatelessWidget {
     super.key,
     required this.lineas,
     required this.onQuitar,
+    this.vacio = 'Aún no hay productos en la factura.',
   });
 
   final List<LineaCompra> lineas;
   final ValueChanged<int> onQuitar;
+
+  /// Shown while there are no lines.
+  final String vacio;
 
   @override
   Widget build(BuildContext context) {
@@ -27,7 +31,7 @@ class TablaLineasCompra extends StatelessWidget {
     );
     if (lineas.isEmpty) {
       return Text(
-        'Aún no hay productos en la factura.',
+        vacio,
         style: tema.textTheme.bodyMedium?.copyWith(
           color: colores.onSurfaceVariant,
         ),

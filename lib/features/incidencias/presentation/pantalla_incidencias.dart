@@ -32,6 +32,8 @@ class PantallaIncidencias extends StatefulWidget {
     required this.incidencias,
     required this.existencias,
     this.proveedores = const [],
+    this.onDevoluciones,
+    this.onDevolver,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -39,6 +41,12 @@ class PantallaIncidencias extends StatefulWidget {
   final ControladorIncidencias incidencias;
   final ControladorExistencias existencias;
   final List<String> proveedores;
+
+  /// Alt+D: the list of goods sent back to suppliers.
+  final VoidCallback? onDevoluciones;
+
+  /// Ctrl+D: sends the chosen incident's goods back to its supplier.
+  final ValueChanged<Incidencia>? onDevolver;
 
   @override
   State<PantallaIncidencias> createState() => _PantallaIncidenciasState();
@@ -128,8 +136,18 @@ class _PantallaIncidenciasState extends State<PantallaIncidencias> {
     );
   }
 
+  void _devolver() {
+    final elegida = _elegida;
+    final onDevolver = widget.onDevolver;
+    if (elegida == null || !elegida.abierta || onDevolver == null) return;
+    onDevolver(elegida);
+  }
+
   Map<ShortcutActivator, VoidCallback> get _atajos => {
     const SingleActivator(LogicalKeyboardKey.escape): _volver,
+    const SingleActivator(LogicalKeyboardKey.keyD, alt: true):
+        ?widget.onDevoluciones,
+    const SingleActivator(LogicalKeyboardKey.keyD, control: true): _devolver,
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): _nueva,
     const SingleActivator(LogicalKeyboardKey.keyI, control: true): _nueva,
     const SingleActivator(LogicalKeyboardKey.keyK, control: true):
@@ -155,7 +173,11 @@ class _PantallaIncidenciasState extends State<PantallaIncidencias> {
       child: Scaffold(
         body: Column(
           children: [
-            BarraIncidencias(onVolver: _volver, onNueva: _nueva),
+            BarraIncidencias(
+              onVolver: _volver,
+              onNueva: _nueva,
+              onDevoluciones: widget.onDevoluciones,
+            ),
             Expanded(
               child: ListenableBuilder(
                 listenable: widget.incidencias,
@@ -176,6 +198,7 @@ class _PantallaIncidenciasState extends State<PantallaIncidencias> {
                   ),
                   onElegir: (i) => setState(() => _elegidaId = i.id),
                   onResponder: _responder,
+                  conDevolver: widget.onDevolver != null,
                 ),
               ),
             ),
@@ -195,9 +218,11 @@ class _Contenido extends StatelessWidget {
     required this.filtros,
     required this.onElegir,
     required this.onResponder,
+    required this.conDevolver,
   });
 
   final DateTime hoy;
+  final bool conDevolver;
   final List<Incidencia> todas;
   final List<Incidencia> visibles;
   final Incidencia? elegida;
@@ -256,8 +281,10 @@ class _Contenido extends StatelessWidget {
             ],
             SizedBox(height: espaciado.md),
             Text(
-              '↑ ↓ elegir · Alt+1–4 cómo respondió · En rojo, abiertas hace '
-              'más de ${Incidencia.diasParaReclamar} días: toca reclamarlas',
+              '↑ ↓ elegir · Alt+1–4 cómo respondió · '
+              '${conDevolver ? 'Ctrl+D devolver la mercancía al proveedor · ' : ''}'
+              'En rojo, abiertas hace más de ${Incidencia.diasParaReclamar} '
+              'días: toca reclamarlas',
               style: suave,
             ),
           ],

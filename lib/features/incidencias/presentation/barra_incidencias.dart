@@ -7,16 +7,21 @@ class BarraIncidencias extends StatelessWidget {
     super.key,
     required this.onVolver,
     required this.onNueva,
+    this.onDevoluciones,
   });
 
   final VoidCallback onVolver;
   final VoidCallback onNueva;
+
+  /// Opens the list of goods sent back to suppliers (Alt+D).
+  final VoidCallback? onDevoluciones;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final colores = tema.colorScheme;
     final espaciado = context.espaciado;
+    final onDevoluciones = this.onDevoluciones;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: colores.surface,
@@ -49,6 +54,17 @@ class BarraIncidencias extends StatelessWidget {
                 ),
               ),
             ),
+            if (onDevoluciones != null)
+              TextButton(
+                onPressed: onDevoluciones,
+                child: Row(
+                  spacing: espaciado.sm,
+                  children: [
+                    const Text('Devoluciones'),
+                    TeclaAtajo('Alt+D', color: colores.onSurfaceVariant),
+                  ],
+                ),
+              ),
             FilledButton.icon(
               onPressed: onNueva,
               // The theme's full-width minimum would not fit in a Row.

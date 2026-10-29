@@ -62,6 +62,16 @@ void main() {
     expect(cuenta.debe, 16176);
   });
 
+  test('goods sent back lower what is owed, and can settle it', () {
+    final cuenta = CuentaPorPagar(
+      compra: compra(vence: DateTime(2026, 11, 11)),
+      pagos: [pago(10000)],
+      devuelto: 21176,
+    );
+    expect(cuenta.debe, 0);
+    expect(cuenta.estado(hoy), EstadoCuenta.pagada);
+  });
+
   test('its state follows the due date, and paid wins over all', () {
     CuentaPorPagar cuenta(DateTime vence, [List<Pago> pagos = const []]) =>
         CuentaPorPagar(

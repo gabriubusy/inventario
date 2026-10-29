@@ -107,10 +107,26 @@ class FilaCuenta extends StatelessWidget {
                   textAlign: TextAlign.right,
                   style: base,
                 ),
-                Text(
-                  cuenta.abonado == 0 ? '—' : formatearDolares(cuenta.abonado),
-                  textAlign: TextAlign.right,
-                  style: base?.copyWith(color: colores.onSurfaceVariant),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      cuenta.abonado == 0
+                          ? '—'
+                          : formatearDolares(cuenta.abonado),
+                      textAlign: TextAlign.right,
+                      style: base?.copyWith(color: colores.onSurfaceVariant),
+                    ),
+                    if (cuenta.devuelto > 0)
+                      Text(
+                        'Devuelto −${formatearDolares(cuenta.devuelto)}',
+                        textAlign: TextAlign.right,
+                        style: tema.textTheme.bodySmall?.copyWith(
+                          color: colores.onSurfaceVariant,
+                          fontFeatures: cifras,
+                        ),
+                      ),
+                  ],
                 ),
                 Text(
                   formatearDolares(cuenta.debe < 0 ? 0 : cuenta.debe),
