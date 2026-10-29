@@ -21,8 +21,8 @@ class _ExportadorFalso implements ExportadorReportes {
   final exportados = <String>[];
 
   @override
-  Future<bool> csv(Reporte reporte, {required String nombre}) async {
-    exportados.add('csv ${reporte.titulo}');
+  Future<bool> excel(Reporte reporte, {required String nombre}) async {
+    exportados.add('excel ${reporte.titulo}');
     return true;
   }
 
@@ -121,6 +121,6 @@ void main() {
       LogicalKeyboardKey.controlLeft,
       LogicalKeyboardKey.keyE,
     );
-    expect(exportador.exportados, ['pdf Gastos', 'csv Gastos']);
+    expect(exportador.exportados, ['pdf Gastos', 'excel Gastos']);
   });
 }

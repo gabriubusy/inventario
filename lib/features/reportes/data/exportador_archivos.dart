@@ -1,16 +1,14 @@
-import 'dart:convert';
-
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/foundation.dart';
-import 'package:inventario/features/reportes/data/csv_reporte.dart';
+import 'package:inventario/features/reportes/data/xlsx_reporte.dart';
 import 'package:inventario/features/reportes/domain/exportador_reportes.dart';
 import 'package:inventario/features/reportes/domain/reporte.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 
-/// PDF through the print dialog and CSV through a save dialog (a download
-/// in the browser).
+/// PDF through the print dialog and Excel through a save dialog (a
+/// download in the browser).
 class ExportadorArchivos implements ExportadorReportes {
   const ExportadorArchivos();
 
@@ -22,21 +20,21 @@ class ExportadorArchivos implements ExportadorReportes {
       );
 
   @override
-  Future<bool> csv(Reporte reporte, {required String nombre}) async {
-    final bytes = Uint8List.fromList(utf8.encode(csvDeReporte(reporte)));
+  Future<bool> excel(Reporte reporte, {required String nombre}) async {
     final archivo = XFile.fromData(
-      bytes,
-      mimeType: 'text/csv',
-      name: '$nombre.csv',
+      xlsxDeReporte(reporte),
+      mimeType:
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+      name: '$nombre.xlsx',
     );
     if (kIsWeb) {
-      await archivo.saveTo('$nombre.csv');
+      await archivo.saveTo('$nombre.xlsx');
       return true;
     }
     final destino = await getSaveLocation(
-      suggestedName: '$nombre.csv',
+      suggestedName: '$nombre.xlsx',
       acceptedTypeGroups: const [
-        XTypeGroup(label: 'CSV', extensions: ['csv']),
+        XTypeGroup(label: 'Excel', extensions: ['xlsx']),
       ],
     );
     if (destino == null) return false;

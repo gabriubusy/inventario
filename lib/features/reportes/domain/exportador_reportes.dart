@@ -5,6 +5,6 @@ abstract interface class ExportadorReportes {
   /// Opens the system print dialog, where it can also be saved as PDF.
   Future<void> pdf(Reporte reporte, {required String subtitulo});
 
-  /// Saves a CSV that Excel opens; false when the user cancelled.
-  Future<bool> csv(Reporte reporte, {required String nombre});
+  /// Saves an Excel workbook (.xlsx); false when the user cancelled.
+  Future<bool> excel(Reporte reporte, {required String nombre});
 }

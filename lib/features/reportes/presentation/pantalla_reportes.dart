@@ -25,7 +25,7 @@ const _teclasTipo = [
   LogicalKeyboardKey.digit6,
 ];
 
-/// F12: six reports over a period, printable as PDF and saved as CSV.
+/// F12: six reports over a period, printable as PDF and saved as Excel.
 class PantallaReportes extends StatefulWidget {
   const PantallaReportes({
     super.key,
@@ -77,11 +77,9 @@ class _PantallaReportesState extends State<PantallaReportes> {
     final mensajero = ScaffoldMessenger.of(context);
     final nombre =
         '${_tipo.etiqueta} ${_hoy.year}-${_hoy.month.toString().padLeft(2, '0')}-${_hoy.day.toString().padLeft(2, '0')}';
-    final guardado = await widget.exportador.csv(_reporte, nombre: nombre);
+    final guardado = await widget.exportador.excel(_reporte, nombre: nombre);
     if (!guardado) return;
-    mensajero.showSnackBar(
-      SnackBar(content: Text('Guardado "$nombre.csv" (se abre con Excel)')),
-    );
+    mensajero.showSnackBar(SnackBar(content: Text('Guardado "$nombre.xlsx"')));
   }
 
   @override

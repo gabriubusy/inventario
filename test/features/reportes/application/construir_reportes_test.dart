@@ -9,7 +9,6 @@ import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/reportes/application/construir_reportes.dart';
-import 'package:inventario/features/reportes/data/csv_reporte.dart';
 import 'package:inventario/features/reportes/domain/reporte.dart';
 
 void main() {
@@ -118,20 +117,5 @@ void main() {
       hoy,
     );
     expect(reporte.filas.single, ['Servicios', 'Gasto', '2', r'$ 6,00']);
-  });
-
-  test('CSV uses semicolons and quotes what needs it', () {
-    const reporte = Reporte(
-      titulo: 'Prueba',
-      cifras: [],
-      columnas: ['Producto', 'Total'],
-      filas: [
-        ['Queso; duro', r'$ 1,50'],
-      ],
-    );
-    expect(
-      csvDeReporte(reporte),
-      '﻿Producto;Total\r\n"Queso; duro";\$ 1,50\r\n',
-    );
   });
 }
