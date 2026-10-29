@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/productos/domain/filtro_estado.dart';
@@ -18,6 +19,7 @@ class ListaProductos extends StatelessWidget {
     required this.onCrear,
     required this.onAbrir,
     required this.onLimpiar,
+    this.onAjustarPrecios,
   });
 
   final ControladorListaProductos controlador;
@@ -33,6 +35,9 @@ class ListaProductos extends StatelessWidget {
   final ValueChanged<Producto> onAbrir;
   final VoidCallback onLimpiar;
 
+  /// Hidden where bulk price changes aren't wired.
+  final VoidCallback? onAjustarPrecios;
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
@@ -40,6 +45,7 @@ class ListaProductos extends StatelessWidget {
     final espaciado = context.espaciado;
     final productos = controlador.visibles;
     final elegido = controlador.elegido;
+    final onAjustarPrecios = this.onAjustarPrecios;
     final nota = tema.textTheme.bodySmall?.copyWith(
       color: colores.onSurfaceVariant,
     );
@@ -78,6 +84,23 @@ class ListaProductos extends StatelessWidget {
                         controlador.filtrar(elegidos.first),
                   ),
                 ),
+                if (onAjustarPrecios != null)
+                  ExcludeFocus(
+                    child: TextButton.icon(
+                      onPressed: onAjustarPrecios,
+                      icon: const Icon(Icons.percent),
+                      label: Row(
+                        spacing: espaciado.sm,
+                        children: [
+                          const Text('Ajustar precios'),
+                          TeclaAtajo(
+                            'Ctrl+Shift+A',
+                            color: colores.onSurfaceVariant,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

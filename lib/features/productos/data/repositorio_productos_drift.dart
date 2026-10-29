@@ -6,6 +6,7 @@ import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/domain/regla_precio.dart';
 import 'package:inventario/features/productos/domain/repositorio_productos.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 
@@ -27,12 +28,14 @@ class RepositorioProductosDrift implements RepositorioProductos {
     final presentaciones = await (_db.select(
       _db.presentaciones,
     )..orderBy([(t) => OrderingTerm(expression: t.orden)])).get();
+    final reglas = await _db.select(_db.reglasPrecio).get();
     return [
       for (final fila in filas)
         _aProducto(
           fila,
           lotes.where((l) => l.productoId == fila.id),
           presentaciones.where((p) => p.productoId == fila.id),
+          reglas.where((r) => r.productoId == fila.id),
         ),
     ];
   }
@@ -117,6 +120,9 @@ class RepositorioProductosDrift implements RepositorioProductos {
       await (_db.delete(
         _db.presentaciones,
       )..where((t) => t.productoId.equals(id))).go();
+      await (_db.delete(
+        _db.reglasPrecio,
+      )..where((t) => t.productoId.equals(id))).go();
     }
     await _db.batch((lote) {
       lote.insertAll(_db.lotesMarca, [
@@ -145,8 +151,26 @@ class RepositorioProductosDrift implements RepositorioProductos {
             predeterminada: p.predeterminada,
           ),
       ]);
+      lote.insertAll(_db.reglasPrecio, [
+        for (final MapEntry(key: lista, value: regla) in datos.reglas.entries)
+          ReglasPrecioCompanion.insert(
+            productoId: id,
+            lista: lista,
+            tipo: switch (regla) {
+              MargenSobreCosto() => _margen,
+              PrecioFijo() => _fijo,
+            },
+            valor: switch (regla) {
+              MargenSobreCosto(:final porcentaje) => porcentaje,
+              PrecioFijo(:final precio) => precio,
+            },
+          ),
+      ]);
     });
   }
+
+  static const _margen = 'margen';
+  static const _fijo = 'fijo';
 
   Producto _construir(String id, DatosProducto datos) => Producto(
     id: id,
@@ -157,12 +181,14 @@ class RepositorioProductosDrift implements RepositorioProductos {
     lotes: List.unmodifiable(datos.lotes),
     presentaciones: List.unmodifiable(datos.presentaciones),
     imagenId: datos.imagenId,
+    reglas: Map.unmodifiable(datos.reglas),
   );
 
   Producto _aProducto(
     FilaProducto fila,
     Iterable<FilaLoteMarca> lotes,
     Iterable<FilaPresentacion> presentaciones,
+    Iterable<FilaReglaPrecio> reglas,
   ) => Producto(
     id: fila.id,
     nombre: fila.nombre,
@@ -170,6 +196,12 @@ class RepositorioProductosDrift implements RepositorioProductos {
     forma: fila.forma,
     minimo: fila.minimo,
     imagenId: fila.imagenId,
+    reglas: Map.unmodifiable({
+      for (final r in reglas)
+        r.lista: r.tipo == _fijo
+            ? PrecioFijo(r.valor)
+            : MargenSobreCosto(r.valor),
+    }),
     lotes: List.unmodifiable([
       for (final l in lotes)
         LoteMarca(

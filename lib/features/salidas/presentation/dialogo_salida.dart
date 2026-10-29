@@ -8,6 +8,7 @@ import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/entradas/presentation/producto_elegido.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -26,6 +27,7 @@ import 'package:inventario/features/salidas/presentation/campo_cantidad_vendida.
 import 'package:inventario/features/salidas/presentation/detalle_salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_cobro.dart';
 import 'package:inventario/features/salidas/presentation/seccion_ticket.dart';
+import 'package:inventario/features/salidas/presentation/selector_lista_precio.dart';
 import 'package:inventario/features/salidas/presentation/selector_modo_venta.dart';
 import 'package:inventario/features/salidas/presentation/teclas_salida.dart';
 
@@ -212,6 +214,7 @@ class _DialogoSalidaState extends State<DialogoSalida> {
         lote,
         salida.cantidad,
         presentacion: salida.presentacion,
+        lista: _ticket.lista,
       ),
     );
     final actual = _actual(producto.id);
@@ -332,8 +335,14 @@ class _DialogoSalidaState extends State<DialogoSalida> {
       const SingleActivator(LogicalKeyboardKey.delete, alt: true): () =>
           _quitar(_elegida ?? _ticket.lineas.length - 1),
       const SingleActivator(LogicalKeyboardKey.keyZ, alt: true): _recuperar,
+      const SingleActivator(LogicalKeyboardKey.keyL, alt: true): () =>
+          _elegirLista(_ticket.lista.siguiente),
     };
   }
+
+  /// Reprices the lines already in the ticket at [lista].
+  void _elegirLista(ListaPrecio lista) =>
+      setState(() => _ticket = _ticket.conLista(lista, _actual));
 
   @override
   Widget build(BuildContext context) {
@@ -359,6 +368,10 @@ class _DialogoSalidaState extends State<DialogoSalida> {
                   const EncabezadoDialogo(
                     titulo: 'Vender',
                     icono: Icons.upload_outlined,
+                  ),
+                  SelectorListaPrecio(
+                    elegida: _ticket.lista,
+                    onElegir: _elegirLista,
                   ),
                   if (producto == null) ...[
                     BuscadorProductoSalida(
@@ -400,6 +413,7 @@ class _DialogoSalidaState extends State<DialogoSalida> {
                         salida: _leerSalida,
                         aBolivares: widget.aBolivares,
                         onEnviar: _enter,
+                        lista: _ticket.lista,
                       ),
                     BotonesCrear(
                       etiqueta: 'Agregar al ticket',

@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 
 @DataClassName('FilaProducto')
 class Productos extends Table {
@@ -35,6 +36,20 @@ class LotesMarca extends Table {
 
   @override
   Set<Column<Object>> get primaryKey => {productoId, orden};
+}
+
+/// A product's rule for Mayor or Especial (schema 8). [tipo] is `margen`
+/// (valor in hundredths of a percent) or `fijo` (dollar hundredths).
+@DataClassName('FilaReglaPrecio')
+class ReglasPrecio extends Table {
+  TextColumn get productoId =>
+      text().references(Productos, #id, onDelete: KeyAction.cascade)();
+  TextColumn get lista => textEnum<ListaPrecio>()();
+  TextColumn get tipo => text()();
+  IntColumn get valor => integer()();
+
+  @override
+  Set<Column<Object>> get primaryKey => {productoId, lista};
 }
 
 @DataClassName('FilaPresentacion')

@@ -10,8 +10,10 @@ import 'package:inventario/features/productos/application/controlador_existencia
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/domain/regla_precio.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
@@ -53,6 +55,7 @@ void main() {
           forma: FormaConteo.porKilo,
           minimo: 8000,
           lotes: [LoteMarca(marca: 'Propia', cantidad: 3800, precio: 620)],
+          reglas: {ListaPrecio.mayor: PrecioFijo(500)},
         ),
       ]),
     );
@@ -185,6 +188,22 @@ void main() {
     );
     await conAlt(tester, LogicalKeyboardKey.keyZ);
     expect(find.text('Propia · 1 kg'), findsOneWidget);
+  });
+
+  testWidgets('Alt+L reprices the ticket and the sale keeps that list', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '2');
+    expect(salidas.ticketEnCurso.total, 1240);
+    await conAlt(tester, LogicalKeyboardKey.keyL);
+    expect(salidas.ticketEnCurso.lista, ListaPrecio.mayor);
+    expect(salidas.ticketEnCurso.total, 1000);
+
+    await cobrarExacto(tester);
+    expect(movimientos.todos.last.importe, 1000);
+    expect(salidas.ticketEnCurso.lista, ListaPrecio.detal);
   });
 
   testWidgets('Ctrl+1 picks the most sold product', (tester) async {

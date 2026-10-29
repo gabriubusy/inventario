@@ -5,6 +5,7 @@ import 'package:inventario/features/movimientos/application/controlador_movimien
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
@@ -147,6 +148,7 @@ class ControladorSalidas extends ChangeNotifier {
         total: ticket.total,
         tasa: tasa,
         pagos: pagos,
+        lista: ticket.lista,
       );
       final venta = await _ventas?.registrar(datos) ?? datos;
       for (final cambio in cambios) {
@@ -257,6 +259,7 @@ class ControladorSalidas extends ChangeNotifier {
           linea.salida,
           tasa,
           ventaId: ventaId.isEmpty ? null : ventaId,
+          lista: ticket.lista,
         ),
       );
       if (anotado != null) anotados.add(anotado);
@@ -270,12 +273,14 @@ class ControladorSalidas extends ChangeNotifier {
     Salida salida,
     int? tasa, {
     String? ventaId,
+    ListaPrecio lista = ListaPrecio.detal,
   }) => movimientoDeVenta(
     antes,
     salida,
     fecha: DateTime.now(),
     tasa: tasa,
     ventaId: ventaId,
+    lista: lista,
   );
 
   void _recordarModo(String productoId, Salida salida) {

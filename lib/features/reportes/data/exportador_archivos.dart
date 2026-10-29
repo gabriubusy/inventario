@@ -10,7 +10,11 @@ import 'package:printing/printing.dart';
 /// PDF through the print dialog and Excel through a save dialog (a
 /// download in the browser).
 class ExportadorArchivos implements ExportadorReportes {
-  const ExportadorArchivos();
+  const ExportadorArchivos({this.encabezado});
+
+  /// The shop's details on top of each PDF; read when printing, so a change
+  /// in Configuración shows at once.
+  final String Function()? encabezado;
 
   @override
   Future<void> pdf(Reporte reporte, {required String subtitulo}) =>
@@ -48,10 +52,13 @@ class ExportadorArchivos implements ExportadorReportes {
     PdfPageFormat formato,
   ) async {
     final doc = pw.Document(title: reporte.titulo);
+    final negocio = encabezado?.call() ?? '';
     doc.addPage(
       pw.MultiPage(
         pageFormat: formato,
         build: (_) => [
+          if (negocio.isNotEmpty)
+            pw.Text(_latin(negocio), style: const pw.TextStyle(fontSize: 10)),
           pw.Text(
             _latin(reporte.titulo),
             style: const pw.TextStyle(

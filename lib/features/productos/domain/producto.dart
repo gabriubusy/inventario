@@ -2,8 +2,10 @@ import 'package:inventario/core/listas.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/estado_stock.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
+import 'package:inventario/features/productos/domain/regla_precio.dart';
 
 typedef RangoPrecio = ({int minimo, int maximo});
 
@@ -17,6 +19,7 @@ class Producto {
     this.lotes = const [],
     this.presentaciones = const [],
     this.imagenId,
+    this.reglas = const {},
   });
 
   final String id;
@@ -33,6 +36,9 @@ class Producto {
 
   /// Photo in the image store; null when the product has none.
   final String? imagenId;
+
+  /// How Mayor and Especial are priced; a list without a rule uses Detal.
+  final Map<ListaPrecio, ReglaPrecio> reglas;
 
   int get piezas => lotes.fold(0, (total, lote) => total + lote.piezas);
 
@@ -85,6 +91,7 @@ class Producto {
     List<LoteMarca>? lotes,
     List<Presentacion>? presentaciones,
     String? imagenId,
+    Map<ListaPrecio, ReglaPrecio>? reglas,
   }) {
     return Producto(
       id: id ?? this.id,
@@ -95,6 +102,7 @@ class Producto {
       lotes: lotes ?? this.lotes,
       presentaciones: presentaciones ?? this.presentaciones,
       imagenId: imagenId ?? this.imagenId,
+      reglas: reglas ?? this.reglas,
     );
   }
 
@@ -108,7 +116,8 @@ class Producto {
       other.minimo == minimo &&
       other.imagenId == imagenId &&
       listasIguales(other.lotes, lotes) &&
-      listasIguales(other.presentaciones, presentaciones);
+      listasIguales(other.presentaciones, presentaciones) &&
+      mapasIguales(other.reglas, reglas);
 
   @override
   int get hashCode => Object.hash(
@@ -120,5 +129,6 @@ class Producto {
     imagenId,
     Object.hashAll(lotes),
     Object.hashAll(presentaciones),
+    hashDeMapa(reglas),
   );
 }

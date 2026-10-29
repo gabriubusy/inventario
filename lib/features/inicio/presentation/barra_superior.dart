@@ -19,6 +19,7 @@ class BarraSuperior extends StatelessWidget {
     required this.onReportes,
     required this.onBloquear,
     required this.onCambiarPin,
+    this.onConfiguracion,
   });
 
   /// Below this width the links fold into a menu instead of shrinking.
@@ -35,6 +36,9 @@ class BarraSuperior extends StatelessWidget {
   final VoidCallback onReportes;
   final VoidCallback onBloquear;
   final VoidCallback onCambiarPin;
+
+  /// Null where Configuración is not offered (tests).
+  final VoidCallback? onConfiguracion;
 
   @override
   Widget build(BuildContext context) {
@@ -102,6 +106,8 @@ class BarraSuperior extends StatelessWidget {
                   (texto: 'Cuentas', atajo: 'F10', onPressed: onCuentas),
                   (texto: 'Caja', atajo: 'F11', onPressed: onCaja),
                   (texto: 'Reportes', atajo: 'F12', onPressed: onReportes),
+                  if (onConfiguracion case final abrir?)
+                    (texto: 'Configuración', atajo: 'Ctrl+,', onPressed: abrir),
                   (
                     texto: 'Cambiar PIN',
                     atajo: 'Ctrl+Shift+L',

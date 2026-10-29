@@ -1,5 +1,6 @@
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/domain/vender.dart';
@@ -12,6 +13,7 @@ Movimiento movimientoDeVenta(
   required DateTime fecha,
   int? tasa,
   String? ventaId,
+  ListaPrecio lista = ListaPrecio.detal,
 }) {
   final lote = antes.lotes[indiceLoteDeSalida(antes, salida)];
   return Movimiento(
@@ -29,6 +31,7 @@ Movimiento movimientoDeVenta(
       lote,
       salida.cantidad,
       presentacion: salida.presentacion,
+      lista: lista,
     ),
     abrioPieza: abrePieza(lote, salida.modo),
     costo: costoDeSalida(antes, lote, salida.cantidad),

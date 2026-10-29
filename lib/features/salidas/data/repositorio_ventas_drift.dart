@@ -25,6 +25,7 @@ class RepositorioVentasDrift implements RepositorioVentas {
           fecha: fila.fecha,
           total: fila.total,
           tasa: fila.tasa,
+          lista: fila.lista,
           pagos: List.unmodifiable([
             for (final p in pagos)
               if (p.ventaId == fila.id)
@@ -49,6 +50,7 @@ class RepositorioVentasDrift implements RepositorioVentas {
             fecha: guardada.fecha,
             total: guardada.total,
             tasa: Value(guardada.tasa),
+            lista: Value(guardada.lista),
           ),
         );
     await _db.batch(

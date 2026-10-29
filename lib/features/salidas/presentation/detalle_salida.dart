@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -105,10 +106,12 @@ class CantidadYNota extends StatelessWidget {
     required this.salida,
     required this.aBolivares,
     required this.onEnviar,
+    this.lista = ListaPrecio.detal,
   });
 
   final Producto producto;
   final LoteMarca lote;
+  final ListaPrecio lista;
   final ModoVenta? modo;
   final MedidaVenta medida;
   final TextEditingController cantidad;
@@ -134,6 +137,7 @@ class CantidadYNota extends StatelessWidget {
           salida: salida,
           aBolivares: aBolivares,
           onEnviar: onEnviar,
+          lista: lista,
         ),
         TextFormField(
           controller: nota,

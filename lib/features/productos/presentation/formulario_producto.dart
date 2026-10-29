@@ -21,6 +21,8 @@ import 'package:inventario/features/productos/presentation/fila_minimo.dart';
 import 'package:inventario/features/productos/presentation/foto_editable.dart';
 import 'package:inventario/features/productos/presentation/lote_editable.dart';
 import 'package:inventario/features/productos/presentation/presentaciones_editables.dart';
+import 'package:inventario/features/productos/presentation/reglas_editables.dart';
+import 'package:inventario/features/productos/presentation/seccion_listas_precio.dart';
 import 'package:inventario/features/productos/presentation/seccion_lotes.dart';
 import 'package:inventario/features/productos/presentation/seccion_presentaciones.dart';
 import 'package:inventario/features/productos/presentation/selector_forma_conteo.dart';
@@ -95,6 +97,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
   );
   late final List<LoteEditable> _lotes = _lotesIniciales();
   late final _presentaciones = PresentacionesEditables.desde(widget.producto);
+  late final _reglas = ReglasEditables.desde(widget.producto);
   late var _categoria = widget.producto?.categoria ?? Categoria.carnes;
   late var _forma = widget.producto?.forma ?? FormaConteo.porKilo;
   FocusNode? _focoPropio;
@@ -136,6 +139,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     _minimo.dispose();
     _foto.dispose();
     _presentaciones.dispose();
+    _reglas.dispose();
     _focoPropio?.dispose();
     for (final lote in _lotes) {
       lote.dispose();
@@ -188,6 +192,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     _desecharDespues(sobrantes);
     _lotes.first.limpiar();
     _presentaciones.limpiar();
+    _reglas.limpiar();
     _foto.quitar();
     _formulario.currentState?.reset();
     _focoNombre.requestFocus();
@@ -207,6 +212,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     presentaciones: _forma.cuentaPiezas
         ? const []
         : _presentaciones.leer(_forma),
+    reglas: _reglas.leer(),
   );
 
   bool _codigoOcupado(String codigo) => codigoEnUso(
@@ -261,6 +267,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
     const SingleActivator(LogicalKeyboardKey.keyM, control: true): _agregarLote,
     const SingleActivator(LogicalKeyboardKey.keyP, control: true):
         _agregarPresentacion,
+    const SingleActivator(LogicalKeyboardKey.keyL, alt: true): _reglas.enfocar,
     const SingleActivator(LogicalKeyboardKey.keyF, alt: true): () =>
         unawaited(_foto.elegir()),
     const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
@@ -322,6 +329,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
                   null => null,
                 },
               ),
+            SeccionListasPrecio(reglas: _reglas, lotes: _lotes, forma: _forma),
             FilaMinimo(
               controller: _minimo,
               forma: _forma,
@@ -340,10 +348,11 @@ class _FormularioProductoState extends State<FormularioProducto> {
             Text(
               _editando
                   ? 'Alt+1–4 categoría · Alt+F foto · Ctrl+M otra marca · '
-                        'Ctrl+P otra presentación · Ctrl+S guarda'
+                        'Ctrl+P otra presentación · Alt+L listas · '
+                        'Ctrl+S guarda'
                   : 'Alt+1–4 categoría · Alt+Q W E R cómo se cuenta · '
                         'Alt+F foto · Ctrl+M otra marca · '
-                        'Ctrl+P otra presentación · Esc cierra',
+                        'Ctrl+P otra presentación · Alt+L listas · Esc cierra',
               textAlign: TextAlign.center,
               style: tema.textTheme.bodySmall?.copyWith(
                 color: tema.colorScheme.onSurfaceVariant,

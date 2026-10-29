@@ -94,6 +94,7 @@ void main() {
     await tester.enterText(campo('Nombre').last, 'Kilo');
     await tester.enterText(campo('Contiene').last, '1');
     await tester.enterText(campo('Precio').last, '2,20');
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Crear'));
     await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
     await tester.pumpAndSettle();
 
@@ -122,6 +123,7 @@ void main() {
     await tester.enterText(campo('Precio').last, '1,10');
     await tester.tap(find.byIcon(Icons.star_border).last);
     await tester.pump();
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Crear'));
     await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
     await tester.pumpAndSettle();
 
@@ -137,6 +139,7 @@ void main() {
     await tester.enterText(campo('Contiene').last, '24');
     await tester.enterText(campo('Código').last, 'arroz-24');
     await tester.enterText(campo('Precio').last, '24');
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Crear'));
     await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
     await tester.pumpAndSettle();
     expect(find.text('Lo usa otro producto'), findsOneWidget);

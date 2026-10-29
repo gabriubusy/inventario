@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
+import 'package:inventario/features/productos/application/controlador_ajuste_precios.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
@@ -90,6 +91,7 @@ void main() {
                       lista: lista,
                       tasa: tasa,
                       fotos: GestorFotos(AlmacenImagenesEnMemoria()),
+                      ajustePrecios: ControladorAjustePrecios(existencias),
                     ),
                   ),
                 ),
@@ -128,6 +130,29 @@ void main() {
     expect(find.text('392,00 Bs'), findsOneWidget);
     expect(find.text('Sin precio'), findsOneWidget);
     expect(find.text('1 \$ = 40,00 Bs'), findsOneWidget);
+  });
+
+  testWidgets('Ctrl+Shift+A raises the prices and Deshacer puts them back', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyA);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    tester.testTextInput.enterText('10');
+    await tester.pump();
+    expect(find.text('Cambia 1 producto'), findsOneWidget);
+    expect(find.textContaining(r'$ 9,80/kg → $ 10,78/kg'), findsOneWidget);
+
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+    expect(guardado('p1').lotes.single.precio, 1078);
+    await tester.tap(find.text('Deshacer'));
+    await tester.pumpAndSettle();
+    expect(guardado('p1').lotes.single.precio, 980);
   });
 
   testWidgets('arrows choose and Enter opens the edit window', (tester) async {

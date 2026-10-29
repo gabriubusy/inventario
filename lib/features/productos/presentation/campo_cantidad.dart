@@ -13,6 +13,7 @@ class CampoCantidad extends StatelessWidget {
     this.obligatorio = _nunca,
     this.onSubmitted,
     this.autofocus = false,
+    this.focusNode,
   });
 
   static final _caracteres = FilteringTextInputFormatter.allow(
@@ -30,6 +31,7 @@ class CampoCantidad extends StatelessWidget {
   /// Without it, Enter just moves to the next field.
   final VoidCallback? onSubmitted;
   final bool autofocus;
+  final FocusNode? focusNode;
 
   static bool _nunca() => false;
 
@@ -50,6 +52,7 @@ class CampoCantidad extends StatelessWidget {
     final onSubmitted = this.onSubmitted;
     return TextFormField(
       controller: controller,
+      focusNode: focusNode,
       autofocus: autofocus,
       textAlign: TextAlign.right,
       keyboardType: TextInputType.numberWithOptions(decimal: decimales > 0),

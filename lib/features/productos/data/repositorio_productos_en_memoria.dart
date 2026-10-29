@@ -56,6 +56,7 @@ class RepositorioProductosEnMemoria implements RepositorioProductos {
     lotes: List.unmodifiable(datos.lotes),
     presentaciones: List.unmodifiable(datos.presentaciones),
     imagenId: datos.imagenId,
+    reglas: Map.unmodifiable(datos.reglas),
   );
 
   @override

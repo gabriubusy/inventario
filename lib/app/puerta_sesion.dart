@@ -8,6 +8,7 @@ import 'package:inventario/features/autenticacion/presentation/dialogo_cambiar_p
 import 'package:inventario/features/autenticacion/presentation/pantalla_inicio_sesion.dart';
 import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/configuracion/application/controlador_negocio.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
 import 'package:inventario/features/entradas/application/controlador_entradas.dart';
@@ -15,10 +16,13 @@ import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/productos/application/controlador_ajuste_precios.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
+import 'package:inventario/features/reportes/data/exportador_archivos.dart';
+import 'package:inventario/features/respaldo/application/controlador_respaldo.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
@@ -44,6 +48,9 @@ class PuertaSesion extends StatelessWidget {
     required this.controladorListaProductos,
     required this.controladorTasa,
     required this.gestorFotos,
+    this.controladorNegocio,
+    this.controladorRespaldo,
+    this.controladorAjustePrecios,
   });
 
   final ControladorSesion controladorSesion;
@@ -63,6 +70,9 @@ class PuertaSesion extends StatelessWidget {
   final ControladorListaProductos controladorListaProductos;
   final ControladorTasa controladorTasa;
   final GestorFotos gestorFotos;
+  final ControladorNegocio? controladorNegocio;
+  final ControladorRespaldo? controladorRespaldo;
+  final ControladorAjustePrecios? controladorAjustePrecios;
 
   @override
   Widget build(BuildContext context) {
@@ -89,6 +99,12 @@ class PuertaSesion extends StatelessWidget {
           onBloquear: controladorSesion.cerrarSesion,
           onCambiarPin: () =>
               unawaited(mostrarDialogoCambiarPin(context, controladorSesion)),
+          negocio: controladorNegocio,
+          respaldo: controladorRespaldo,
+          ajustePrecios: controladorAjustePrecios,
+          exportador: ExportadorArchivos(
+            encabezado: () => controladorNegocio?.datos.encabezado ?? '',
+          ),
         ),
         SesionCerrada() || IniciandoSesion() => PantallaInicioSesion(
           controlador: controladorSesion,

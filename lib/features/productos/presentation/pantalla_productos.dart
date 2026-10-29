@@ -4,12 +4,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/features/productos/application/controlador_ajuste_precios.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 import 'package:inventario/features/productos/presentation/barra_productos.dart';
+import 'package:inventario/features/productos/presentation/dialogo_ajuste_precios.dart';
 import 'package:inventario/features/productos/presentation/dialogo_nuevo_producto.dart';
 import 'package:inventario/features/productos/presentation/elegir_imagen.dart';
 import 'package:inventario/features/productos/presentation/lista_productos.dart';
@@ -28,6 +30,7 @@ class PantallaProductos extends StatefulWidget {
     this.proveedores = const [],
     this.elegirImagen = elegirImagenDelEquipo,
     this.onKardex,
+    this.ajustePrecios,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -40,6 +43,9 @@ class PantallaProductos extends StatefulWidget {
 
   /// F8 opens the chosen product's kardex; left out where there is none.
   final ValueChanged<Producto>? onKardex;
+
+  /// Ctrl+Shift+A moves a price list over many products; optional in tests.
+  final ControladorAjustePrecios? ajustePrecios;
 
   @override
   State<PantallaProductos> createState() => _PantallaProductosState();
@@ -123,6 +129,40 @@ class _PantallaProductosState extends State<PantallaProductos> {
 
   void _ponerTasa() => unawaited(mostrarDialogoTasa(context, widget.tasa));
 
+  Future<void> _ajustarPrecios() async {
+    final ajuste = widget.ajustePrecios;
+    if (ajuste == null) return;
+    final cuantos = await mostrarDialogoAjustePrecios(
+      context,
+      ajuste: ajuste,
+      proveedores: widget.proveedores,
+    );
+    if (cuantos == null || !mounted) return;
+    final mensajero = ScaffoldMessenger.of(context)..hideCurrentSnackBar();
+    mensajero.showSnackBar(
+      SnackBar(
+        content: Text(
+          cuantos == 1
+              ? 'Precios ajustados en 1 producto'
+              : 'Precios ajustados en $cuantos productos',
+        ),
+        action: SnackBarAction(
+          label: 'Deshacer',
+          onPressed: () => unawaited(_deshacerAjuste(ajuste)),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deshacerAjuste(ControladorAjustePrecios ajuste) async {
+    if (await ajuste.deshacer() || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No se pudo deshacer: algún producto cambió después'),
+      ),
+    );
+  }
+
   void _guardado(Producto anterior, Producto guardado) {
     final aviso = (ScaffoldMessenger.of(context)..hideCurrentSnackBar())
         .showSnackBar(
@@ -173,6 +213,13 @@ class _PantallaProductosState extends State<PantallaProductos> {
         widget.lista.moverEleccion(1),
     const SingleActivator(LogicalKeyboardKey.enter): _editarElegido,
     const SingleActivator(LogicalKeyboardKey.f8): _kardexDelElegido,
+    if (widget.ajustePrecios != null)
+      const SingleActivator(
+        LogicalKeyboardKey.keyA,
+        control: true,
+        shift: true,
+      ): () =>
+          unawaited(_ajustarPrecios()),
   };
 
   @override
@@ -218,6 +265,9 @@ class _PantallaProductosState extends State<PantallaProductos> {
                           onCrear: _nuevo,
                           onAbrir: _editar,
                           onLimpiar: _limpiarBusqueda,
+                          onAjustarPrecios: widget.ajustePrecios == null
+                              ? null
+                              : () => unawaited(_ajustarPrecios()),
                         ),
                       ),
                     ),

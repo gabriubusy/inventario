@@ -52,3 +52,6 @@ app.*.map.json
 
 # Browser test captures
 .playwright-mcp/
+
+# Installer output
+/installer/salida/

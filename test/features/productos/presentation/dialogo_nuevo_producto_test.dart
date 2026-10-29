@@ -98,6 +98,7 @@ void main() {
   }
 
   Future<void> crear(WidgetTester tester) async {
+    await tester.ensureVisible(find.widgetWithText(FilledButton, 'Crear'));
     await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
     await tester.pumpAndSettle();
   }
@@ -420,6 +421,7 @@ void main() {
       await tester.enterText(campo('Marca'), 'Marca Z');
       await tester.enterText(campo('Proveedor'), 'Lácteos Nuevo');
       await tester.enterText(campo('Cantidad'), '3');
+      await tester.ensureVisible(find.widgetWithText(FilledButton, 'Crear'));
       await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
       await tester.pumpAndSettle();
       expect(creado('Queso paisa')?.lotes.single.proveedor, 'Lácteos Nuevo');

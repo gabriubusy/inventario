@@ -21,6 +21,14 @@ class LineaTicket {
   /// Dollar hundredths; null when the brand has no price.
   final int? importe;
 
+  LineaTicket conImporte(int? importe) => LineaTicket(
+    productoId: productoId,
+    producto: producto,
+    forma: forma,
+    salida: salida,
+    importe: importe,
+  );
+
   @override
   bool operator ==(Object other) =>
       other is LineaTicket &&

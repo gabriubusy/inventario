@@ -1,6 +1,8 @@
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/core/texto.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
+import 'package:inventario/features/productos/domain/precio_en_lista.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/salidas/domain/modo_venta.dart';
@@ -52,21 +54,22 @@ Producto? vender(Producto producto, Salida salida) {
   );
 }
 
-/// What the sale costs in dollar hundredths: by the pack's price when sold
-/// in one, else by the brand's; null when there is no price.
+/// What the sale costs in dollar hundredths in [lista]: by the pack's price
+/// when sold in one, else by the brand's; null when there is no price.
 int? importeDeSalida(
   Producto producto,
   LoteMarca lote,
   int cantidad, {
   Presentacion? presentacion,
+  ListaPrecio lista = ListaPrecio.detal,
 }) {
   if (presentacion != null) {
     return dividirRedondeando(
-      presentacion.precio * cantidad,
+      precioDePresentacion(producto, presentacion, lote, lista) * cantidad,
       presentacion.factor,
     );
   }
-  final precio = lote.precio;
+  final precio = precioDeLote(producto, lote, lista);
   if (precio == null) return null;
   return dividirRedondeando(
     precio * cantidad,

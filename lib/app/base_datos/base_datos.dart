@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/caja/data/tabla_cajas.dart';
 import 'package:inventario/features/compras/data/tabla_compras.dart';
+import 'package:inventario/features/configuracion/data/tabla_negocio.dart';
 import 'package:inventario/features/devoluciones_proveedor/data/tablas_devoluciones_proveedor.dart';
 import 'package:inventario/features/devoluciones_proveedor/domain/compensacion.dart';
 import 'package:inventario/features/devoluciones_proveedor/domain/motivo_devolucion.dart';
@@ -16,6 +17,7 @@ import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/data/tablas_productos.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/proveedores/data/tabla_proveedores.dart';
 import 'package:inventario/features/salidas/data/tablas_ventas.dart';
 
@@ -40,13 +42,15 @@ part 'base_datos.g.dart';
     Gastos,
     DevolucionesProveedor,
     LineasDevolucion,
+    Negocio,
+    ReglasPrecio,
   ],
 )
 class BaseDatos extends _$BaseDatos {
   BaseDatos(super.ejecutor);
 
   @override
-  int get schemaVersion => 6;
+  int get schemaVersion => 8;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -77,6 +81,15 @@ class BaseDatos extends _$BaseDatos {
       if (desde < 6) {
         await m.createTable(devolucionesProveedor);
         await m.createTable(lineasDevolucion);
+      }
+      // 7: the shop's details, so a backup carries them.
+      if (desde < 7) {
+        await m.createTable(negocio);
+      }
+      // 8: Mayor and Especial price lists, and the list each sale used.
+      if (desde < 8) {
+        await m.createTable(reglasPrecio);
+        await m.addColumn(ventas, ventas.lista);
       }
     },
     beforeOpen: (_) async {

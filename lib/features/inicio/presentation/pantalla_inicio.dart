@@ -12,6 +12,8 @@ import 'package:inventario/features/caja/presentation/pantalla_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/compras/presentation/pantalla_cuentas.dart';
+import 'package:inventario/features/configuracion/application/controlador_negocio.dart';
+import 'package:inventario/features/configuracion/presentation/pantalla_configuracion.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/conteo/presentation/pantalla_conteo.dart';
 import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
@@ -30,6 +32,7 @@ import 'package:inventario/features/inicio/presentation/barra_superior.dart';
 import 'package:inventario/features/inicio/presentation/panel_del_dia.dart';
 import 'package:inventario/features/kardex/presentation/pantalla_kardex.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/productos/application/controlador_ajuste_precios.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
@@ -42,6 +45,9 @@ import 'package:inventario/features/proveedores/presentation/pantalla_proveedore
 import 'package:inventario/features/reportes/data/exportador_archivos.dart';
 import 'package:inventario/features/reportes/domain/exportador_reportes.dart';
 import 'package:inventario/features/reportes/presentation/pantalla_reportes.dart';
+import 'package:inventario/features/respaldo/application/controlador_respaldo.dart';
+import 'package:inventario/features/respaldo/presentation/acciones_respaldo.dart';
+import 'package:inventario/features/respaldo/presentation/aviso_respaldo.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/presentation/aviso_salida.dart';
@@ -75,6 +81,9 @@ class PantallaInicio extends StatefulWidget {
     required this.fotos,
     required this.onBloquear,
     required this.onCambiarPin,
+    this.negocio,
+    this.respaldo,
+    this.ajustePrecios,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -100,6 +109,11 @@ class PantallaInicio extends StatefulWidget {
   final GestorFotos fotos;
   final VoidCallback onBloquear;
   final VoidCallback onCambiarPin;
+
+  /// Configuración (Ctrl+,) and backups (Ctrl+B); optional in tests.
+  final ControladorNegocio? negocio;
+  final ControladorRespaldo? respaldo;
+  final ControladorAjustePrecios? ajustePrecios;
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
@@ -248,6 +262,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
           fotos: widget.fotos,
           proveedores: widget.proveedores.nombres,
           onKardex: (producto) => _abrirKardex(producto.id),
+          ajustePrecios: widget.ajustePrecios,
         ),
       ),
     ),
@@ -374,7 +389,32 @@ class _PantallaInicioState extends State<PantallaInicio> {
     ),
   );
 
+  void _abrirConfiguracion() {
+    final negocio = widget.negocio;
+    final respaldo = widget.respaldo;
+    if (negocio == null || respaldo == null) return;
+    unawaited(
+      Navigator.of(context).push(
+        MaterialPageRoute<void>(
+          builder: (_) => PantallaConfiguracion(
+            negocio: negocio,
+            respaldo: respaldo,
+            onCambiarPin: widget.onCambiarPin,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _respaldar() {
+    final respaldo = widget.respaldo;
+    if (respaldo != null) unawaited(respaldarAhora(context, respaldo));
+  }
+
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    const SingleActivator(LogicalKeyboardKey.comma, control: true):
+        _abrirConfiguracion,
+    const SingleActivator(LogicalKeyboardKey.keyB, control: true): _respaldar,
     for (final accion in AccionRapida.values)
       SingleActivator(accion.tecla): () => _ejecutar(accion),
     const SingleActivator(LogicalKeyboardKey.keyK, control: true):
@@ -426,6 +466,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 onReportes: _abrirReportes,
                 onBloquear: widget.onBloquear,
                 onCambiarPin: widget.onCambiarPin,
+                onConfiguracion: widget.negocio == null
+                    ? null
+                    : _abrirConfiguracion,
               ),
               ListenableBuilder(
                 listenable: widget.tasa,
@@ -433,6 +476,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     ? const SizedBox.shrink()
                     : AvisoTasa(controlador: widget.tasa, onPoner: _ponerTasa),
               ),
+              if (widget.respaldo case final respaldo?)
+                AvisoRespaldo(respaldo: respaldo, onRespaldar: _respaldar),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, limites) {

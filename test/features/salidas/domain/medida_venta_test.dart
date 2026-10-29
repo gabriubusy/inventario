@@ -12,13 +12,13 @@ void main() {
   test('one sack takes 15 kg out and costs its price', () {
     const medida = MedidaEnPresentacion(saco);
     expect(medida.aBase(1000), 15000);
-    expect(medida.importe(1000, lote), 3000);
+    expect(medida.importe(1000, saco.precio), 3000);
   });
 
-  test('2,5 loose kilos take 2,5 kg and cost 2,5 × the kilo price', () {
+  test('2,5 loose kilos take 2,5 kg and cost 2,5 Ã— the kilo price', () {
     const medida = MedidaEnPresentacion(kilo);
     expect(medida.aBase(2500), 2500);
-    expect(medida.importe(2500, lote), 550);
+    expect(medida.importe(2500, kilo.precio), 550);
   });
 
   test('says how many packs the stock covers', () {
@@ -29,10 +29,7 @@ void main() {
   test('without packs, the brand price per unit applies', () {
     const medida = MedidaEnUnidad(UnidadBase.kg);
     expect(medida.aBase(2500), 2500);
-    expect(medida.importe(2500, lote), 500);
-    expect(
-      medida.importe(2500, const LoteMarca(marca: 'X', cantidad: 1)),
-      isNull,
-    );
+    expect(medida.importe(2500, lote.precio), 500);
+    expect(medida.importe(2500, null), isNull);
   });
 }

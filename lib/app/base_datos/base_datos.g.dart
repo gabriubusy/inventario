@@ -5424,7 +5424,17 @@ class $VentasTable extends Ventas with TableInfo<$VentasTable, FilaVenta> {
     requiredDuringInsert: false,
   );
   @override
-  List<GeneratedColumn> get $columns => [id, fecha, total, tasa];
+  late final GeneratedColumnWithTypeConverter<ListaPrecio, String> lista =
+      GeneratedColumn<String>(
+        'lista',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: Constant(ListaPrecio.detal.name),
+      ).withConverter<ListaPrecio>($VentasTable.$converterlista);
+  @override
+  List<GeneratedColumn> get $columns => [id, fecha, total, tasa, lista];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -5489,6 +5499,12 @@ class $VentasTable extends Ventas with TableInfo<$VentasTable, FilaVenta> {
         DriftSqlType.int,
         data['${effectivePrefix}tasa'],
       ),
+      lista: $VentasTable.$converterlista.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}lista'],
+        )!,
+      ),
     );
   }
 
@@ -5496,6 +5512,9 @@ class $VentasTable extends Ventas with TableInfo<$VentasTable, FilaVenta> {
   $VentasTable createAlias(String alias) {
     return $VentasTable(attachedDatabase, alias);
   }
+
+  static JsonTypeConverter2<ListaPrecio, String, String> $converterlista =
+      const EnumNameConverter<ListaPrecio>(ListaPrecio.values);
 }
 
 class FilaVenta extends DataClass implements Insertable<FilaVenta> {
@@ -5503,11 +5522,15 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
   final DateTime fecha;
   final int total;
   final int? tasa;
+
+  /// The price list it was sold at (schema 8); older sales were Detal.
+  final ListaPrecio lista;
   const FilaVenta({
     required this.id,
     required this.fecha,
     required this.total,
     this.tasa,
+    required this.lista,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -5518,6 +5541,11 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
     if (!nullToAbsent || tasa != null) {
       map['tasa'] = Variable<int>(tasa);
     }
+    {
+      map['lista'] = Variable<String>(
+        $VentasTable.$converterlista.toSql(lista),
+      );
+    }
     return map;
   }
 
@@ -5527,6 +5555,7 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
       fecha: Value(fecha),
       total: Value(total),
       tasa: tasa == null && nullToAbsent ? const Value.absent() : Value(tasa),
+      lista: Value(lista),
     );
   }
 
@@ -5540,6 +5569,9 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
       fecha: serializer.fromJson<DateTime>(json['fecha']),
       total: serializer.fromJson<int>(json['total']),
       tasa: serializer.fromJson<int?>(json['tasa']),
+      lista: $VentasTable.$converterlista.fromJson(
+        serializer.fromJson<String>(json['lista']),
+      ),
     );
   }
   @override
@@ -5550,6 +5582,9 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
       'fecha': serializer.toJson<DateTime>(fecha),
       'total': serializer.toJson<int>(total),
       'tasa': serializer.toJson<int?>(tasa),
+      'lista': serializer.toJson<String>(
+        $VentasTable.$converterlista.toJson(lista),
+      ),
     };
   }
 
@@ -5558,11 +5593,13 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
     DateTime? fecha,
     int? total,
     Value<int?> tasa = const Value.absent(),
+    ListaPrecio? lista,
   }) => FilaVenta(
     id: id ?? this.id,
     fecha: fecha ?? this.fecha,
     total: total ?? this.total,
     tasa: tasa.present ? tasa.value : this.tasa,
+    lista: lista ?? this.lista,
   );
   FilaVenta copyWithCompanion(VentasCompanion data) {
     return FilaVenta(
@@ -5570,6 +5607,7 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
       fecha: data.fecha.present ? data.fecha.value : this.fecha,
       total: data.total.present ? data.total.value : this.total,
       tasa: data.tasa.present ? data.tasa.value : this.tasa,
+      lista: data.lista.present ? data.lista.value : this.lista,
     );
   }
 
@@ -5579,13 +5617,14 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
           ..write('id: $id, ')
           ..write('fecha: $fecha, ')
           ..write('total: $total, ')
-          ..write('tasa: $tasa')
+          ..write('tasa: $tasa, ')
+          ..write('lista: $lista')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, fecha, total, tasa);
+  int get hashCode => Object.hash(id, fecha, total, tasa, lista);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -5593,7 +5632,8 @@ class FilaVenta extends DataClass implements Insertable<FilaVenta> {
           other.id == this.id &&
           other.fecha == this.fecha &&
           other.total == this.total &&
-          other.tasa == this.tasa);
+          other.tasa == this.tasa &&
+          other.lista == this.lista);
 }
 
 class VentasCompanion extends UpdateCompanion<FilaVenta> {
@@ -5601,12 +5641,14 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
   final Value<DateTime> fecha;
   final Value<int> total;
   final Value<int?> tasa;
+  final Value<ListaPrecio> lista;
   final Value<int> rowid;
   const VentasCompanion({
     this.id = const Value.absent(),
     this.fecha = const Value.absent(),
     this.total = const Value.absent(),
     this.tasa = const Value.absent(),
+    this.lista = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   VentasCompanion.insert({
@@ -5614,6 +5656,7 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
     required DateTime fecha,
     required int total,
     this.tasa = const Value.absent(),
+    this.lista = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        fecha = Value(fecha),
@@ -5623,6 +5666,7 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
     Expression<DateTime>? fecha,
     Expression<int>? total,
     Expression<int>? tasa,
+    Expression<String>? lista,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -5630,6 +5674,7 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
       if (fecha != null) 'fecha': fecha,
       if (total != null) 'total': total,
       if (tasa != null) 'tasa': tasa,
+      if (lista != null) 'lista': lista,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -5639,6 +5684,7 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
     Value<DateTime>? fecha,
     Value<int>? total,
     Value<int?>? tasa,
+    Value<ListaPrecio>? lista,
     Value<int>? rowid,
   }) {
     return VentasCompanion(
@@ -5646,6 +5692,7 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
       fecha: fecha ?? this.fecha,
       total: total ?? this.total,
       tasa: tasa ?? this.tasa,
+      lista: lista ?? this.lista,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -5665,6 +5712,11 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
     if (tasa.present) {
       map['tasa'] = Variable<int>(tasa.value);
     }
+    if (lista.present) {
+      map['lista'] = Variable<String>(
+        $VentasTable.$converterlista.toSql(lista.value),
+      );
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -5678,6 +5730,7 @@ class VentasCompanion extends UpdateCompanion<FilaVenta> {
           ..write('fecha: $fecha, ')
           ..write('total: $total, ')
           ..write('tasa: $tasa, ')
+          ..write('lista: $lista, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -8386,6 +8439,664 @@ class LineasDevolucionCompanion extends UpdateCompanion<FilaLineaDevolucion> {
   }
 }
 
+class $NegocioTable extends Negocio with TableInfo<$NegocioTable, FilaNegocio> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $NegocioTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nombreMeta = const VerificationMeta('nombre');
+  @override
+  late final GeneratedColumn<String> nombre = GeneratedColumn<String>(
+    'nombre',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _rifMeta = const VerificationMeta('rif');
+  @override
+  late final GeneratedColumn<String> rif = GeneratedColumn<String>(
+    'rif',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _direccionMeta = const VerificationMeta(
+    'direccion',
+  );
+  @override
+  late final GeneratedColumn<String> direccion = GeneratedColumn<String>(
+    'direccion',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _telefonoMeta = const VerificationMeta(
+    'telefono',
+  );
+  @override
+  late final GeneratedColumn<String> telefono = GeneratedColumn<String>(
+    'telefono',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, nombre, rif, direccion, telefono];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'negocio';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FilaNegocio> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('nombre')) {
+      context.handle(
+        _nombreMeta,
+        nombre.isAcceptableOrUnknown(data['nombre']!, _nombreMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nombreMeta);
+    }
+    if (data.containsKey('rif')) {
+      context.handle(
+        _rifMeta,
+        rif.isAcceptableOrUnknown(data['rif']!, _rifMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_rifMeta);
+    }
+    if (data.containsKey('direccion')) {
+      context.handle(
+        _direccionMeta,
+        direccion.isAcceptableOrUnknown(data['direccion']!, _direccionMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_direccionMeta);
+    }
+    if (data.containsKey('telefono')) {
+      context.handle(
+        _telefonoMeta,
+        telefono.isAcceptableOrUnknown(data['telefono']!, _telefonoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_telefonoMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  FilaNegocio map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FilaNegocio(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      nombre: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}nombre'],
+      )!,
+      rif: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}rif'],
+      )!,
+      direccion: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}direccion'],
+      )!,
+      telefono: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}telefono'],
+      )!,
+    );
+  }
+
+  @override
+  $NegocioTable createAlias(String alias) {
+    return $NegocioTable(attachedDatabase, alias);
+  }
+}
+
+class FilaNegocio extends DataClass implements Insertable<FilaNegocio> {
+  final int id;
+  final String nombre;
+  final String rif;
+  final String direccion;
+  final String telefono;
+  const FilaNegocio({
+    required this.id,
+    required this.nombre,
+    required this.rif,
+    required this.direccion,
+    required this.telefono,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['nombre'] = Variable<String>(nombre);
+    map['rif'] = Variable<String>(rif);
+    map['direccion'] = Variable<String>(direccion);
+    map['telefono'] = Variable<String>(telefono);
+    return map;
+  }
+
+  NegocioCompanion toCompanion(bool nullToAbsent) {
+    return NegocioCompanion(
+      id: Value(id),
+      nombre: Value(nombre),
+      rif: Value(rif),
+      direccion: Value(direccion),
+      telefono: Value(telefono),
+    );
+  }
+
+  factory FilaNegocio.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FilaNegocio(
+      id: serializer.fromJson<int>(json['id']),
+      nombre: serializer.fromJson<String>(json['nombre']),
+      rif: serializer.fromJson<String>(json['rif']),
+      direccion: serializer.fromJson<String>(json['direccion']),
+      telefono: serializer.fromJson<String>(json['telefono']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'nombre': serializer.toJson<String>(nombre),
+      'rif': serializer.toJson<String>(rif),
+      'direccion': serializer.toJson<String>(direccion),
+      'telefono': serializer.toJson<String>(telefono),
+    };
+  }
+
+  FilaNegocio copyWith({
+    int? id,
+    String? nombre,
+    String? rif,
+    String? direccion,
+    String? telefono,
+  }) => FilaNegocio(
+    id: id ?? this.id,
+    nombre: nombre ?? this.nombre,
+    rif: rif ?? this.rif,
+    direccion: direccion ?? this.direccion,
+    telefono: telefono ?? this.telefono,
+  );
+  FilaNegocio copyWithCompanion(NegocioCompanion data) {
+    return FilaNegocio(
+      id: data.id.present ? data.id.value : this.id,
+      nombre: data.nombre.present ? data.nombre.value : this.nombre,
+      rif: data.rif.present ? data.rif.value : this.rif,
+      direccion: data.direccion.present ? data.direccion.value : this.direccion,
+      telefono: data.telefono.present ? data.telefono.value : this.telefono,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FilaNegocio(')
+          ..write('id: $id, ')
+          ..write('nombre: $nombre, ')
+          ..write('rif: $rif, ')
+          ..write('direccion: $direccion, ')
+          ..write('telefono: $telefono')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, nombre, rif, direccion, telefono);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FilaNegocio &&
+          other.id == this.id &&
+          other.nombre == this.nombre &&
+          other.rif == this.rif &&
+          other.direccion == this.direccion &&
+          other.telefono == this.telefono);
+}
+
+class NegocioCompanion extends UpdateCompanion<FilaNegocio> {
+  final Value<int> id;
+  final Value<String> nombre;
+  final Value<String> rif;
+  final Value<String> direccion;
+  final Value<String> telefono;
+  const NegocioCompanion({
+    this.id = const Value.absent(),
+    this.nombre = const Value.absent(),
+    this.rif = const Value.absent(),
+    this.direccion = const Value.absent(),
+    this.telefono = const Value.absent(),
+  });
+  NegocioCompanion.insert({
+    this.id = const Value.absent(),
+    required String nombre,
+    required String rif,
+    required String direccion,
+    required String telefono,
+  }) : nombre = Value(nombre),
+       rif = Value(rif),
+       direccion = Value(direccion),
+       telefono = Value(telefono);
+  static Insertable<FilaNegocio> custom({
+    Expression<int>? id,
+    Expression<String>? nombre,
+    Expression<String>? rif,
+    Expression<String>? direccion,
+    Expression<String>? telefono,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (nombre != null) 'nombre': nombre,
+      if (rif != null) 'rif': rif,
+      if (direccion != null) 'direccion': direccion,
+      if (telefono != null) 'telefono': telefono,
+    });
+  }
+
+  NegocioCompanion copyWith({
+    Value<int>? id,
+    Value<String>? nombre,
+    Value<String>? rif,
+    Value<String>? direccion,
+    Value<String>? telefono,
+  }) {
+    return NegocioCompanion(
+      id: id ?? this.id,
+      nombre: nombre ?? this.nombre,
+      rif: rif ?? this.rif,
+      direccion: direccion ?? this.direccion,
+      telefono: telefono ?? this.telefono,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (nombre.present) {
+      map['nombre'] = Variable<String>(nombre.value);
+    }
+    if (rif.present) {
+      map['rif'] = Variable<String>(rif.value);
+    }
+    if (direccion.present) {
+      map['direccion'] = Variable<String>(direccion.value);
+    }
+    if (telefono.present) {
+      map['telefono'] = Variable<String>(telefono.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('NegocioCompanion(')
+          ..write('id: $id, ')
+          ..write('nombre: $nombre, ')
+          ..write('rif: $rif, ')
+          ..write('direccion: $direccion, ')
+          ..write('telefono: $telefono')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReglasPrecioTable extends ReglasPrecio
+    with TableInfo<$ReglasPrecioTable, FilaReglaPrecio> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReglasPrecioTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _productoIdMeta = const VerificationMeta(
+    'productoId',
+  );
+  @override
+  late final GeneratedColumn<String> productoId = GeneratedColumn<String>(
+    'producto_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES productos (id) ON DELETE CASCADE',
+    ),
+  );
+  @override
+  late final GeneratedColumnWithTypeConverter<ListaPrecio, String> lista =
+      GeneratedColumn<String>(
+        'lista',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: true,
+      ).withConverter<ListaPrecio>($ReglasPrecioTable.$converterlista);
+  static const VerificationMeta _tipoMeta = const VerificationMeta('tipo');
+  @override
+  late final GeneratedColumn<String> tipo = GeneratedColumn<String>(
+    'tipo',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _valorMeta = const VerificationMeta('valor');
+  @override
+  late final GeneratedColumn<int> valor = GeneratedColumn<int>(
+    'valor',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [productoId, lista, tipo, valor];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'reglas_precio';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<FilaReglaPrecio> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('producto_id')) {
+      context.handle(
+        _productoIdMeta,
+        productoId.isAcceptableOrUnknown(data['producto_id']!, _productoIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_productoIdMeta);
+    }
+    if (data.containsKey('tipo')) {
+      context.handle(
+        _tipoMeta,
+        tipo.isAcceptableOrUnknown(data['tipo']!, _tipoMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_tipoMeta);
+    }
+    if (data.containsKey('valor')) {
+      context.handle(
+        _valorMeta,
+        valor.isAcceptableOrUnknown(data['valor']!, _valorMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_valorMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {productoId, lista};
+  @override
+  FilaReglaPrecio map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return FilaReglaPrecio(
+      productoId: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}producto_id'],
+      )!,
+      lista: $ReglasPrecioTable.$converterlista.fromSql(
+        attachedDatabase.typeMapping.read(
+          DriftSqlType.string,
+          data['${effectivePrefix}lista'],
+        )!,
+      ),
+      tipo: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}tipo'],
+      )!,
+      valor: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}valor'],
+      )!,
+    );
+  }
+
+  @override
+  $ReglasPrecioTable createAlias(String alias) {
+    return $ReglasPrecioTable(attachedDatabase, alias);
+  }
+
+  static JsonTypeConverter2<ListaPrecio, String, String> $converterlista =
+      const EnumNameConverter<ListaPrecio>(ListaPrecio.values);
+}
+
+class FilaReglaPrecio extends DataClass implements Insertable<FilaReglaPrecio> {
+  final String productoId;
+  final ListaPrecio lista;
+  final String tipo;
+  final int valor;
+  const FilaReglaPrecio({
+    required this.productoId,
+    required this.lista,
+    required this.tipo,
+    required this.valor,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['producto_id'] = Variable<String>(productoId);
+    {
+      map['lista'] = Variable<String>(
+        $ReglasPrecioTable.$converterlista.toSql(lista),
+      );
+    }
+    map['tipo'] = Variable<String>(tipo);
+    map['valor'] = Variable<int>(valor);
+    return map;
+  }
+
+  ReglasPrecioCompanion toCompanion(bool nullToAbsent) {
+    return ReglasPrecioCompanion(
+      productoId: Value(productoId),
+      lista: Value(lista),
+      tipo: Value(tipo),
+      valor: Value(valor),
+    );
+  }
+
+  factory FilaReglaPrecio.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return FilaReglaPrecio(
+      productoId: serializer.fromJson<String>(json['productoId']),
+      lista: $ReglasPrecioTable.$converterlista.fromJson(
+        serializer.fromJson<String>(json['lista']),
+      ),
+      tipo: serializer.fromJson<String>(json['tipo']),
+      valor: serializer.fromJson<int>(json['valor']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'productoId': serializer.toJson<String>(productoId),
+      'lista': serializer.toJson<String>(
+        $ReglasPrecioTable.$converterlista.toJson(lista),
+      ),
+      'tipo': serializer.toJson<String>(tipo),
+      'valor': serializer.toJson<int>(valor),
+    };
+  }
+
+  FilaReglaPrecio copyWith({
+    String? productoId,
+    ListaPrecio? lista,
+    String? tipo,
+    int? valor,
+  }) => FilaReglaPrecio(
+    productoId: productoId ?? this.productoId,
+    lista: lista ?? this.lista,
+    tipo: tipo ?? this.tipo,
+    valor: valor ?? this.valor,
+  );
+  FilaReglaPrecio copyWithCompanion(ReglasPrecioCompanion data) {
+    return FilaReglaPrecio(
+      productoId: data.productoId.present
+          ? data.productoId.value
+          : this.productoId,
+      lista: data.lista.present ? data.lista.value : this.lista,
+      tipo: data.tipo.present ? data.tipo.value : this.tipo,
+      valor: data.valor.present ? data.valor.value : this.valor,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('FilaReglaPrecio(')
+          ..write('productoId: $productoId, ')
+          ..write('lista: $lista, ')
+          ..write('tipo: $tipo, ')
+          ..write('valor: $valor')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(productoId, lista, tipo, valor);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is FilaReglaPrecio &&
+          other.productoId == this.productoId &&
+          other.lista == this.lista &&
+          other.tipo == this.tipo &&
+          other.valor == this.valor);
+}
+
+class ReglasPrecioCompanion extends UpdateCompanion<FilaReglaPrecio> {
+  final Value<String> productoId;
+  final Value<ListaPrecio> lista;
+  final Value<String> tipo;
+  final Value<int> valor;
+  final Value<int> rowid;
+  const ReglasPrecioCompanion({
+    this.productoId = const Value.absent(),
+    this.lista = const Value.absent(),
+    this.tipo = const Value.absent(),
+    this.valor = const Value.absent(),
+    this.rowid = const Value.absent(),
+  });
+  ReglasPrecioCompanion.insert({
+    required String productoId,
+    required ListaPrecio lista,
+    required String tipo,
+    required int valor,
+    this.rowid = const Value.absent(),
+  }) : productoId = Value(productoId),
+       lista = Value(lista),
+       tipo = Value(tipo),
+       valor = Value(valor);
+  static Insertable<FilaReglaPrecio> custom({
+    Expression<String>? productoId,
+    Expression<String>? lista,
+    Expression<String>? tipo,
+    Expression<int>? valor,
+    Expression<int>? rowid,
+  }) {
+    return RawValuesInsertable({
+      if (productoId != null) 'producto_id': productoId,
+      if (lista != null) 'lista': lista,
+      if (tipo != null) 'tipo': tipo,
+      if (valor != null) 'valor': valor,
+      if (rowid != null) 'rowid': rowid,
+    });
+  }
+
+  ReglasPrecioCompanion copyWith({
+    Value<String>? productoId,
+    Value<ListaPrecio>? lista,
+    Value<String>? tipo,
+    Value<int>? valor,
+    Value<int>? rowid,
+  }) {
+    return ReglasPrecioCompanion(
+      productoId: productoId ?? this.productoId,
+      lista: lista ?? this.lista,
+      tipo: tipo ?? this.tipo,
+      valor: valor ?? this.valor,
+      rowid: rowid ?? this.rowid,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (productoId.present) {
+      map['producto_id'] = Variable<String>(productoId.value);
+    }
+    if (lista.present) {
+      map['lista'] = Variable<String>(
+        $ReglasPrecioTable.$converterlista.toSql(lista.value),
+      );
+    }
+    if (tipo.present) {
+      map['tipo'] = Variable<String>(tipo.value);
+    }
+    if (valor.present) {
+      map['valor'] = Variable<int>(valor.value);
+    }
+    if (rowid.present) {
+      map['rowid'] = Variable<int>(rowid.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReglasPrecioCompanion(')
+          ..write('productoId: $productoId, ')
+          ..write('lista: $lista, ')
+          ..write('tipo: $tipo, ')
+          ..write('valor: $valor, ')
+          ..write('rowid: $rowid')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$BaseDatos extends GeneratedDatabase {
   _$BaseDatos(QueryExecutor e) : super(e);
   $BaseDatosManager get managers => $BaseDatosManager(this);
@@ -8407,6 +9118,8 @@ abstract class _$BaseDatos extends GeneratedDatabase {
   late final $LineasDevolucionTable lineasDevolucion = $LineasDevolucionTable(
     this,
   );
+  late final $NegocioTable negocio = $NegocioTable(this);
+  late final $ReglasPrecioTable reglasPrecio = $ReglasPrecioTable(this);
   late final Index presentacionesCodigo = Index(
     'presentaciones_codigo',
     'CREATE INDEX presentaciones_codigo ON presentaciones (codigo)',
@@ -8443,6 +9156,8 @@ abstract class _$BaseDatos extends GeneratedDatabase {
     gastos,
     devolucionesProveedor,
     lineasDevolucion,
+    negocio,
+    reglasPrecio,
     presentacionesCodigo,
     movimientosFecha,
     movimientosProducto,
@@ -8491,6 +9206,13 @@ abstract class _$BaseDatos extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('lineas_devolucion', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'productos',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('reglas_precio', kind: UpdateKind.delete)],
     ),
   ]);
   @override
@@ -8554,6 +9276,24 @@ final class $$ProductosTableReferences
     ).filter((f) => f.productoId.id.sqlEquals($_itemColumn<String>('id')!));
 
     final cache = $_typedResult.readTableOrNull(_presentacionesRefsTable($_db));
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+
+  static MultiTypedResultKey<$ReglasPrecioTable, List<FilaReglaPrecio>>
+  _reglasPrecioRefsTable(_$BaseDatos db) => MultiTypedResultKey.fromTable(
+    db.reglasPrecio,
+    aliasName: 'productos__id__reglas_precio__producto_id',
+  );
+
+  $$ReglasPrecioTableProcessedTableManager get reglasPrecioRefs {
+    final manager = $$ReglasPrecioTableTableManager(
+      $_db,
+      $_db.reglasPrecio,
+    ).filter((f) => f.productoId.id.sqlEquals($_itemColumn<String>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(_reglasPrecioRefsTable($_db));
     return ProcessedTableManager(
       manager.$state.copyWith(prefetchedData: cache),
     );
@@ -8647,6 +9387,31 @@ class $$ProductosTableFilterComposer
           }) => $$PresentacionesTableFilterComposer(
             $db: $db,
             $table: $db.presentaciones,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+
+  Expression<bool> reglasPrecioRefs(
+    Expression<bool> Function($$ReglasPrecioTableFilterComposer f) f,
+  ) {
+    final $$ReglasPrecioTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.reglasPrecio,
+      getReferencedColumn: (t) => t.productoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReglasPrecioTableFilterComposer(
+            $db: $db,
+            $table: $db.reglasPrecio,
             $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
             joinBuilder: joinBuilder,
             $removeJoinBuilderFromRootComposer:
@@ -8783,6 +9548,31 @@ class $$ProductosTableAnnotationComposer
     );
     return f(composer);
   }
+
+  Expression<T> reglasPrecioRefs<T extends Object>(
+    Expression<T> Function($$ReglasPrecioTableAnnotationComposer a) f,
+  ) {
+    final $$ReglasPrecioTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.reglasPrecio,
+      getReferencedColumn: (t) => t.productoId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ReglasPrecioTableAnnotationComposer(
+            $db: $db,
+            $table: $db.reglasPrecio,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
 }
 
 class $$ProductosTableTableManager
@@ -8798,7 +9588,11 @@ class $$ProductosTableTableManager
           $$ProductosTableUpdateCompanionBuilder,
           (FilaProducto, $$ProductosTableReferences),
           FilaProducto,
-          PrefetchHooks Function({bool lotesMarcaRefs, bool presentacionesRefs})
+          PrefetchHooks Function({
+            bool lotesMarcaRefs,
+            bool presentacionesRefs,
+            bool reglasPrecioRefs,
+          })
         > {
   $$ProductosTableTableManager(_$BaseDatos db, $ProductosTable table)
     : super(
@@ -8860,12 +9654,17 @@ class $$ProductosTableTableManager
               )
               .toList(),
           prefetchHooksCallback:
-              ({lotesMarcaRefs = false, presentacionesRefs = false}) {
+              ({
+                lotesMarcaRefs = false,
+                presentacionesRefs = false,
+                reglasPrecioRefs = false,
+              }) {
                 return PrefetchHooks(
                   db: db,
                   explicitlyWatchedTables: [
                     if (lotesMarcaRefs) db.lotesMarca,
                     if (presentacionesRefs) db.presentaciones,
+                    if (reglasPrecioRefs) db.reglasPrecio,
                   ],
                   addJoins: null,
                   getPrefetchedDataCallback: (items) async {
@@ -8910,6 +9709,26 @@ class $$ProductosTableTableManager
                           referencedColumn: 'producto_id',
                           typedResults: items,
                         ),
+                      if (reglasPrecioRefs)
+                        await $_getPrefetchedDataByColumns<
+                          FilaProducto,
+                          $ProductosTable,
+                          FilaReglaPrecio,
+                          $ReglasPrecioTable
+                        >(
+                          currentTable: table,
+                          referencedTable: $$ProductosTableReferences
+                              ._reglasPrecioRefsTable(db),
+                          managerFromTypedResult: (p0) =>
+                              $$ProductosTableReferences(
+                                db,
+                                table,
+                                p0,
+                              ).reglasPrecioRefs,
+                          currentColumn: 'id',
+                          referencedColumn: 'producto_id',
+                          typedResults: items,
+                        ),
                     ];
                   },
                 );
@@ -8930,7 +9749,11 @@ typedef $$ProductosTableProcessedTableManager =
       $$ProductosTableUpdateCompanionBuilder,
       (FilaProducto, $$ProductosTableReferences),
       FilaProducto,
-      PrefetchHooks Function({bool lotesMarcaRefs, bool presentacionesRefs})
+      PrefetchHooks Function({
+        bool lotesMarcaRefs,
+        bool presentacionesRefs,
+        bool reglasPrecioRefs,
+      })
     >;
 typedef $$LotesMarcaTableCreateCompanionBuilder = LotesMarcaCompanion Function({
   required String productoId,
@@ -11999,6 +12822,7 @@ typedef $$VentasTableCreateCompanionBuilder = VentasCompanion Function({
   required DateTime fecha,
   required int total,
   Value<int?> tasa,
+  Value<ListaPrecio> lista,
   Value<int> rowid,
 });
 typedef $$VentasTableUpdateCompanionBuilder = VentasCompanion Function({
@@ -12006,6 +12830,7 @@ typedef $$VentasTableUpdateCompanionBuilder = VentasCompanion Function({
   Value<DateTime> fecha,
   Value<int> total,
   Value<int?> tasa,
+  Value<ListaPrecio> lista,
   Value<int> rowid,
 });
 
@@ -12059,6 +12884,12 @@ class $$VentasTableFilterComposer extends Composer<_$BaseDatos, $VentasTable> {
     column: $table.tasa,
     builder: (column) => ColumnFilters(column),
   );
+
+  ColumnWithTypeConverterFilters<ListaPrecio, ListaPrecio, String> get lista =>
+      $composableBuilder(
+        column: $table.lista,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
 
   Expression<bool> pagosVentaRefs(
     Expression<bool> Function($$PagosVentaTableFilterComposer f) f,
@@ -12114,6 +12945,11 @@ class $$VentasTableOrderingComposer
     column: $table.tasa,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<String> get lista => $composableBuilder(
+    column: $table.lista,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$VentasTableAnnotationComposer
@@ -12136,6 +12972,9 @@ class $$VentasTableAnnotationComposer
 
   GeneratedColumn<int> get tasa =>
       $composableBuilder(column: $table.tasa, builder: (column) => column);
+
+  GeneratedColumnWithTypeConverter<ListaPrecio, String> get lista =>
+      $composableBuilder(column: $table.lista, builder: (column) => column);
 
   Expression<T> pagosVentaRefs<T extends Object>(
     Expression<T> Function($$PagosVentaTableAnnotationComposer a) f,
@@ -12195,12 +13034,14 @@ class $$VentasTableTableManager
                 Value<DateTime> fecha = const Value.absent(),
                 Value<int> total = const Value.absent(),
                 Value<int?> tasa = const Value.absent(),
+                Value<ListaPrecio> lista = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VentasCompanion(
                 id: id,
                 fecha: fecha,
                 total: total,
                 tasa: tasa,
+                lista: lista,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12209,12 +13050,14 @@ class $$VentasTableTableManager
                 required DateTime fecha,
                 required int total,
                 Value<int?> tasa = const Value.absent(),
+                Value<ListaPrecio> lista = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => VentasCompanion.insert(
                 id: id,
                 fecha: fecha,
                 total: total,
                 tasa: tasa,
+                lista: lista,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -13981,6 +14824,501 @@ typedef $$LineasDevolucionTableProcessedTableManager =
       FilaLineaDevolucion,
       PrefetchHooks Function({bool devolucionId})
     >;
+typedef $$NegocioTableCreateCompanionBuilder = NegocioCompanion Function({
+  Value<int> id,
+  required String nombre,
+  required String rif,
+  required String direccion,
+  required String telefono,
+});
+typedef $$NegocioTableUpdateCompanionBuilder = NegocioCompanion Function({
+  Value<int> id,
+  Value<String> nombre,
+  Value<String> rif,
+  Value<String> direccion,
+  Value<String> telefono,
+});
+
+class $$NegocioTableFilterComposer
+    extends Composer<_$BaseDatos, $NegocioTable> {
+  $$NegocioTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get nombre => $composableBuilder(
+    column: $table.nombre,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get rif => $composableBuilder(
+    column: $table.rif,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get direccion => $composableBuilder(
+    column: $table.direccion,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get telefono => $composableBuilder(
+    column: $table.telefono,
+    builder: (column) => ColumnFilters(column),
+  );
+}
+
+class $$NegocioTableOrderingComposer
+    extends Composer<_$BaseDatos, $NegocioTable> {
+  $$NegocioTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get nombre => $composableBuilder(
+    column: $table.nombre,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get rif => $composableBuilder(
+    column: $table.rif,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get direccion => $composableBuilder(
+    column: $table.direccion,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get telefono => $composableBuilder(
+    column: $table.telefono,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$NegocioTableAnnotationComposer
+    extends Composer<_$BaseDatos, $NegocioTable> {
+  $$NegocioTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get nombre =>
+      $composableBuilder(column: $table.nombre, builder: (column) => column);
+
+  GeneratedColumn<String> get rif =>
+      $composableBuilder(column: $table.rif, builder: (column) => column);
+
+  GeneratedColumn<String> get direccion =>
+      $composableBuilder(column: $table.direccion, builder: (column) => column);
+
+  GeneratedColumn<String> get telefono =>
+      $composableBuilder(column: $table.telefono, builder: (column) => column);
+}
+
+class $$NegocioTableTableManager
+    extends
+        RootTableManager<
+          _$BaseDatos,
+          $NegocioTable,
+          FilaNegocio,
+          $$NegocioTableFilterComposer,
+          $$NegocioTableOrderingComposer,
+          $$NegocioTableAnnotationComposer,
+          $$NegocioTableCreateCompanionBuilder,
+          $$NegocioTableUpdateCompanionBuilder,
+          (
+            FilaNegocio,
+            BaseReferences<_$BaseDatos, $NegocioTable, FilaNegocio>,
+          ),
+          FilaNegocio,
+          PrefetchHooks Function()
+        > {
+  $$NegocioTableTableManager(_$BaseDatos db, $NegocioTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$NegocioTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$NegocioTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$NegocioTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> nombre = const Value.absent(),
+                Value<String> rif = const Value.absent(),
+                Value<String> direccion = const Value.absent(),
+                Value<String> telefono = const Value.absent(),
+              }) => NegocioCompanion(
+                id: id,
+                nombre: nombre,
+                rif: rif,
+                direccion: direccion,
+                telefono: telefono,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String nombre,
+                required String rif,
+                required String direccion,
+                required String telefono,
+              }) => NegocioCompanion.insert(
+                id: id,
+                nombre: nombre,
+                rif: rif,
+                direccion: direccion,
+                telefono: telefono,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$NegocioTable, FilaNegocio>(table),
+                  BaseReferences<_$BaseDatos, $NegocioTable, FilaNegocio>(
+                    db,
+                    table,
+                    e,
+                  ),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: null,
+        ),
+      );
+}
+
+typedef $$NegocioTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BaseDatos,
+      $NegocioTable,
+      FilaNegocio,
+      $$NegocioTableFilterComposer,
+      $$NegocioTableOrderingComposer,
+      $$NegocioTableAnnotationComposer,
+      $$NegocioTableCreateCompanionBuilder,
+      $$NegocioTableUpdateCompanionBuilder,
+      (FilaNegocio, BaseReferences<_$BaseDatos, $NegocioTable, FilaNegocio>),
+      FilaNegocio,
+      PrefetchHooks Function()
+    >;
+typedef $$ReglasPrecioTableCreateCompanionBuilder =
+    ReglasPrecioCompanion Function({
+      required String productoId,
+      required ListaPrecio lista,
+      required String tipo,
+      required int valor,
+      Value<int> rowid,
+    });
+typedef $$ReglasPrecioTableUpdateCompanionBuilder =
+    ReglasPrecioCompanion Function({
+      Value<String> productoId,
+      Value<ListaPrecio> lista,
+      Value<String> tipo,
+      Value<int> valor,
+      Value<int> rowid,
+    });
+
+final class $$ReglasPrecioTableReferences
+    extends BaseReferences<_$BaseDatos, $ReglasPrecioTable, FilaReglaPrecio> {
+  $$ReglasPrecioTableReferences(super.$_db, super.$_table, super.$_typedResult);
+
+  static $ProductosTable _productoIdTable(_$BaseDatos db) =>
+      db.productos.createAlias('reglas_precio__producto_id__productos__id');
+
+  $$ProductosTableProcessedTableManager get productoId {
+    final $_column = $_itemColumn<String>('producto_id')!;
+
+    final manager = $$ProductosTableTableManager(
+      $_db,
+      $_db.productos,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_productoIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$ReglasPrecioTableFilterComposer
+    extends Composer<_$BaseDatos, $ReglasPrecioTable> {
+  $$ReglasPrecioTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnWithTypeConverterFilters<ListaPrecio, ListaPrecio, String> get lista =>
+      $composableBuilder(
+        column: $table.lista,
+        builder: (column) => ColumnWithTypeConverterFilters(column),
+      );
+
+  ColumnFilters<String> get tipo => $composableBuilder(
+    column: $table.tipo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$ProductosTableFilterComposer get productoId {
+    final $$ProductosTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productoId,
+      referencedTable: $db.productos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductosTableFilterComposer(
+            $db: $db,
+            $table: $db.productos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReglasPrecioTableOrderingComposer
+    extends Composer<_$BaseDatos, $ReglasPrecioTable> {
+  $$ReglasPrecioTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<String> get lista => $composableBuilder(
+    column: $table.lista,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get tipo => $composableBuilder(
+    column: $table.tipo,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get valor => $composableBuilder(
+    column: $table.valor,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$ProductosTableOrderingComposer get productoId {
+    final $$ProductosTableOrderingComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productoId,
+      referencedTable: $db.productos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductosTableOrderingComposer(
+            $db: $db,
+            $table: $db.productos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReglasPrecioTableAnnotationComposer
+    extends Composer<_$BaseDatos, $ReglasPrecioTable> {
+  $$ReglasPrecioTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumnWithTypeConverter<ListaPrecio, String> get lista =>
+      $composableBuilder(column: $table.lista, builder: (column) => column);
+
+  GeneratedColumn<String> get tipo =>
+      $composableBuilder(column: $table.tipo, builder: (column) => column);
+
+  GeneratedColumn<int> get valor =>
+      $composableBuilder(column: $table.valor, builder: (column) => column);
+
+  $$ProductosTableAnnotationComposer get productoId {
+    final $$ProductosTableAnnotationComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.productoId,
+      referencedTable: $db.productos,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$ProductosTableAnnotationComposer(
+            $db: $db,
+            $table: $db.productos,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$ReglasPrecioTableTableManager
+    extends
+        RootTableManager<
+          _$BaseDatos,
+          $ReglasPrecioTable,
+          FilaReglaPrecio,
+          $$ReglasPrecioTableFilterComposer,
+          $$ReglasPrecioTableOrderingComposer,
+          $$ReglasPrecioTableAnnotationComposer,
+          $$ReglasPrecioTableCreateCompanionBuilder,
+          $$ReglasPrecioTableUpdateCompanionBuilder,
+          (FilaReglaPrecio, $$ReglasPrecioTableReferences),
+          FilaReglaPrecio,
+          PrefetchHooks Function({bool productoId})
+        > {
+  $$ReglasPrecioTableTableManager(_$BaseDatos db, $ReglasPrecioTable table)
+    : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$ReglasPrecioTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$ReglasPrecioTableOrderingComposer($db: db, $table: table),
+          createComputedFieldComposer: () =>
+              $$ReglasPrecioTableAnnotationComposer($db: db, $table: table),
+          updateCompanionCallback:
+              ({
+                Value<String> productoId = const Value.absent(),
+                Value<ListaPrecio> lista = const Value.absent(),
+                Value<String> tipo = const Value.absent(),
+                Value<int> valor = const Value.absent(),
+                Value<int> rowid = const Value.absent(),
+              }) => ReglasPrecioCompanion(
+                productoId: productoId,
+                lista: lista,
+                tipo: tipo,
+                valor: valor,
+                rowid: rowid,
+              ),
+          createCompanionCallback:
+              ({
+                required String productoId,
+                required ListaPrecio lista,
+                required String tipo,
+                required int valor,
+                Value<int> rowid = const Value.absent(),
+              }) => ReglasPrecioCompanion.insert(
+                productoId: productoId,
+                lista: lista,
+                tipo: tipo,
+                valor: valor,
+                rowid: rowid,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable<$ReglasPrecioTable, FilaReglaPrecio>(table),
+                  $$ReglasPrecioTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({productoId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (productoId) {
+                      state = state.withJoin(
+                        currentTable: table,
+                        currentColumn: table.productoId,
+                        referencedTable: $$ReglasPrecioTableReferences
+                            ._productoIdTable(db),
+                        referencedColumn: $$ReglasPrecioTableReferences
+                            ._productoIdTable(db)
+                            .id,
+                      ) as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$ReglasPrecioTableProcessedTableManager =
+    ProcessedTableManager<
+      _$BaseDatos,
+      $ReglasPrecioTable,
+      FilaReglaPrecio,
+      $$ReglasPrecioTableFilterComposer,
+      $$ReglasPrecioTableOrderingComposer,
+      $$ReglasPrecioTableAnnotationComposer,
+      $$ReglasPrecioTableCreateCompanionBuilder,
+      $$ReglasPrecioTableUpdateCompanionBuilder,
+      (FilaReglaPrecio, $$ReglasPrecioTableReferences),
+      FilaReglaPrecio,
+      PrefetchHooks Function({bool productoId})
+    >;
 
 class $BaseDatosManager {
   final _$BaseDatos _db;
@@ -14015,4 +15353,8 @@ class $BaseDatosManager {
       $$DevolucionesProveedorTableTableManager(_db, _db.devolucionesProveedor);
   $$LineasDevolucionTableTableManager get lineasDevolucion =>
       $$LineasDevolucionTableTableManager(_db, _db.lineasDevolucion);
+  $$NegocioTableTableManager get negocio =>
+      $$NegocioTableTableManager(_db, _db.negocio);
+  $$ReglasPrecioTableTableManager get reglasPrecio =>
+      $$ReglasPrecioTableTableManager(_db, _db.reglasPrecio);
 }

@@ -1,8 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/domain/regla_precio.dart';
 import 'package:inventario/features/salidas/domain/linea_ticket.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/domain/ticket.dart';
@@ -49,5 +51,22 @@ void main() {
     final sin = ticket.sin(1);
     expect(sin.lineas.map((l) => l.salida.cantidad), [1000, 3000]);
     expect(sin.con(1, kilos(2000)), ticket);
+  });
+
+  test('changing the list reprices the lines and is kept on', () {
+    final mayor = molida.copyWith(
+      reglas: const {ListaPrecio.mayor: PrecioFijo(500)},
+    );
+    final ticket = Ticket([kilos(2000, importe: 1240)]);
+    final enMayor = ticket.conLista(ListaPrecio.mayor, (_) => mayor);
+    expect(enMayor.total, 1000);
+    expect(enMayor.lista, ListaPrecio.mayor);
+    expect(enMayor.sin(0).lista, ListaPrecio.mayor);
+    expect(enMayor.conLista(ListaPrecio.detal, (_) => mayor).total, 1240);
+  });
+
+  test('a line whose product is gone keeps its amount', () {
+    final ticket = Ticket([kilos(2000, importe: 1240)]);
+    expect(ticket.conLista(ListaPrecio.mayor, (_) => null).total, 1240);
   });
 }

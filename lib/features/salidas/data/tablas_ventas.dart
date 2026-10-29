@@ -1,5 +1,6 @@
 import 'package:drift/drift.dart';
 import 'package:inventario/core/medio_pago.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 
 /// A paid ticket; its products are the sale movements with its id.
 @DataClassName('FilaVenta')
@@ -9,6 +10,10 @@ class Ventas extends Table {
   DateTimeColumn get fecha => dateTime()();
   IntColumn get total => integer()();
   IntColumn get tasa => integer().nullable()();
+
+  /// The price list it was sold at (schema 8); older sales were Detal.
+  TextColumn get lista =>
+      textEnum<ListaPrecio>().withDefault(Constant(ListaPrecio.detal.name))();
 
   @override
   Set<Column<Object>> get primaryKey => {id};

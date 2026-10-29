@@ -7,9 +7,11 @@ import 'package:inventario/features/productos/data/repositorio_productos_drift.d
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/domain/regla_precio.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 
 void main() {
@@ -58,6 +60,32 @@ void main() {
         ProductoGuardado(:final producto) => producto,
         NombreRepetido() => throw StateError('name taken'),
       };
+
+  test('the Mayor and Especial rules are kept and replaced', () async {
+    final creado = await crear(
+      DatosProducto(
+        nombre: alimento.nombre,
+        categoria: alimento.categoria,
+        forma: alimento.forma,
+        minimo: alimento.minimo,
+        lotes: alimento.lotes,
+        reglas: const {
+          ListaPrecio.mayor: MargenSobreCosto(3000),
+          ListaPrecio.especial: PrecioFijo(500),
+        },
+      ),
+    );
+    expect((await repositorio.obtenerTodos()).single, creado);
+    await repositorio.actualizar(
+      creado.id,
+      DatosProducto.desde(
+        creado.copyWith(reglas: const {ListaPrecio.mayor: PrecioFijo(450)}),
+      ),
+    );
+    expect((await repositorio.obtenerTodos()).single.reglas, const {
+      ListaPrecio.mayor: PrecioFijo(450),
+    });
+  });
 
   test('a product comes back with its brands and packs in order', () async {
     final creado = await crear(alimento);

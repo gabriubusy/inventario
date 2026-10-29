@@ -14,6 +14,9 @@ import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/caja/data/repositorio_cajas_drift.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_drift.dart';
+import 'package:inventario/features/configuracion/application/controlador_negocio.dart';
+import 'package:inventario/features/configuracion/data/almacen_ajustes_respaldo_preferencias.dart';
+import 'package:inventario/features/configuracion/data/repositorio_negocio_drift.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
 import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
 import 'package:inventario/features/devoluciones_proveedor/data/repositorio_devoluciones_proveedor_drift.dart';
@@ -24,6 +27,7 @@ import 'package:inventario/features/incidencias/application/controlador_incidenc
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_drift.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/data/repositorio_movimientos_drift.dart';
+import 'package:inventario/features/productos/application/controlador_ajuste_precios.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
@@ -31,6 +35,8 @@ import 'package:inventario/features/productos/data/almacen_imagenes_local.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_drift.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_drift.dart';
+import 'package:inventario/features/respaldo/application/controlador_respaldo.dart';
+import 'package:inventario/features/respaldo/data/gestor_respaldos_local.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
 import 'package:inventario/features/salidas/data/repositorio_ventas_drift.dart';
@@ -49,6 +55,8 @@ Future<void> main() async {
   );
   // Restored before the first frame so the PIN screen doesn't flash.
   await controladorSesion.restaurar();
+  // A backup chosen to restore replaces the data before anything opens it.
+  await aplicarRestauracionPendiente();
   final baseDatos = abrirBaseDatos();
   final productos = RepositorioProductosDrift(baseDatos);
   final proveedores = RepositorioProveedoresDrift(baseDatos);
@@ -118,6 +126,15 @@ Future<void> main() async {
     transacciones: transacciones,
   );
   final gestorFotos = GestorFotos(await crearAlmacenImagenesLocal());
+  final controladorNegocio = ControladorNegocio(
+    RepositorioNegocioDrift(baseDatos),
+  );
+  final controladorRespaldo = ControladorRespaldo(
+    await crearGestorRespaldosLocal(baseDatos),
+    AlmacenAjustesRespaldoPreferencias(),
+  );
+  unawaited(controladorNegocio.cargar());
+  unawaited(controladorRespaldo.cargar());
   unawaited(controladorExistencias.cargar());
   unawaited(controladorProveedores.cargar());
   unawaited(controladorIncidencias.cargar());
@@ -174,6 +191,12 @@ Future<void> main() async {
       ),
       controladorTasa: controladorTasa,
       gestorFotos: gestorFotos,
+      controladorNegocio: controladorNegocio,
+      controladorRespaldo: controladorRespaldo,
+      controladorAjustePrecios: ControladorAjustePrecios(
+        controladorExistencias,
+        transacciones: transacciones,
+      ),
     ),
   );
 }

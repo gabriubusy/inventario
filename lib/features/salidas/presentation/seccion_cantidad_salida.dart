@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/core/numeros.dart';
+import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/presentacion.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -26,6 +27,7 @@ class SeccionCantidadSalida extends StatelessWidget {
     required this.salida,
     required this.aBolivares,
     required this.onEnviar,
+    this.lista = ListaPrecio.detal,
   });
 
   final Producto producto;
@@ -39,6 +41,9 @@ class SeccionCantidadSalida extends StatelessWidget {
   final Salida? Function() salida;
   final int? Function(int dolares) aBolivares;
   final VoidCallback onEnviar;
+
+  /// The ticket's price list.
+  final ListaPrecio lista;
 
   /// "kg" when the pack is the unit itself, else the pack's name.
   String _sufijo({required bool plural}) => switch (medida) {
@@ -58,14 +63,15 @@ class SeccionCantidadSalida extends StatelessWidget {
         : '${nombre}es';
   }
 
-  String? get _porUnidad => switch (medida) {
-    MedidaEnPresentacion(:final presentacion) =>
-      '${formatearDolares(presentacion.precio)} /${_sufijo(plural: false)}',
-    MedidaEnUnidad(:final unidad) => switch (lote.precio) {
-      final precio? => '${formatearDolares(precio)} /${unidad.simbolo}',
-      null => null,
-    },
-  };
+  int? get _precio => medida.precio(producto, lote, lista);
+
+  /// "$ 5,33 /kg (Mayor)"; the list is named only when it isn't Detal.
+  String? get _porUnidad {
+    final precio = _precio;
+    if (precio == null) return null;
+    final enLista = lista == ListaPrecio.detal ? '' : ' (${lista.etiqueta})';
+    return '${formatearDolares(precio)} /${_sufijo(plural: false)}$enLista';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +111,7 @@ class SeccionCantidadSalida extends StatelessWidget {
                         ? null
                         : '${formatDecimal(escrito, decimales: medida.decimales)}'
                               ' ${_sufijo(plural: !uno)}',
-                    importe: medida.importe(escrito, lote),
+                    importe: medida.importe(escrito, _precio),
                     aBolivares: aBolivares,
                   ),
                 ),
