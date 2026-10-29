@@ -9,6 +9,7 @@ import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/devolver_venta.dart';
+import 'package:inventario/features/salidas/domain/mas_vendidos.dart';
 import 'package:inventario/features/salidas/domain/modo_venta.dart';
 import 'package:inventario/features/salidas/domain/movimiento_de_venta.dart';
 import 'package:inventario/features/salidas/domain/pago_venta.dart';
@@ -73,6 +74,21 @@ class ControladorSalidas extends ChangeNotifier {
     for (final venta in await _ventas?.obtenerTodas() ?? const <Venta>[])
       venta.id: venta,
   };
+
+  /// The quick buttons of the sale window: the most sold products that
+  /// still exist, best first.
+  List<Producto> masVendidosAhora({int cuantos = 8}) {
+    final movimientos = _movimientos;
+    if (movimientos == null) return const [];
+    return [
+      for (final id in masVendidos(
+        movimientos.todos,
+        movimientos.hoy,
+        cuantos: cuantos,
+      ))
+        ?_buscar(id),
+    ];
+  }
 
   /// Whole piece unless this product was last sold by weight.
   ModoVenta modoPara(String productoId) =>

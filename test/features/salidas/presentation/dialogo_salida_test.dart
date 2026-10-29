@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
+import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
@@ -11,11 +13,13 @@ import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/salidas/application/controlador_salidas.dart';
+import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
 
 void main() {
   late ControladorExistencias existencias;
   late ControladorSalidas salidas;
+  late ControladorMovimientos movimientos;
 
   setUp(() async {
     existencias = ControladorExistencias(
@@ -53,7 +57,12 @@ void main() {
       ]),
     );
     await existencias.cargar();
-    salidas = ControladorSalidas(existencias, tasaDeHoy: () => 4000);
+    movimientos = ControladorMovimientos(RepositorioMovimientosEnMemoria());
+    salidas = ControladorSalidas(
+      existencias,
+      movimientos: movimientos,
+      tasaDeHoy: () => 4000,
+    );
   });
 
   tearDown(() {
@@ -175,6 +184,18 @@ void main() {
       findsOneWidget,
     );
     await conAlt(tester, LogicalKeyboardKey.keyZ);
+    expect(find.text('Propia · 1 kg'), findsOneWidget);
+  });
+
+  testWidgets('Ctrl+1 picks the most sold product', (tester) async {
+    await salidas.registrar('p2', const Salida(marca: 'Propia', cantidad: 500));
+    await abrir(tester);
+    expect(find.text('Más vendidos'), findsOneWidget);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+    await escribirYEnter(tester, '1');
     expect(find.text('Propia · 1 kg'), findsOneWidget);
   });
 

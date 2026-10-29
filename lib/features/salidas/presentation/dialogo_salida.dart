@@ -20,6 +20,7 @@ import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/domain/ticket.dart';
 import 'package:inventario/features/salidas/domain/vender.dart';
 import 'package:inventario/features/salidas/presentation/aviso_venta.dart';
+import 'package:inventario/features/salidas/presentation/botones_mas_vendidos.dart';
 import 'package:inventario/features/salidas/presentation/buscador_producto_salida.dart';
 import 'package:inventario/features/salidas/presentation/campo_cantidad_vendida.dart';
 import 'package:inventario/features/salidas/presentation/detalle_salida.dart';
@@ -78,6 +79,9 @@ class _DialogoSalidaState extends State<DialogoSalida> {
   int? _elegida;
   (int, LineaTicket)? _quitada;
   var _cobrando = false;
+
+  /// Worked out once when the window opens, not on every rebuild.
+  late final _masVendidos = widget.salidas.masVendidosAhora();
 
   Ticket get _ticket => widget.salidas.ticketEnCurso;
 
@@ -318,6 +322,9 @@ class _DialogoSalidaState extends State<DialogoSalida> {
           in teclasModoVenta.entries)
         SingleActivator(tecla, alt: true): () => _elegirModo(modo),
       const SingleActivator(LogicalKeyboardKey.f10): () => unawaited(_cobrar()),
+      for (final (i, masVendido) in _masVendidos.indexed)
+        SingleActivator(teclasMasVendidos[i], control: true): () =>
+            _elegirProducto(masVendido, null),
       const SingleActivator(LogicalKeyboardKey.arrowUp, alt: true): () =>
           _moverEleccion(-1),
       const SingleActivator(LogicalKeyboardKey.arrowDown, alt: true): () =>
@@ -353,14 +360,18 @@ class _DialogoSalidaState extends State<DialogoSalida> {
                     titulo: 'Vender',
                     icono: Icons.upload_outlined,
                   ),
-                  if (producto == null)
+                  if (producto == null) ...[
                     BuscadorProductoSalida(
                       productos: widget.existencias.productos,
                       controller: _busqueda,
                       focusNode: _focoBusqueda,
                       onElegir: _elegirProducto,
-                    )
-                  else ...[
+                    ),
+                    BotonesMasVendidos(
+                      productos: _masVendidos,
+                      onElegir: (producto) => _elegirProducto(producto, null),
+                    ),
+                  ] else ...[
                     ProductoElegido(
                       producto: producto,
                       onCambiar: _cambiarProducto,
@@ -408,11 +419,13 @@ class _DialogoSalidaState extends State<DialogoSalida> {
                   ),
                   Text(
                     _conPresentaciones
-                        ? 'Escribe o escanea el producto · Alt+1… presentación · '
+                        ? 'Escribe o escanea el producto · Ctrl+1… más '
+                              'vendidos · Alt+1… presentación · '
                               'Alt+Q… marca · Enter agrega · F10 cobra · '
                               'Alt+↑↓ elige línea · Alt+Supr la quita · Esc cierra '
                               '(el ticket se guarda)'
-                        : 'Escribe o escanea el producto · Alt+1… marca · '
+                        : 'Escribe o escanea el producto · Ctrl+1… más '
+                              'vendidos · Alt+1… marca · '
                               'Alt+P pieza entera · Alt+K por kilo · Enter '
                               'agrega · F10 cobra · Alt+↑↓ elige línea · '
                               'Alt+Supr la quita · Esc cierra (el ticket se guarda)',
