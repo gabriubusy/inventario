@@ -64,7 +64,7 @@ void main() {
     await mostrar(tester);
     await conControl(tester, LogicalKeyboardKey.keyG);
     expect(find.byType(DialogoGasto), findsOneWidget);
-    await tester.tap(find.textContaining(r'Efectivo $ · Alt+1'));
+    await tester.tap(find.widgetWithText(ChoiceChip, r'Efectivo $'));
     await tester.pump();
     await tester.enterText(find.widgetWithText(TextField, r'Monto en $'), '5');
     final registrar = find.widgetWithText(FilledButton, 'Registrar gasto');

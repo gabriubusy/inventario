@@ -231,6 +231,7 @@ class _DialogoCompraState extends State<DialogoCompra> {
                 ),
                 ConEtiqueta(
                   etiqueta: '¿Cómo se paga?',
+                  ayuda: ayudaPagoCompra,
                   child: SeccionPagoCompra(
                     credito: _credito,
                     dias: _dias,

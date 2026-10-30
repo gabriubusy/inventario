@@ -189,22 +189,25 @@ class _PantallaCuentasState extends State<PantallaCuentas> {
                     Row(
                       spacing: espaciado.md,
                       children: [
-                        ExcludeFocus(
-                          child: SegmentedButton<bool>(
-                            showSelectedIcon: false,
-                            segments: const [
-                              ButtonSegment(
-                                value: false,
-                                label: _ConAtajo('Por pagar', 'Alt+A'),
-                              ),
-                              ButtonSegment(
-                                value: true,
-                                label: _ConAtajo('Pagadas', 'Alt+T'),
-                              ),
-                            ],
-                            selected: {_pagadas},
-                            onSelectionChanged: (v) =>
-                                setState(() => _pagadas = v.first),
+                        Tooltip(
+                          message: 'Por pagar · Alt+A\nPagadas · Alt+T',
+                          child: ExcludeFocus(
+                            child: SegmentedButton<bool>(
+                              showSelectedIcon: false,
+                              segments: const [
+                                ButtonSegment(
+                                  value: false,
+                                  label: Text('Por pagar'),
+                                ),
+                                ButtonSegment(
+                                  value: true,
+                                  label: Text('Pagadas'),
+                                ),
+                              ],
+                              selected: {_pagadas},
+                              onSelectionChanged: (v) =>
+                                  setState(() => _pagadas = v.first),
+                            ),
                           ),
                         ),
                         const Spacer(),
@@ -293,21 +296,4 @@ class _PantallaCuentasState extends State<PantallaCuentas> {
       ),
     );
   }
-}
-
-class _ConAtajo extends StatelessWidget {
-  const _ConAtajo(this.texto, this.atajo);
-
-  final String texto;
-  final String atajo;
-
-  @override
-  Widget build(BuildContext context) => Row(
-    mainAxisSize: MainAxisSize.min,
-    spacing: context.espaciado.sm,
-    children: [
-      Text(texto),
-      TeclaAtajo(atajo, color: Theme.of(context).colorScheme.onSurfaceVariant),
-    ],
-  );
 }

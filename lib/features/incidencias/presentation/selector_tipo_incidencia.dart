@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/incidencias/domain/tipo_incidencia.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
 
 /// Alt+Q, W, E, R, T pick each kind, in declaration order.
@@ -12,6 +13,12 @@ const teclasTipoIncidencia = [
   LogicalKeyboardKey.keyR,
   LogicalKeyboardKey.keyT,
 ];
+
+/// Each kind with its shortcut, for its label's hover help.
+final ayudaTipoIncidencia = lineasAyuda(
+  [for (final t in TipoIncidencia.values) t.etiqueta],
+  const ['Alt+Q', 'Alt+W', 'Alt+E', 'Alt+R', 'Alt+T'],
+).join('\n');
 
 class SelectorTipoIncidencia extends StatelessWidget {
   const SelectorTipoIncidencia({

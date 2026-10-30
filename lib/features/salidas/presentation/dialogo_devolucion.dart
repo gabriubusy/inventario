@@ -23,6 +23,13 @@ import 'package:inventario/features/salidas/presentation/opciones_medio_pago.dar
 
 /// Alt+Q back to the stock, Alt+W to merma.
 const _teclasDestino = [LogicalKeyboardKey.keyQ, LogicalKeyboardKey.keyW];
+const _letrasDestino = ['Q', 'W'];
+
+/// What each destination means, shown on hover over its label.
+final _ayudaDestino = [
+  for (final (i, d) in DestinoDevolucion.values.indexed)
+    '${d.etiqueta}: ${d.detalle.toLowerCase()} · Alt+${_letrasDestino[i]}',
+].join('\n');
 
 Future<void> mostrarDialogoDevolucion(
   BuildContext context, {
@@ -235,25 +242,29 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                     sufijo: unidad.simbolo,
                     maximo: _maximo,
                   ),
-                  ExcludeFocus(
-                    child: Row(
-                      spacing: espaciado.sm,
-                      children: [
-                        for (final destino in DestinoDevolucion.values)
-                          Expanded(
-                            child: OpcionSeleccionable(
-                              titulo: destino.etiqueta,
-                              detalle: destino.detalle,
-                              elegida: destino == _destino,
-                              onPulsar: () =>
-                                  setState(() => _destino = destino),
+                  ConEtiqueta(
+                    etiqueta: 'Qué se hace con lo devuelto',
+                    ayuda: _ayudaDestino,
+                    child: ExcludeFocus(
+                      child: Row(
+                        spacing: espaciado.sm,
+                        children: [
+                          for (final destino in DestinoDevolucion.values)
+                            Expanded(
+                              child: OpcionSeleccionable(
+                                titulo: destino.etiqueta,
+                                elegida: destino == _destino,
+                                onPulsar: () =>
+                                    setState(() => _destino = destino),
+                              ),
                             ),
-                          ),
-                      ],
+                        ],
+                      ),
                     ),
                   ),
                   ConEtiqueta(
                     etiqueta: 'Cómo se le devuelve el dinero',
+                    ayuda: ayudaMediosPago(mediosReembolso),
                     child: OpcionesMedioPago(
                       elegido: _medio,
                       onElegir: _elegirMedio,

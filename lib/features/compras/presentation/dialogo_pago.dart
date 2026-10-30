@@ -12,6 +12,7 @@ import 'package:inventario/core/numeros.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
 import 'package:inventario/features/compras/domain/resultados_compra.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 
 const _teclasMedio = [
   LogicalKeyboardKey.digit1,
@@ -198,19 +199,33 @@ class _DialogoPagoState extends State<DialogoPago> {
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
-                ExcludeFocus(
-                  child: Wrap(
-                    spacing: espaciado.sm,
-                    runSpacing: espaciado.sm,
-                    children: [
-                      for (final (i, m) in MedioPago.paraProveedores.indexed)
-                        ChoiceChip(
-                          label: Text('${m.etiqueta} · Alt+${i + 1}'),
-                          selected: m == _medio,
-                          showCheckmark: false,
-                          onSelected: (_) => _elegirMedio(m),
-                        ),
+                ConEtiqueta(
+                  etiqueta: 'Cómo se paga',
+                  ayuda: lineasAyuda(
+                    [for (final m in MedioPago.paraProveedores) m.etiqueta],
+                    [
+                      for (
+                        var i = 1;
+                        i <= MedioPago.paraProveedores.length;
+                        i++
+                      )
+                        'Alt+$i',
                     ],
+                  ).join('\n'),
+                  child: ExcludeFocus(
+                    child: Wrap(
+                      spacing: espaciado.sm,
+                      runSpacing: espaciado.sm,
+                      children: [
+                        for (final m in MedioPago.paraProveedores)
+                          ChoiceChip(
+                            label: Text(m.etiqueta),
+                            selected: m == _medio,
+                            showCheckmark: false,
+                            onSelected: (_) => _elegirMedio(m),
+                          ),
+                      ],
+                    ),
                   ),
                 ),
                 Row(

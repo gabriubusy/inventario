@@ -13,6 +13,7 @@ import 'package:inventario/features/productos/domain/ambito_ajuste.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/presentation/campo_cantidad.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
 import 'package:inventario/features/productos/presentation/opciones_ambito_ajuste.dart';
 import 'package:inventario/features/productos/presentation/previsto_ajuste.dart';
@@ -147,27 +148,29 @@ class _DialogoAjustePreciosState extends State<DialogoAjustePrecios> {
                   titulo: 'Ajustar precios',
                   icono: Icons.percent,
                 ),
-                ExcludeFocus(
-                  child: Row(
-                    spacing: espaciado.sm,
-                    children: [
-                      Expanded(
-                        child: OpcionSeleccionable(
-                          titulo: 'Subir',
-                          detalle: 'Alt+Q',
-                          elegida: !_baja,
-                          onPulsar: () => setState(() => _baja = false),
+                ConEtiqueta(
+                  etiqueta: 'Subir o bajar',
+                  ayuda: 'Subir · Alt+Q\nBajar · Alt+W',
+                  child: ExcludeFocus(
+                    child: Row(
+                      spacing: espaciado.sm,
+                      children: [
+                        Expanded(
+                          child: OpcionSeleccionable(
+                            titulo: 'Subir',
+                            elegida: !_baja,
+                            onPulsar: () => setState(() => _baja = false),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: OpcionSeleccionable(
-                          titulo: 'Bajar',
-                          detalle: 'Alt+W',
-                          elegida: _baja,
-                          onPulsar: () => setState(() => _baja = true),
+                        Expanded(
+                          child: OpcionSeleccionable(
+                            titulo: 'Bajar',
+                            elegida: _baja,
+                            onPulsar: () => setState(() => _baja = true),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 CampoCantidad(

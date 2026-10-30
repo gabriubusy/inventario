@@ -64,6 +64,7 @@ class CamposProducto extends StatelessWidget {
         // Excluded from Tab/Enter: they have their own Alt shortcuts.
         ConEtiqueta(
           etiqueta: 'Categoría',
+          ayuda: ayudaCategoria,
           child: ExcludeFocus(
             child: SelectorCategoria(elegida: categoria, onElegir: onCategoria),
           ),
@@ -71,6 +72,7 @@ class CamposProducto extends StatelessWidget {
         if (formaEditable)
           ConEtiqueta(
             etiqueta: 'Cómo se cuenta',
+            ayuda: ayudaFormaConteo,
             child: ExcludeFocus(
               child: SelectorFormaConteo(elegida: forma, onElegir: onForma),
             ),

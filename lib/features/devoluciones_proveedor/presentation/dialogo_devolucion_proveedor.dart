@@ -256,6 +256,7 @@ class _DialogoDevolucionProveedorState
                 ),
                 ConEtiqueta(
                   etiqueta: 'Por qué',
+                  ayuda: ayudaMotivoDevolucion,
                   child: SelectorMotivoDevolucion(
                     motivo: _motivo,
                     onMotivo: (m) => setState(() => _motivo = m),
@@ -280,6 +281,7 @@ class _DialogoDevolucionProveedorState
                 TotalCompra(lineas: _lineas, aBolivares: widget.aBolivares),
                 ConEtiqueta(
                   etiqueta: '¿Cómo lo compensa el proveedor?',
+                  ayuda: ayudaCompensacion,
                   child: SeccionCompensacion(
                     compensacion: _compensacion,
                     cuentas: widget.devoluciones.cuentasCon(_proveedor.text),

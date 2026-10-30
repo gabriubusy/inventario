@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/espaciado.dart';
-import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/salidas/domain/modo_venta.dart';
 import 'package:inventario/features/salidas/presentation/opcion_tarjeta.dart';
 
@@ -10,6 +9,12 @@ const teclasModoVenta = {
   ModoVenta.piezaEntera: (LogicalKeyboardKey.keyP, 'Alt+P'),
   ModoVenta.porPeso: (LogicalKeyboardKey.keyK, 'Alt+K'),
 };
+
+/// What each way of selling means, shown on hover over its label.
+final ayudaModoVenta = [
+  for (final modo in ModoVenta.values)
+    '${modo.etiqueta}: ${modo.detalle} · ${teclasModoVenta[modo]?.$2 ?? ''}',
+].join('\n');
 
 class SelectorModoVenta extends StatelessWidget {
   const SelectorModoVenta({
@@ -61,33 +66,11 @@ class SelectorModoVenta extends StatelessWidget {
                     ),
                   ),
                   Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          spacing: espaciado.sm,
-                          children: [
-                            Expanded(
-                              child: Text(
-                                modo.etiqueta,
-                                style: tema.textTheme.titleSmall?.copyWith(
-                                  fontWeight: FontWeight.w600,
-                                ),
-                              ),
-                            ),
-                            TeclaAtajo(
-                              teclasModoVenta[modo]?.$2 ?? '',
-                              color: colores.onSurfaceVariant,
-                            ),
-                          ],
-                        ),
-                        Text(
-                          modo.detalle,
-                          style: tema.textTheme.bodySmall?.copyWith(
-                            color: colores.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
+                    child: Text(
+                      modo.etiqueta,
+                      style: tema.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                 ],

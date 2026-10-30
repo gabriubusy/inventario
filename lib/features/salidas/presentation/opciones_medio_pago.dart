@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/rejilla_adaptable.dart';
-import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/core/medio_pago.dart';
 
 /// Alt+1… picks the way of paying, in [MedioPago.values] order.
@@ -14,6 +13,10 @@ const teclasMedioPago = [
   LogicalKeyboardKey.digit5,
   LogicalKeyboardKey.digit6,
 ];
+
+/// "Efectivo $ · Alt+1" per way offered, for its label's hover help.
+String ayudaMediosPago([List<MedioPago> medios = MedioPago.values]) =>
+    [for (final m in medios) '${m.etiqueta} · Alt+${m.index + 1}'].join('\n');
 
 class OpcionesMedioPago extends StatelessWidget {
   const OpcionesMedioPago({
@@ -56,25 +59,15 @@ class OpcionesMedioPago extends StatelessWidget {
                   width: medio == elegido ? 2 : 1,
                 ),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      medio.etiqueta,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: colores.onSurface,
-                        fontWeight: medio == elegido
-                            ? FontWeight.w600
-                            : FontWeight.w400,
-                      ),
-                    ),
-                  ),
-                  TeclaAtajo(
-                    'Alt+${medio.index + 1}',
-                    color: colores.onSurfaceVariant,
-                  ),
-                ],
+              child: Text(
+                medio.etiqueta,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: colores.onSurface,
+                  fontWeight: medio == elegido
+                      ? FontWeight.w600
+                      : FontWeight.w400,
+                ),
               ),
             ),
           ),

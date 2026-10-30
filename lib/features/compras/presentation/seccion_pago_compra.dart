@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/fechas.dart';
 import 'package:inventario/core/medio_pago.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
 
 /// Alt+A, S, D, F, G pick each way of paying, in declaration order.
@@ -14,6 +15,18 @@ const teclasMedio = [
   LogicalKeyboardKey.keyG,
 ];
 const _letras = ['A', 'S', 'D', 'F', 'G'];
+
+/// What each option means, shown on hover over its label.
+final ayudaPagoCompra = [
+  'De contado: se paga ahora · Alt+Q',
+  'A crédito: queda por pagar · Alt+W',
+  '',
+  'De contado, cómo se pagó:',
+  ...lineasAyuda(
+    [for (final m in MedioPago.paraProveedores) m.etiqueta],
+    [for (final l in _letras) 'Alt+$l'],
+  ),
+].join('\n');
 
 /// Cash (Alt+Q) with how it was paid, or credit (Alt+W) with its due date.
 class SeccionPagoCompra extends StatelessWidget {
@@ -52,7 +65,6 @@ class SeccionPagoCompra extends StatelessWidget {
               Expanded(
                 child: OpcionSeleccionable(
                   titulo: 'De contado',
-                  detalle: 'Se paga ahora · Alt+Q',
                   elegida: !credito,
                   onPulsar: () => onCredito(false),
                 ),
@@ -60,7 +72,6 @@ class SeccionPagoCompra extends StatelessWidget {
               Expanded(
                 child: OpcionSeleccionable(
                   titulo: 'A crédito',
-                  detalle: 'Queda por pagar · Alt+W',
                   elegida: credito,
                   onPulsar: () => onCredito(true),
                 ),
@@ -102,9 +113,9 @@ class SeccionPagoCompra extends StatelessWidget {
               spacing: espaciado.sm,
               runSpacing: espaciado.sm,
               children: [
-                for (final (i, m) in MedioPago.paraProveedores.indexed)
+                for (final m in MedioPago.paraProveedores)
                   ChoiceChip(
-                    label: Text('${m.etiqueta} · Alt+${_letras[i]}'),
+                    label: Text(m.etiqueta),
                     selected: m == medio,
                     showCheckmark: false,
                     onSelected: (_) => onMedio(m),

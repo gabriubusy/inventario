@@ -7,6 +7,12 @@ import 'package:inventario/features/productos/presentation/opcion_seleccionable.
 /// Alt+Q merma, Alt+W robo, in declaration order.
 const teclasTipoAjuste = [LogicalKeyboardKey.keyQ, LogicalKeyboardKey.keyW];
 
+/// What each kind means, shown on hover over its label.
+const ayudaTipoAjuste =
+    'Los dos salen del stock\n'
+    'Merma · Alt+Q\n'
+    'Robo o pérdida · Alt+W';
+
 class SelectorTipoAjuste extends StatelessWidget {
   const SelectorTipoAjuste({
     super.key,
@@ -26,7 +32,6 @@ class SelectorTipoAjuste extends StatelessWidget {
           Expanded(
             child: OpcionSeleccionable(
               titulo: tipo.etiqueta,
-              detalle: 'Sale del stock',
               elegida: tipo == elegido,
               onPulsar: () => onElegir(tipo),
             ),

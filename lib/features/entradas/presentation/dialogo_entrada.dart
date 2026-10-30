@@ -279,6 +279,9 @@ class _DialogoEntradaState extends State<DialogoEntrada> {
                     ),
                     ConEtiqueta(
                       etiqueta: 'Marca',
+                      ayuda:
+                          'Alt+1… elige la marca\n'
+                          'Otra marca: una marca o proveedor nuevo',
                       child: ExcludeFocus(
                         child: OpcionesMarca(
                           producto: producto,

@@ -9,6 +9,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/core/numeros.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/salidas/domain/pago_venta.dart';
 import 'package:inventario/features/salidas/domain/resultado_cobro.dart';
 import 'package:inventario/features/salidas/domain/resumen_cobro.dart';
@@ -175,7 +176,14 @@ class _DialogoCobroState extends State<DialogoCobro> {
                     fontFeatures: const [FontFeature.tabularFigures()],
                   ),
                 ),
-                OpcionesMedioPago(elegido: _medio, onElegir: _elegirMedio),
+                ConEtiqueta(
+                  etiqueta: 'Cómo paga',
+                  ayuda: ayudaMediosPago(),
+                  child: OpcionesMedioPago(
+                    elegido: _medio,
+                    onElegir: _elegirMedio,
+                  ),
+                ),
                 if (_pagos.isNotEmpty)
                   ListaPagos(pagos: _pagos, onQuitar: _quitarPago),
                 Wrap(

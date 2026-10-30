@@ -244,6 +244,7 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
                   ),
                   ConEtiqueta(
                     etiqueta: '¿Con qué producto?',
+                    ayuda: 'Alt+1… elige el producto y su marca',
                     child: ExcludeFocus(
                       child: OpcionesSuministro(
                         suministros: _suministros,
@@ -261,6 +262,7 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
                     ),
                   ConEtiqueta(
                     etiqueta: '¿Qué pasó?',
+                    ayuda: ayudaTipoIncidencia,
                     child: ExcludeFocus(
                       child: SelectorTipoIncidencia(
                         elegido: _tipo,

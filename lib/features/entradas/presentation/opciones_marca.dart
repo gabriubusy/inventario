@@ -50,7 +50,6 @@ class OpcionesMarca extends StatelessWidget {
               width: ancho,
               child: OpcionSeleccionable(
                 titulo: '+ Otra marca',
-                detalle: 'Marca o proveedor nuevo',
                 elegida: elegido == null,
                 onPulsar: () => onElegir(null),
               ),

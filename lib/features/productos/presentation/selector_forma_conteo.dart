@@ -12,6 +12,13 @@ const teclasFormaConteo = [
   (LogicalKeyboardKey.keyR, 'R'),
 ];
 
+/// Each way of counting with an example and its shortcut, for its label.
+final ayudaFormaConteo = [
+  for (final (i, forma) in FormaConteo.values.indexed)
+    '${forma.etiqueta}: ${forma.ejemplo.toLowerCase()} · '
+        'Alt+${teclasFormaConteo[i].$2}',
+].join('\n');
+
 class SelectorFormaConteo extends StatelessWidget {
   const SelectorFormaConteo({
     super.key,
@@ -31,7 +38,6 @@ class SelectorFormaConteo extends StatelessWidget {
           Expanded(
             child: OpcionSeleccionable(
               titulo: forma.etiqueta,
-              ayuda: 'Por ejemplo: ${forma.ejemplo.toLowerCase()}',
               elegida: forma == elegida,
               onPulsar: () => onElegir(forma),
             ),

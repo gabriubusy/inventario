@@ -210,14 +210,19 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
                     titulo: 'Registrar merma o pérdida',
                     icono: Icons.delete_outline,
                   ),
-                  ExcludeFocus(
-                    child: SelectorTipoAjuste(
-                      elegido: _tipo,
-                      onElegir: _elegirTipo,
+                  ConEtiqueta(
+                    etiqueta: 'Qué pasó',
+                    ayuda: ayudaTipoAjuste,
+                    child: ExcludeFocus(
+                      child: SelectorTipoAjuste(
+                        elegido: _tipo,
+                        onElegir: _elegirTipo,
+                      ),
                     ),
                   ),
                   ConEtiqueta(
                     etiqueta: 'Motivo',
+                    ayuda: ayudaMotivos(_tipo.motivos),
                     child: ExcludeFocus(
                       child: SelectorMotivo(
                         motivos: _tipo.motivos,
@@ -249,6 +254,7 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
                     else
                       ConEtiqueta(
                         etiqueta: 'Marca',
+                        ayuda: ayudaMarcas(producto),
                         child: ExcludeFocus(
                           child: OpcionesMarcaSalida(
                             producto: producto,

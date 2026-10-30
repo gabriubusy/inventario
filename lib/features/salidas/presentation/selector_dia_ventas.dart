@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
-import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/core/fechas.dart';
 
-/// ‹ Alt+←  Hoy  Ayer  Alt+→ ›, plus the long date of the day shown.
+/// ‹ Hoy Ayer ›, plus the long date of the day shown; the arrows' hover
+/// help tells Alt+← and Alt+→.
 class SelectorDiaVentas extends StatelessWidget {
   const SelectorDiaVentas({
     super.key,
@@ -22,7 +22,6 @@ class SelectorDiaVentas extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
-    final colores = tema.colorScheme;
     final espaciado = context.espaciado;
     final atras = diasEntre(dia, hoy);
     final ayer = DateTime(hoy.year, hoy.month, hoy.day - 1);
@@ -53,7 +52,6 @@ class SelectorDiaVentas extends StatelessWidget {
             fontWeight: FontWeight.w600,
           ),
         ),
-        TeclaAtajo('Alt+← →', color: colores.onSurfaceVariant),
       ],
     );
   }

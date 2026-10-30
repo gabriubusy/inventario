@@ -51,6 +51,7 @@ class DetalleSalida extends StatelessWidget {
         if (producto.presentaciones.isNotEmpty)
           ConEtiqueta(
             etiqueta: 'Presentación',
+            ayuda: ayudaPresentaciones(producto),
             child: ExcludeFocus(
               child: OpcionesPresentacionSalida(
                 producto: producto,
@@ -71,18 +72,19 @@ class DetalleSalida extends StatelessWidget {
         else
           ConEtiqueta(
             etiqueta: 'Marca',
+            ayuda: ayudaMarcas(producto, teclasMarca),
             child: ExcludeFocus(
               child: OpcionesMarcaSalida(
                 producto: producto,
                 elegido: lote,
                 onElegir: onLote,
-                atajos: teclasMarca,
               ),
             ),
           ),
         if (modo != null)
           ConEtiqueta(
             etiqueta: 'Cómo se vende',
+            ayuda: ayudaModoVenta,
             child: ExcludeFocus(
               child: SelectorModoVenta(elegido: modo, onElegir: onModo),
             ),

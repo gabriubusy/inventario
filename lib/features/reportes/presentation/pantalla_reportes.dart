@@ -11,6 +11,7 @@ import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/inicio/presentation/cifra_del_dia.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/reportes/application/construir_reportes.dart';
 import 'package:inventario/features/reportes/domain/exportador_reportes.dart';
 import 'package:inventario/features/reportes/domain/reporte.dart';
@@ -154,19 +155,29 @@ class _PantallaReportesState extends State<PantallaReportes> {
                 child: ListView(
                   padding: EdgeInsets.all(espaciado.xl),
                   children: [
-                    ExcludeFocus(
-                      child: Wrap(
-                        spacing: espaciado.sm,
-                        runSpacing: espaciado.sm,
-                        children: [
-                          for (final (i, t) in TipoReporte.values.indexed)
-                            ChoiceChip(
-                              label: Text('${t.etiqueta} · Alt+${i + 1}'),
-                              selected: t == _tipo,
-                              showCheckmark: false,
-                              onSelected: (_) => setState(() => _tipo = t),
-                            ),
+                    ConEtiqueta(
+                      etiqueta: 'Reporte',
+                      ayuda: lineasAyuda(
+                        [for (final t in TipoReporte.values) t.etiqueta],
+                        [
+                          for (var i = 1; i <= TipoReporte.values.length; i++)
+                            'Alt+$i',
                         ],
+                      ).join('\n'),
+                      child: ExcludeFocus(
+                        child: Wrap(
+                          spacing: espaciado.sm,
+                          runSpacing: espaciado.sm,
+                          children: [
+                            for (final t in TipoReporte.values)
+                              ChoiceChip(
+                                label: Text(t.etiqueta),
+                                selected: t == _tipo,
+                                showCheckmark: false,
+                                onSelected: (_) => setState(() => _tipo = t),
+                              ),
+                          ],
+                        ),
                       ),
                     ),
                     SizedBox(height: espaciado.md),

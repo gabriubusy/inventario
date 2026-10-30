@@ -15,6 +15,7 @@ import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
 import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
+import 'package:inventario/features/salidas/presentation/opciones_medio_pago.dart';
 
 const _teclasCategoria = [
   LogicalKeyboardKey.keyA,
@@ -177,39 +178,47 @@ class _DialogoGastoState extends State<DialogoGasto> {
                   titulo: 'Gasto o ingreso',
                   icono: Icons.receipt_outlined,
                 ),
-                ExcludeFocus(
-                  child: Row(
-                    spacing: espaciado.sm,
-                    children: [
-                      Expanded(
-                        child: OpcionSeleccionable(
-                          titulo: 'Gasto',
-                          detalle: 'Sale dinero · Alt+Q',
-                          elegida: !_ingreso,
-                          onPulsar: () => _elegirTipo(false),
+                ConEtiqueta(
+                  etiqueta: 'Tipo',
+                  ayuda:
+                      'Gasto: sale dinero · Alt+Q\n'
+                      'Ingreso: entra dinero que no es venta · Alt+W',
+                  child: ExcludeFocus(
+                    child: Row(
+                      spacing: espaciado.sm,
+                      children: [
+                        Expanded(
+                          child: OpcionSeleccionable(
+                            titulo: 'Gasto',
+                            elegida: !_ingreso,
+                            onPulsar: () => _elegirTipo(false),
+                          ),
                         ),
-                      ),
-                      Expanded(
-                        child: OpcionSeleccionable(
-                          titulo: 'Ingreso',
-                          detalle: 'Entra dinero que no es venta · Alt+W',
-                          elegida: _ingreso,
-                          onPulsar: () => _elegirTipo(true),
+                        Expanded(
+                          child: OpcionSeleccionable(
+                            titulo: 'Ingreso',
+                            elegida: _ingreso,
+                            onPulsar: () => _elegirTipo(true),
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 ConEtiqueta(
                   etiqueta: 'Categoría',
+                  ayuda: lineasAyuda(
+                    [for (final c in _categorias) c.etiqueta],
+                    [for (final l in _letras) 'Alt+$l'],
+                  ).join('\n'),
                   child: ExcludeFocus(
                     child: Wrap(
                       spacing: espaciado.sm,
                       runSpacing: espaciado.sm,
                       children: [
-                        for (final (i, c) in _categorias.indexed)
+                        for (final c in _categorias)
                           ChoiceChip(
-                            label: Text('${c.etiqueta} · Alt+${_letras[i]}'),
+                            label: Text(c.etiqueta),
                             selected: c == _categoria,
                             showCheckmark: false,
                             onSelected: (_) => setState(() => _categoria = c),
@@ -220,14 +229,15 @@ class _DialogoGastoState extends State<DialogoGasto> {
                 ),
                 ConEtiqueta(
                   etiqueta: _ingreso ? 'Cómo entró' : 'Cómo se pagó',
+                  ayuda: ayudaMediosPago(),
                   child: ExcludeFocus(
                     child: Wrap(
                       spacing: espaciado.sm,
                       runSpacing: espaciado.sm,
                       children: [
-                        for (final (i, m) in MedioPago.values.indexed)
+                        for (final m in MedioPago.values)
                           ChoiceChip(
-                            label: Text('${m.etiqueta} · Alt+${i + 1}'),
+                            label: Text(m.etiqueta),
                             selected: m == _medio,
                             showCheckmark: false,
                             onSelected: (_) => setState(() => _medio = m),

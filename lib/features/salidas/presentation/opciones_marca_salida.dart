@@ -1,13 +1,24 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
-import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/textos_producto.dart';
 import 'package:inventario/features/salidas/presentation/opcion_tarjeta.dart';
 
-/// One card per brand lot with its price, stock and supplier, Alt+1… each.
+/// "Marca · Alt+1" per brand of [producto], for its label's hover help.
+/// [teclas] replaces Alt+1… when packs took the digits.
+String ayudaMarcas(Producto producto, [List<String> teclas = const []]) =>
+    lineasAyuda(
+      [for (final l in producto.lotes) l.marca],
+      [
+        for (var i = 0; i < producto.lotes.length; i++)
+          i < teclas.length ? teclas[i] : 'Alt+${i + 1}',
+      ],
+    ).join('\n');
+
+/// One card per brand lot with its price, stock and supplier.
 /// Unlike entries there is no "other brand": only what is in stock sells.
 class OpcionesMarcaSalida extends StatelessWidget {
   const OpcionesMarcaSalida({
@@ -15,7 +26,6 @@ class OpcionesMarcaSalida extends StatelessWidget {
     required this.producto,
     required this.elegido,
     required this.onElegir,
-    this.atajos = const [],
   });
 
   static const _columnas = 2;
@@ -23,9 +33,6 @@ class OpcionesMarcaSalida extends StatelessWidget {
   final Producto producto;
   final int? elegido;
   final ValueChanged<int> onElegir;
-
-  /// Shortcut shown on each card; Alt+1… unless packs took the digits.
-  final List<String> atajos;
 
   @override
   Widget build(BuildContext context) {
@@ -44,11 +51,7 @@ class OpcionesMarcaSalida extends StatelessWidget {
                 child: OpcionTarjeta(
                   elegida: elegido == i,
                   onPulsar: () => onElegir(i),
-                  child: _Marca(
-                    producto: producto,
-                    lote: lote,
-                    atajo: i < atajos.length ? atajos[i] : 'Alt+${i + 1}',
-                  ),
+                  child: _Marca(producto: producto, lote: lote),
                 ),
               ),
           ],
@@ -59,15 +62,10 @@ class OpcionesMarcaSalida extends StatelessWidget {
 }
 
 class _Marca extends StatelessWidget {
-  const _Marca({
-    required this.producto,
-    required this.lote,
-    required this.atajo,
-  });
+  const _Marca({required this.producto, required this.lote});
 
   final Producto producto;
   final LoteMarca lote;
-  final String atajo;
 
   @override
   Widget build(BuildContext context) {
@@ -83,21 +81,13 @@ class _Marca extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       spacing: context.espaciado.xs / 2,
       children: [
-        Row(
-          spacing: context.espaciado.sm,
-          children: [
-            Expanded(
-              child: Text(
-                lote.marca,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: tema.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            TeclaAtajo(atajo, color: colores.onSurfaceVariant),
-          ],
+        Text(
+          lote.marca,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: tema.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w600,
+          ),
         ),
         Text(
           precio == null

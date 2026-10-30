@@ -3,6 +3,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/kardex/domain/filtro_kardex.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 
 /// Group (Alt+1–4), period (Alt+P) and brand.
 class FiltrosKardex extends StatelessWidget {
@@ -43,29 +44,21 @@ class FiltrosKardex extends StatelessWidget {
       runSpacing: espaciado.sm,
       crossAxisAlignment: WrapCrossAlignment.center,
       children: [
-        ExcludeFocus(
-          child: SegmentedButton<GrupoMovimiento?>(
-            showSelectedIcon: false,
-            segments: [
-              for (final (i, MapEntry(key: valor, value: texto))
-                  in etiquetasGrupo.entries.indexed)
-                ButtonSegment(
-                  value: valor,
-                  label: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    spacing: espaciado.sm,
-                    children: [
-                      Text(texto),
-                      TeclaAtajo(
-                        'Alt+${i + 1}',
-                        color: colores.onSurfaceVariant,
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-            selected: {grupo},
-            onSelectionChanged: (valor) => onGrupo(valor.first),
+        Tooltip(
+          message: lineasAyuda(etiquetasGrupo.values.toList(), [
+            for (var i = 1; i <= etiquetasGrupo.length; i++) 'Alt+$i',
+          ]).join('\n'),
+          child: ExcludeFocus(
+            child: SegmentedButton<GrupoMovimiento?>(
+              showSelectedIcon: false,
+              segments: [
+                for (final MapEntry(key: valor, value: texto)
+                    in etiquetasGrupo.entries)
+                  ButtonSegment(value: valor, label: Text(texto)),
+              ],
+              selected: {grupo},
+              onSelectionChanged: (valor) => onGrupo(valor.first),
+            ),
           ),
         ),
         DropdownButton<PeriodoKardex>(

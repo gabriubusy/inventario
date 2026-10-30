@@ -40,30 +40,35 @@ class OpcionesAmbitoAjuste extends StatelessWidget {
       children: [
         ConEtiqueta(
           etiqueta: 'Lista',
+          ayuda: lineasAyuda(
+            [for (final l in ListaPrecio.values) l.etiqueta],
+            [for (var i = 1; i <= ListaPrecio.values.length; i++) 'Alt+$i'],
+          ).join('\n'),
           child: chips([
-            for (final (i, l) in ListaPrecio.values.indexed)
-              chip(
-                '${l.etiqueta} · Alt+${i + 1}',
-                elegido: l == lista,
-                on: () => onLista(l),
-              ),
+            for (final l in ListaPrecio.values)
+              chip(l.etiqueta, elegido: l == lista, on: () => onLista(l)),
           ]),
         ),
         ConEtiqueta(
           etiqueta: 'A qué productos',
+          ayuda:
+              'Todos · Alt+A\n'
+              'Una categoría · Alt+S\n'
+              'Un proveedor · Alt+D\n'
+              'Repetir la tecla pasa a la siguiente',
           child: chips([
             chip(
-              'Todos · Alt+A',
+              'Todos',
               elegido: ambito is TodosLosProductos,
               on: () => onAmbito(const TodosLosProductos()),
             ),
             chip(
-              'Una categoría · Alt+S',
+              'Una categoría',
               elegido: ambito is DeCategoria,
               on: () => onAmbito(DeCategoria(Categoria.values.first)),
             ),
             chip(
-              'Un proveedor · Alt+D',
+              'Un proveedor',
               elegido: ambito is DeProveedor,
               on: proveedores.isEmpty
                   ? null

@@ -12,6 +12,7 @@ import 'package:inventario/features/entradas/presentation/campo_cantidad_recibid
 import 'package:inventario/features/entradas/presentation/producto_elegido.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 
 /// Adds one product line to the invoice: product, brand, amounts and cost.
 /// Enter on the cost (or Ctrl+Enter anywhere) adds it and starts the next.
@@ -168,13 +169,20 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
             )
           else ...[
             ProductoElegido(producto: producto, onCambiar: _cambiarProducto),
-            ExcludeFocus(
-              child: OpcionesMarcaCompra(
-                producto: producto,
-                lotes: _lotes,
-                elegido: _lote,
-                onElegir: _elegirLote,
-                conOtraMarca: widget.conOtraMarca,
+            ConEtiqueta(
+              etiqueta: 'Marca',
+              ayuda: widget.conOtraMarca
+                  ? 'Alt+1… elige la marca\n'
+                        'Otra marca: una nueva para este proveedor'
+                  : 'Alt+1… elige la marca',
+              child: ExcludeFocus(
+                child: OpcionesMarcaCompra(
+                  producto: producto,
+                  lotes: _lotes,
+                  elegido: _lote,
+                  onElegir: _elegirLote,
+                  conOtraMarca: widget.conOtraMarca,
+                ),
               ),
             ),
             Row(

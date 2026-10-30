@@ -6,6 +6,7 @@ import 'package:inventario/core/fechas.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
 import 'package:inventario/features/devoluciones_proveedor/domain/compensacion.dart';
+import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
 
 /// Alt+Q, W, E pick each way of making up, in declaration order.
@@ -16,6 +17,19 @@ const teclasCompensacion = [
 ];
 const _letrasCompensacion = ['Q', 'W', 'E'];
 const _letrasMedio = ['A', 'S', 'D', 'F', 'G'];
+
+/// What each way of making up means, shown on hover over its label.
+final ayudaCompensacion = [
+  for (final (i, c) in Compensacion.values.indexed)
+    '${c.etiqueta}: ${c.detalle.toLowerCase()} · Alt+${_letrasCompensacion[i]}',
+  'Alt+T elige otra factura',
+  '',
+  'Devuelve dinero, cómo llegó:',
+  ...lineasAyuda(
+    [for (final m in MedioPago.paraProveedores) m.etiqueta],
+    [for (final l in _letrasMedio) 'Alt+$l'],
+  ),
+].join('\n');
 
 /// Discount on an invoice (Alt+T picks another), money back with how it came
 /// (Alt+A–G), or the goods again.
@@ -62,11 +76,10 @@ class SeccionCompensacion extends StatelessWidget {
           child: Row(
             spacing: espaciado.sm,
             children: [
-              for (final (i, c) in Compensacion.values.indexed)
+              for (final c in Compensacion.values)
                 Expanded(
                   child: OpcionSeleccionable(
                     titulo: c.etiqueta,
-                    detalle: '${c.detalle} · Alt+${_letrasCompensacion[i]}',
                     elegida: c == compensacion,
                     onPulsar: () => onCompensacion(c),
                   ),
@@ -87,9 +100,9 @@ class SeccionCompensacion extends StatelessWidget {
               spacing: espaciado.sm,
               runSpacing: espaciado.sm,
               children: [
-                for (final (i, m) in MedioPago.paraProveedores.indexed)
+                for (final m in MedioPago.paraProveedores)
                   ChoiceChip(
-                    label: Text('${m.etiqueta} · Alt+${_letrasMedio[i]}'),
+                    label: Text(m.etiqueta),
                     selected: m == medio,
                     showCheckmark: false,
                     onSelected: (_) => onMedio(m),
@@ -170,8 +183,7 @@ class _Facturas extends StatelessWidget {
         if (elegida != null)
           Text(
             'Debe ${formatearDolares(elegida.debe)} → '
-            '${formatearDolares(elegida.debe - total)}'
-            '${cuentas.length > 1 ? ' · Alt+T otra factura' : ''}',
+            '${formatearDolares(elegida.debe - total)}',
             style: suave,
           ),
       ],

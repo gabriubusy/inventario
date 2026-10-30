@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
 
-/// A radio-like tile; the chosen one gets a light fill. Its keyboard shortcut
-/// is not drawn inside: it ate the space and cut the words short.
+/// A radio-like tile; the chosen one gets a light fill. Shortcuts and what
+/// each option means go in the hover help of the group's label, not here.
 class OpcionSeleccionable extends StatelessWidget {
   const OpcionSeleccionable({
     super.key,
@@ -10,19 +10,14 @@ class OpcionSeleccionable extends StatelessWidget {
     required this.elegida,
     required this.onPulsar,
     this.detalle,
-    this.ayuda,
   });
 
   static const _alto = 44.0;
-  static const _tamanoAyuda = 16.0;
 
   final String titulo;
 
-  /// Always-visible second line, for facts the user needs at a glance.
+  /// Second line for live data only (stock, supplier), never fixed text.
   final String? detalle;
-
-  /// Explanation behind a "?" shown on hover, for what is only a reminder.
-  final String? ayuda;
   final bool elegida;
   final VoidCallback onPulsar;
 
@@ -32,7 +27,6 @@ class OpcionSeleccionable extends StatelessWidget {
     final colores = tema.colorScheme;
     final espaciado = context.espaciado;
     final detalle = this.detalle;
-    final ayuda = this.ayuda;
     return Semantics(
       selected: elegida,
       child: OutlinedButton(
@@ -58,29 +52,13 @@ class OpcionSeleccionable extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                spacing: espaciado.xs,
-                children: [
-                  Expanded(
-                    child: Text(
-                      titulo,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: tema.textTheme.labelLarge?.copyWith(
-                        fontWeight: elegida ? FontWeight.w600 : FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (ayuda != null)
-                    Tooltip(
-                      message: ayuda,
-                      child: Icon(
-                        Icons.help_outline,
-                        size: _tamanoAyuda,
-                        color: colores.onSurfaceVariant,
-                      ),
-                    ),
-                ],
+              Text(
+                titulo,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: tema.textTheme.labelLarge?.copyWith(
+                  fontWeight: elegida ? FontWeight.w600 : FontWeight.w500,
+                ),
               ),
               if (detalle != null)
                 Text(
