@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/logo_inventario.dart';
 import 'package:inventario/core/fechas.dart';
 import 'package:inventario/features/inicio/presentation/enlaces_cabecera.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
@@ -59,20 +60,7 @@ class BarraSuperior extends StatelessWidget {
           builder: (context, limites) => Row(
             spacing: espaciado.md,
             children: [
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  color: colores.primary,
-                  borderRadius: BorderRadius.circular(espaciado.sm),
-                ),
-                child: Padding(
-                  padding: EdgeInsets.all(espaciado.sm),
-                  child: Icon(
-                    Icons.storefront_outlined,
-                    size: espaciado.xl - 4,
-                    color: colores.onPrimary,
-                  ),
-                ),
-              ),
+              LogoInventario(tamano: espaciado.xl + espaciado.lg),
               Text(
                 'Inventario',
                 style: tema.textTheme.titleMedium?.copyWith(

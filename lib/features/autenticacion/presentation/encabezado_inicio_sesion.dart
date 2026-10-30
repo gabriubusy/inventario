@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/logo_inventario.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 
 class EncabezadoInicioSesion extends StatelessWidget {
@@ -12,20 +13,7 @@ class EncabezadoInicioSesion extends StatelessWidget {
     final espaciado = context.espaciado;
     return Column(
       children: [
-        DecoratedBox(
-          decoration: BoxDecoration(
-            color: colores.primaryContainer,
-            shape: BoxShape.circle,
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(espaciado.lg),
-            child: Icon(
-              Icons.storefront_outlined,
-              size: espaciado.xxl,
-              color: colores.onPrimaryContainer,
-            ),
-          ),
-        ),
+        LogoInventario(tamano: espaciado.xxl * 2),
         SizedBox(height: espaciado.lg),
         Text(
           'Introduce tu PIN',

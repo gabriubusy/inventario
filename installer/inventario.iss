@@ -24,6 +24,10 @@ WizardStyle=modern
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 UninstallDisplayIcon={app}\{#Ejecutable}
+SetupIconFile=..\windows\runner\resources\app_icon.ico
+; Rendered from the logo (core/marca.dart); @2x for high-DPI screens.
+WizardSmallImageFile=asistente_pequeno.bmp,asistente_pequeno@2x.bmp
+WizardImageFile=asistente_grande.bmp,asistente_grande@2x.bmp
 
 [Languages]
 Name: "es"; MessagesFile: "compiler:Languages\Spanish.isl"
