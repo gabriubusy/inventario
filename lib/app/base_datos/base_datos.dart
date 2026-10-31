@@ -50,7 +50,7 @@ class BaseDatos extends _$BaseDatos {
   BaseDatos(super.ejecutor);
 
   @override
-  int get schemaVersion => 8;
+  int get schemaVersion => 9;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -65,6 +65,7 @@ class BaseDatos extends _$BaseDatos {
       // 3: tickets with several products and how they were paid.
       if (desde < 3) {
         await m.createTable(ventas);
+        await m.createIndex(ventasFecha);
         await m.createTable(pagosVenta);
         await m.addColumn(movimientos, movimientos.ventaId);
       }
@@ -89,7 +90,12 @@ class BaseDatos extends _$BaseDatos {
       // 8: Mayor and Especial price lists, and the list each sale used.
       if (desde < 8) {
         await m.createTable(reglasPrecio);
-        await m.addColumn(ventas, ventas.lista);
+        // A database older than 3 got today's ventas, list column included.
+        if (desde >= 3) await m.addColumn(ventas, ventas.lista);
+      }
+      // 9: when a sale was cancelled, for the till open at that moment.
+      if (desde < 9) {
+        await m.addColumn(movimientos, movimientos.anuladaEl);
       }
     },
     beforeOpen: (_) async {

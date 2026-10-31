@@ -78,7 +78,11 @@ class SeccionCantidadSalida extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, _) {
-        final escrito = CampoCantidadVendida.leer(controller, medida.decimales);
+        final escrito = CampoCantidadVendida.leer(
+          controller,
+          medida.decimales,
+          unidad: medida.unidadEscrita,
+        );
         final uno = escrito == _uno;
         final venta = salida();
         return Column(
@@ -101,6 +105,7 @@ class SeccionCantidadSalida extends StatelessWidget {
                     disponible: medida.desdeBase(
                       disponibleParaVender(lote, modo),
                     ),
+                    unidad: medida.unidadEscrita,
                     onEnviar: onEnviar,
                   ),
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
+import 'package:inventario/features/movimientos/domain/movimiento.dart';
+import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
@@ -79,6 +81,39 @@ void main() {
     expect(await salidas.deshacer(), isFalse);
     expect(guardado().minimo, 9);
   });
+
+  test(
+    'a later movement keeps Ctrl+Z from reaching back to the sale',
+    () async {
+      var reloj = DateTime(2026, 10, 29, 9);
+      final movimientos = ControladorMovimientos(
+        RepositorioMovimientosEnMemoria(),
+        ahora: () => reloj = reloj.add(const Duration(minutes: 1)),
+      );
+      final conHistorial = ControladorSalidas(
+        existencias,
+        movimientos: movimientos,
+      );
+      addTearDown(conHistorial.dispose);
+      addTearDown(movimientos.dispose);
+      await conHistorial.registrar('p1', porKilo);
+      expect(conHistorial.puedeDeshacer, isTrue);
+      await movimientos.anotar(
+        Movimiento(
+          fecha: reloj,
+          tipo: TipoMovimiento.entrada,
+          productoId: 'p2',
+          producto: 'Carne',
+          forma: FormaConteo.porKilo,
+          marca: 'Propia',
+          cantidad: 5000,
+        ),
+      );
+      expect(conHistorial.puedeDeshacer, isFalse);
+      expect(await conHistorial.deshacer(), isFalse);
+      expect(guardado().lotes.single.cantidad, 7450);
+    },
+  );
 
   test('refuses to sell without today\'s rate', () async {
     final sinTasa = ControladorSalidas(existencias, tasaDeHoy: () => null);

@@ -339,7 +339,7 @@ class _FormularioProductoState extends State<FormularioProducto> {
             BotonesCrear(
               guardando: _guardando,
               etiqueta: _editando ? 'Guardar' : 'Crear',
-              atajo: _editando ? 'Ctrl+S' : 'Enter',
+              atajo: 'Ctrl+S',
               onCrear: () => unawaited(_guardar(otro: false)),
               onCrearOtro: _editando
                   ? null

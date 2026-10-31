@@ -31,6 +31,16 @@ class ControladorDevoluciones extends ChangeNotifier {
 
   int devolvibleDe(Movimiento venta) => devolvible(venta, _movimientos.todos);
 
+  /// What [cantidad] of [venta] gives back; the last part takes what is
+  /// left, so the parts never add up to more. The window shows the same.
+  int? importeADevolver(Movimiento venta, int cantidad) {
+    if (cantidad != devolvibleDe(venta)) {
+      return importeDevuelto(venta, cantidad);
+    }
+    final previas = devolucionesDe(venta, _movimientos.todos);
+    return restante(venta.importe, previas.map((m) => m.importe));
+  }
+
   Future<ResultadoDevolucion> devolver(
     Movimiento venta, {
     required int cantidad,
@@ -44,7 +54,17 @@ class ControladorDevoluciones extends ChangeNotifier {
     if (antes == null) return const DevolucionSinProducto();
     // A whole piece only comes back as a piece when it returns untouched.
     final entera = queda == venta.cantidad && cantidad == venta.cantidad;
-    final importe = importeDevuelto(venta, cantidad);
+    final importe = importeADevolver(venta, cantidad);
+    // The cost comes back only with the goods; damaged ones stay a loss.
+    // The last part's share is what the earlier parts left, wherever they went.
+    // Zero, not null, for damaged goods: null is kept for older returns.
+    final costo = destino == DestinoDevolucion.merma
+        ? 0
+        : cantidad == queda
+        ? restante(venta.costo, [
+            proporcional(venta.costo, venta.cantidad - queda, venta.cantidad),
+          ])
+        : proporcional(venta.costo, cantidad, venta.cantidad);
     Movimiento base(TipoMovimiento tipo, String texto) {
       final esDevolucion = tipo == TipoMovimiento.devolucionCliente;
       return Movimiento(
@@ -58,6 +78,7 @@ class ControladorDevoluciones extends ChangeNotifier {
         piezas: entera ? venta.piezas : 0,
         cantidad: cantidad,
         importe: esDevolucion ? importe : null,
+        costo: esDevolucion ? costo : null,
         // The refund in Bs uses the sale's rate, not today's.
         tasa: esDevolucion ? venta.tasa : null,
         nota: texto,

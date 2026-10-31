@@ -115,11 +115,17 @@ void main() {
     ]);
   });
 
-  testWidgets('short of the total it does not register', (tester) async {
+  testWidgets('Enter on a short amount adds it and asks for the rest', (
+    tester,
+  ) async {
     await abrir(tester);
     await escribir(tester, '50');
     expect(find.text('Falta'), findsOneWidget);
+    expect(find.text('Añadir este pago'), findsOneWidget);
     await enter(tester);
     expect(cobrado, isNull);
+    expect(find.text(r'Efectivo $ · $ 50,00'), findsOneWidget);
+    expect(find.text(r'$ 3,27'), findsOneWidget);
+    expect(find.textContaining('o 2.901,47 Bs'), findsOneWidget);
   });
 }

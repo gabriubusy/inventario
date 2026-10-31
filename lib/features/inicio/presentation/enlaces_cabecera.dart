@@ -11,10 +11,15 @@ class EnlacesCabecera extends StatelessWidget {
     super.key,
     required this.enlaces,
     required this.compacto,
+    this.fijos = 0,
   });
 
   final List<EnlaceCabecera> enlaces;
   final bool compacto;
+
+  /// How many of the first links stay in view when [compacto], so the
+  /// daily ones (the till) never hide in the menu.
+  final int fijos;
 
   @override
   Widget build(BuildContext context) {
@@ -33,12 +38,13 @@ class EnlacesCabecera extends StatelessWidget {
         ],
       );
     }
-    return PopupMenuButton<VoidCallback>(
+    final visibles = enlaces.take(fijos).toList();
+    final menu = PopupMenuButton<VoidCallback>(
       tooltip: 'Más opciones',
       position: PopupMenuPosition.under,
       onSelected: (accion) => accion(),
       itemBuilder: (_) => [
-        for (final enlace in enlaces)
+        for (final enlace in enlaces.skip(fijos))
           PopupMenuItem(
             value: enlace.onPressed,
             child: _TextoConAtajo(enlace: enlace, separado: true),
@@ -58,6 +64,19 @@ class EnlacesCabecera extends StatelessWidget {
           ],
         ),
       ),
+    );
+    if (visibles.isEmpty) return menu;
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      spacing: espaciado.sm,
+      children: [
+        for (final enlace in visibles)
+          TextButton(
+            onPressed: enlace.onPressed,
+            child: _TextoConAtajo(enlace: enlace),
+          ),
+        menu,
+      ],
     );
   }
 }

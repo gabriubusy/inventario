@@ -72,6 +72,7 @@ class ListaMovimientosCaja extends StatelessWidget {
                       ),
                     ),
                     Expanded(
+                      flex: 2,
                       child: Text(
                         m.detalle,
                         maxLines: 1,
@@ -79,15 +80,20 @@ class ListaMovimientosCaja extends StatelessWidget {
                         style: tema.textTheme.bodyMedium,
                       ),
                     ),
-                    Text(
-                      [
-                        for (final MapEntry(key: medio, value: monto)
-                            in m.montos.entries)
-                          '${medio.etiqueta} ${textoConSigno(monto, medio.moneda)}',
-                      ].join(' · '),
-                      style: tema.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        fontFeatures: cifras,
+                    // Wraps instead of overflowing when the column is narrow.
+                    Expanded(
+                      flex: 3,
+                      child: Text(
+                        [
+                          for (final MapEntry(key: medio, value: monto)
+                              in m.montos.entries)
+                            '${medio.etiqueta} ${textoConSigno(monto, medio.moneda)}',
+                        ].join(' · '),
+                        textAlign: TextAlign.right,
+                        style: tema.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w600,
+                          fontFeatures: cifras,
+                        ),
                       ),
                     ),
                   ],

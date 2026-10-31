@@ -21,6 +21,8 @@ class BarraProductos extends StatelessWidget {
   final VoidCallback onTasa;
   final VoidCallback onNuevo;
 
+  static const _anchoCompleto = 860.0;
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
@@ -36,50 +38,57 @@ class BarraProductos extends StatelessWidget {
           horizontal: espaciado.xxl,
           vertical: espaciado.md,
         ),
-        child: Row(
-          spacing: espaciado.md,
-          children: [
-            TextButton.icon(
-              onPressed: onVolver,
-              icon: const Icon(Icons.arrow_back),
-              label: Row(
-                spacing: espaciado.sm,
-                children: [
-                  const Text('Inicio'),
-                  TeclaAtajo('Esc', color: colores.onSurfaceVariant),
-                ],
-              ),
-            ),
-            Text(
-              'Productos',
-              style: tema.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            Expanded(
-              child: Text(
-                resumen,
-                overflow: TextOverflow.ellipsis,
-                style: tema.textTheme.bodyMedium?.copyWith(
-                  color: colores.onSurfaceVariant,
+        child: LayoutBuilder(
+          builder: (context, limites) => Row(
+            spacing: espaciado.md,
+            children: [
+              TextButton.icon(
+                onPressed: onVolver,
+                icon: const Icon(Icons.arrow_back),
+                label: Row(
+                  spacing: espaciado.sm,
+                  children: [
+                    const Text('Inicio'),
+                    TeclaAtajo('Esc', color: colores.onSurfaceVariant),
+                  ],
                 ),
               ),
-            ),
-            BotonTasa(controlador: tasa, onPulsar: onTasa),
-            FilledButton.icon(
-              onPressed: onNuevo,
-              // The theme's full-width minimum would not fit in a Row.
-              style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-              icon: const Icon(Icons.add),
-              label: Row(
-                spacing: espaciado.sm,
-                children: [
-                  const Text('Nuevo producto'),
-                  TeclaAtajo('Ctrl+N', color: colores.onPrimary),
-                ],
+              Text(
+                'Productos',
+                style: tema.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-            ),
-          ],
+              Expanded(
+                child: Text(
+                  resumen,
+                  overflow: TextOverflow.ellipsis,
+                  style: tema.textTheme.bodyMedium?.copyWith(
+                    color: colores.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              BotonTasa(controlador: tasa, onPulsar: onTasa),
+              FilledButton.icon(
+                onPressed: onNuevo,
+                // The theme's full-width minimum would not fit in a Row.
+                style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+                icon: const Icon(Icons.add),
+                label: Row(
+                  spacing: espaciado.sm,
+                  children: [
+                    // A narrow window keeps the shortcut and drops a word.
+                    Text(
+                      limites.maxWidth < _anchoCompleto
+                          ? 'Nuevo'
+                          : 'Nuevo producto',
+                    ),
+                    TeclaAtajo('Ctrl+N', color: colores.onPrimary),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

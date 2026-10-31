@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/colores_estado.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/rejilla_adaptable.dart';
 import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/features/incidencias/domain/incidencia.dart';
@@ -43,6 +44,8 @@ class FichaProveedor extends StatelessWidget {
   /// What is still owed to this supplier, in dollar hundredths.
   final int deuda;
 
+  static const _anchoDato = 160.0;
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
@@ -63,117 +66,94 @@ class FichaProveedor extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           spacing: espaciado.xl,
           children: [
-            Row(
+            Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: espaciado.md,
               children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    spacing: espaciado.xs,
-                    children: [
-                      Text(
-                        proveedor.nombre,
-                        style: tema.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.w600,
-                        ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  spacing: espaciado.xs,
+                  children: [
+                    Text(
+                      proveedor.nombre,
+                      style: tema.textTheme.headlineSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
                       ),
-                      if (proveedor.rif.isNotEmpty)
-                        Text('RIF ${proveedor.rif}', style: vacio),
-                    ],
-                  ),
+                    ),
+                    if (proveedor.rif.isNotEmpty)
+                      Text('RIF ${proveedor.rif}', style: vacio),
+                  ],
                 ),
-                // Buttons wrap to a second line before squeezing the name.
-                Flexible(
-                  child: Wrap(
-                    alignment: WrapAlignment.end,
-                    spacing: espaciado.sm,
-                    runSpacing: espaciado.sm,
-                    children: [
+                // Under the name, so a narrow sheet never squeezes either.
+                Wrap(
+                  spacing: espaciado.sm,
+                  runSpacing: espaciado.sm,
+                  children: [
+                    OutlinedButton(
+                      onPressed: onEditar,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: espaciado.sm,
+                        children: [
+                          const Text('Editar'),
+                          TeclaAtajo('Ctrl+E', color: colores.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
+                    OutlinedButton(
+                      onPressed: onRegistrarIncidencia,
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: espaciado.sm,
+                        children: [
+                          const Text('Incidencia'),
+                          TeclaAtajo('Ctrl+I', color: colores.onSurfaceVariant),
+                        ],
+                      ),
+                    ),
+                    if (onDevolver != null)
                       OutlinedButton(
-                        onPressed: onEditar,
+                        onPressed: onDevolver,
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           spacing: espaciado.sm,
                           children: [
-                            const Text('Editar'),
+                            const Text('Devolver'),
                             TeclaAtajo(
-                              'Ctrl+E',
+                              'Ctrl+D',
                               color: colores.onSurfaceVariant,
                             ),
                           ],
                         ),
                       ),
-                      OutlinedButton(
-                        onPressed: onRegistrarIncidencia,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: espaciado.sm,
-                          children: [
-                            const Text('Incidencia'),
-                            TeclaAtajo(
-                              'Ctrl+I',
-                              color: colores.onSurfaceVariant,
-                            ),
-                          ],
-                        ),
+                    FilledButton(
+                      onPressed: onRegistrarEntrada,
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(0, 40),
                       ),
-                      if (onDevolver != null)
-                        OutlinedButton(
-                          onPressed: onDevolver,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: espaciado.sm,
-                            children: [
-                              const Text('Devolver'),
-                              TeclaAtajo(
-                                'Ctrl+D',
-                                color: colores.onSurfaceVariant,
-                              ),
-                            ],
-                          ),
-                        ),
-                      FilledButton(
-                        onPressed: onRegistrarEntrada,
-                        style: FilledButton.styleFrom(
-                          minimumSize: const Size(0, 40),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: espaciado.sm,
-                          children: [
-                            const Text('Pedido a proveedor'),
-                            TeclaAtajo('F2', color: colores.onPrimary),
-                          ],
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        spacing: espaciado.sm,
+                        children: [
+                          const Text('Pedido a proveedor'),
+                          TeclaAtajo('F2', color: colores.onPrimary),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              spacing: espaciado.md,
+            RejillaAdaptable(
+              anchoMinimo: _anchoDato,
+              espacio: espaciado.md,
               children: [
-                Expanded(
-                  child: DatoProveedor(
-                    etiqueta: 'Teléfono',
-                    valor: proveedor.telefono,
-                  ),
+                DatoProveedor(etiqueta: 'Teléfono', valor: proveedor.telefono),
+                DatoProveedor(
+                  etiqueta: 'Persona de contacto',
+                  valor: proveedor.contacto,
                 ),
-                Expanded(
-                  child: DatoProveedor(
-                    etiqueta: 'Persona de contacto',
-                    valor: proveedor.contacto,
-                  ),
-                ),
-                Expanded(
-                  child: DatoProveedor(
-                    etiqueta: 'Notas',
-                    valor: proveedor.notas,
-                  ),
-                ),
+                DatoProveedor(etiqueta: 'Notas', valor: proveedor.notas),
               ],
             ),
             if (deuda > 0)

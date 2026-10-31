@@ -11,6 +11,9 @@ import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 
+/// One lot changed by a count, and its kardex line.
+typedef _Cambio = ({Producto antes, Producto despues, Movimiento? anotado});
+
 /// Sets the stock to what was physically counted, noting each difference
 /// in the kardex. The last save can be undone as a whole.
 class ControladorConteo extends ChangeNotifier {
@@ -25,28 +28,26 @@ class ControladorConteo extends ChangeNotifier {
   /// A whole count is saved, or undone, as one.
   final Transacciones _transacciones;
   final ControladorMovimientos? _movimientos;
-  List<({Producto antes, Producto despues})> _ultimos = const [];
-  List<Movimiento> _anotados = const [];
+  List<_Cambio> _ultimos = const [];
 
   bool get puedeDeshacer => _ultimos.isNotEmpty;
 
+  /// What was typed but not saved, by lot, so leaving F9 by mistake (Esc)
+  /// loses nothing. Emptied once the count is saved.
+  Map<String, ({String piezas, String cantidad})> borrador = const {};
+
   /// Saves every count that differs; returns how many lots changed.
   Future<int> guardar(List<ConteoLote> conteos) async {
-    final cambios = <({Producto antes, Producto despues})>[];
-    final anotados = <Movimiento>[];
-    await _transacciones.enUna(
-      () => _escribirConteos(conteos, cambios, anotados),
-    );
+    final cambios = <_Cambio>[];
+    await _transacciones.enUna(() => _escribirConteos(conteos, cambios));
     _ultimos = cambios;
-    _anotados = anotados;
     notifyListeners();
     return cambios.length;
   }
 
   Future<void> _escribirConteos(
     List<ConteoLote> conteos,
-    List<({Producto antes, Producto despues})> cambios,
-    List<Movimiento> anotados,
+    List<_Cambio> cambios,
   ) async {
     for (final conteo in conteos) {
       final antes = _buscar(conteo.productoId);
@@ -61,36 +62,39 @@ class ControladorConteo extends ChangeNotifier {
         DatosProducto.desde(despues),
       );
       if (resultado case ProductoGuardado(:final producto)) {
-        cambios.add((antes: antes, despues: producto));
-        if (await _anotar(antes, conteo, diferencia) case final anotado?) {
-          anotados.add(anotado);
-        }
+        final anotado = await _anotar(antes, conteo, diferencia);
+        cambios.add((antes: antes, despues: producto, anotado: anotado));
       }
     }
   }
 
-  /// Puts back every lot of the last save that nobody changed since;
-  /// returns how many could not be undone.
+  /// Puts back every product of the last save that nobody changed since;
+  /// returns how many lots could not be undone. Their kardex lines stay.
   Future<int> deshacer() async {
     final ultimos = _ultimos;
-    final anotados = _anotados;
     _ultimos = const [];
-    _anotados = const [];
     notifyListeners();
+    // Two lots of one product: the first "before" and the last "after".
+    final porProducto = <String, List<_Cambio>>{};
+    for (final cambio in ultimos) {
+      (porProducto[cambio.antes.id] ??= []).add(cambio);
+    }
     return _transacciones.enUna(() async {
       var fallidos = 0;
-      for (final cambio in ultimos.reversed) {
-        if (_buscar(cambio.despues.id) != cambio.despues) {
-          fallidos++;
+      for (final cambios in porProducto.values) {
+        if (_buscar(cambios.first.antes.id) != cambios.last.despues) {
+          fallidos += cambios.length;
           continue;
         }
         await _existencias.actualizarProducto(
-          cambio.antes.id,
-          DatosProducto.desde(cambio.antes),
+          cambios.first.antes.id,
+          DatosProducto.desde(cambios.first.antes),
         );
-      }
-      for (final anotado in anotados) {
-        await _movimientos?.quitar(anotado);
+        for (final cambio in cambios) {
+          if (cambio.anotado case final anotado?) {
+            await _movimientos?.quitar(anotado);
+          }
+        }
       }
       return fallidos;
     });

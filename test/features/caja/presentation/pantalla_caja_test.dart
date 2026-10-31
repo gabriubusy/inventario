@@ -83,12 +83,28 @@ void main() {
     await caja.abrir(fondoDolares: 2000, fondoBolivares: 0);
     await mostrar(tester);
     await conControl(tester, LogicalKeyboardKey.keyS);
-    expect(find.text('Cuadra'), findsOneWidget);
+    // Nothing comes prefilled: closing without counting is refused.
+    expect(find.text('Sin contar'), findsOneWidget);
+    await conControl(tester, LogicalKeyboardKey.keyS);
+    expect(caja.abierta, isNotNull);
+    expect(find.textContaining('Cuenta y escribe'), findsOneWidget);
     await tester.enterText(find.widgetWithText(TextField, 'Contado'), '19');
     await tester.pump();
     expect(find.text(r'Faltan $ 1,00'), findsOneWidget);
     await conControl(tester, LogicalKeyboardKey.keyS);
     expect(caja.abierta, isNull);
     expect(find.text('Abrir la caja de hoy'), findsOneWidget);
+  });
+
+  testWidgets('a close can be undone from its notice', (tester) async {
+    await caja.abrir(fondoDolares: 2000, fondoBolivares: 0);
+    await mostrar(tester);
+    await conControl(tester, LogicalKeyboardKey.keyS);
+    await tester.enterText(find.widgetWithText(TextField, 'Contado'), '20');
+    await conControl(tester, LogicalKeyboardKey.keyS);
+    expect(caja.abierta, isNull);
+    await tester.tap(find.text('Deshacer'));
+    await tester.pumpAndSettle();
+    expect(caja.abierta, isNotNull);
   });
 }

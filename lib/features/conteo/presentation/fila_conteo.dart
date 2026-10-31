@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:inventario/app/colores_estado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/numeros.dart';
+import 'package:inventario/core/unidad.dart';
 import 'package:inventario/features/conteo/domain/aplicar_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -28,6 +29,9 @@ class FilaConteo extends StatelessWidget {
   static const _anchoDiferencia = 150.0;
   static final _caracteres = FilteringTextInputFormatter.allow(
     RegExp('[0-9.,]'),
+  );
+  static final _conUnidad = FilteringTextInputFormatter.allow(
+    RegExp('[0-9.,a-zA-Z ]'),
   );
 
   final Producto producto;
@@ -119,6 +123,7 @@ class FilaConteo extends StatelessWidget {
                 etiqueta: forma.cuentaPiezas ? 'Peso' : 'Contado',
                 decimales: forma.unidad.decimales,
                 sufijo: forma.unidad.simbolo,
+                conUnidad: true,
               ),
             ),
             SizedBox(
@@ -143,9 +148,14 @@ class FilaConteo extends StatelessWidget {
     );
   }
 
-  /// Parses [texto] scaled by [decimales]; null when empty or not a number.
-  static int? leer(String texto, int decimales) =>
-      texto.trim().isEmpty ? null : parseDecimal(texto, decimales: decimales);
+  /// Parses [texto] scaled by [decimales], or in [unidad] when given
+  /// ("250 g" too); null when empty or not a number.
+  static int? leer(String texto, int decimales, {UnidadBase? unidad}) {
+    if (texto.trim().isEmpty) return null;
+    return unidad == null
+        ? parseDecimal(texto, decimales: decimales)
+        : unidad.leer(texto);
+  }
 }
 
 class _Campo extends StatelessWidget {
@@ -154,6 +164,7 @@ class _Campo extends StatelessWidget {
     required this.etiqueta,
     required this.decimales,
     this.sufijo,
+    this.conUnidad = false,
   });
 
   final TextEditingController controller;
@@ -161,13 +172,20 @@ class _Campo extends StatelessWidget {
   final int decimales;
   final String? sufijo;
 
+  /// Letters too, for "250 g".
+  final bool conUnidad;
+
   @override
   Widget build(BuildContext context) {
     return TextField(
       controller: controller,
       textAlign: TextAlign.right,
-      keyboardType: TextInputType.numberWithOptions(decimal: decimales > 0),
-      inputFormatters: [FilaConteo._caracteres],
+      keyboardType: conUnidad
+          ? TextInputType.text
+          : TextInputType.numberWithOptions(decimal: decimales > 0),
+      inputFormatters: [
+        if (conUnidad) FilaConteo._conUnidad else FilaConteo._caracteres,
+      ],
       textInputAction: TextInputAction.next,
       decoration: InputDecoration(
         labelText: etiqueta,

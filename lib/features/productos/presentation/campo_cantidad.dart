@@ -14,6 +14,7 @@ class CampoCantidad extends StatelessWidget {
     this.onSubmitted,
     this.autofocus = false,
     this.focusNode,
+    this.positivo = false,
   });
 
   static final _caracteres = FilteringTextInputFormatter.allow(
@@ -33,6 +34,9 @@ class CampoCantidad extends StatelessWidget {
   final bool autofocus;
   final FocusNode? focusNode;
 
+  /// Zero is refused too, e.g. a pack that contains nothing.
+  final bool positivo;
+
   static bool _nunca() => false;
 
   /// Stored value of a field that already passed validation.
@@ -43,8 +47,10 @@ class CampoCantidad extends StatelessWidget {
     if (texto == null || texto.trim().isEmpty) {
       return obligatorio() ? 'Falta' : null;
     }
-    if (parseDecimal(texto, decimales: decimales) != null) return null;
-    return decimales == 0 ? 'Solo enteros' : 'Ej.: 2,5';
+    final valor = parseDecimal(texto, decimales: decimales);
+    if (valor == null) return decimales == 0 ? 'Solo enteros' : 'Ej.: 2,5';
+    if (positivo && valor <= 0) return 'Mayor que 0';
+    return null;
   }
 
   @override

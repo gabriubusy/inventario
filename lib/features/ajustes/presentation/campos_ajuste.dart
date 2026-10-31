@@ -41,6 +41,7 @@ class CamposAjuste extends StatelessWidget {
       cantidad: CampoCantidadRecibida.leer(
         cantidad,
         producto.forma.unidad.decimales,
+        unidad: producto.forma.unidad,
       ),
     );
     if (restado == null) return null;
@@ -81,6 +82,7 @@ class CamposAjuste extends StatelessWidget {
                 focusNode: focoCantidad,
                 decimales: forma.unidad.decimales,
                 sufijo: forma.unidad.simbolo,
+                unidad: forma.unidad,
                 maximo: lote.cantidad,
               ),
             ),

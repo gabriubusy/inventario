@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/seguir_elegido.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
 import 'package:inventario/features/productos/domain/estado_stock.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -53,79 +54,82 @@ class FilaProducto extends StatelessWidget {
       fontFeatures: const [FontFeature.tabularFigures()],
     );
     final precio = textoPrecio(producto);
-    return Semantics(
-      selected: elegido,
-      button: true,
-      child: InkWell(
-        onTap: onElegir,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: elegido ? colores.primary.withValues(alpha: 0.08) : null,
-            border: Border(top: BorderSide(color: colores.outlineVariant)),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(minHeight: _alto),
-            child: Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: espaciado.lg,
-                vertical: espaciado.sm,
-              ),
-              child: Row(
-                spacing: espaciado.md,
-                children: [
-                  FotoProducto(
-                    fotos: fotos,
-                    imagenId: producto.imagenId,
-                    nombre: producto.nombre,
-                    lado: ColumnasProducto.foto,
-                  ),
-                  Expanded(
-                    child: _Celda(
-                      arriba: producto.nombre,
-                      abajo: _subtitulo,
-                      estiloArriba: fuerte,
-                      estiloAbajo: secundario,
-                      alinear: CrossAxisAlignment.start,
+    return SeguirElegido(
+      elegido: elegido,
+      child: Semantics(
+        selected: elegido,
+        button: true,
+        child: InkWell(
+          onTap: onElegir,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: elegido ? colores.primary.withValues(alpha: 0.08) : null,
+              border: Border(top: BorderSide(color: colores.outlineVariant)),
+            ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: _alto),
+              child: Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: espaciado.lg,
+                  vertical: espaciado.sm,
+                ),
+                child: Row(
+                  spacing: espaciado.md,
+                  children: [
+                    FotoProducto(
+                      fotos: fotos,
+                      imagenId: producto.imagenId,
+                      nombre: producto.nombre,
+                      lado: ColumnasProducto.foto,
                     ),
-                  ),
-                  SizedBox(
-                    width: ColumnasProducto.existencia,
-                    child: _Celda(
-                      arriba: textoPrincipal(producto),
-                      abajo: producto.forma.cuentaPiezas
-                          ? producto.forma.unidad.formatear(producto.cantidad)
-                          : producto.forma.etiqueta.toLowerCase(),
-                      estiloArriba: fuerte,
-                      estiloAbajo: secundario,
+                    Expanded(
+                      child: _Celda(
+                        arriba: producto.nombre,
+                        abajo: _subtitulo,
+                        estiloArriba: fuerte,
+                        estiloAbajo: secundario,
+                        alinear: CrossAxisAlignment.start,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: ColumnasProducto.precio,
-                    child: _Celda(
-                      arriba: precio ?? 'Sin precio',
-                      abajo: textoPrecioBs(producto, aBolivares) ?? '',
-                      estiloArriba: precio == null ? secundario : fuerte,
-                      estiloAbajo: secundario,
+                    SizedBox(
+                      width: ColumnasProducto.existencia,
+                      child: _Celda(
+                        arriba: textoPrincipal(producto),
+                        abajo: producto.forma.cuentaPiezas
+                            ? producto.forma.unidad.formatear(producto.cantidad)
+                            : producto.forma.etiqueta.toLowerCase(),
+                        estiloArriba: fuerte,
+                        estiloAbajo: secundario,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: ColumnasProducto.minimo,
-                    child: Text(
-                      textoCantidadMinima(producto),
-                      textAlign: TextAlign.right,
-                      style: secundario,
+                    SizedBox(
+                      width: ColumnasProducto.precio,
+                      child: _Celda(
+                        arriba: precio ?? 'Sin precio',
+                        abajo: textoPrecioBs(producto, aBolivares) ?? '',
+                        estiloArriba: precio == null ? secundario : fuerte,
+                        estiloAbajo: secundario,
+                      ),
                     ),
-                  ),
-                  SizedBox(
-                    width: ColumnasProducto.estado,
-                    child: Align(
-                      alignment: Alignment.centerRight,
-                      child: producto.estado == EstadoStock.disponible
-                          ? Text('OK', style: secundario)
-                          : EtiquetaEstado(producto.estado),
+                    SizedBox(
+                      width: ColumnasProducto.minimo,
+                      child: Text(
+                        textoCantidadMinima(producto),
+                        textAlign: TextAlign.right,
+                        style: secundario,
+                      ),
                     ),
-                  ),
-                ],
+                    SizedBox(
+                      width: ColumnasProducto.estado,
+                      child: Align(
+                        alignment: Alignment.centerRight,
+                        child: producto.estado == EstadoStock.disponible
+                            ? Text('OK', style: secundario)
+                            : EtiquetaEstado(producto.estado),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

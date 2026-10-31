@@ -30,6 +30,10 @@ class FuenteTasaDolarApi implements FuenteTasa {
       return const TasaNoDisponible();
     } on TimeoutException {
       return const TasaNoDisponible();
+      // TLS and socket errors escape ClientException and can't be named
+      // here without dart:io (web); offline they all mean the same.
+    } on Exception {
+      return const TasaNoDisponible();
     }
     if (respuesta.statusCode != 200) return const TasaNoDisponible();
     final Object? datos;

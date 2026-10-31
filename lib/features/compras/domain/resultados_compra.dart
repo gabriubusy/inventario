@@ -18,6 +18,12 @@ class CompraSinProducto extends ResultadoCompra {
   final String producto;
 }
 
+/// Paid on the spot in bolívares without today's rate: the till could not
+/// tell how much left.
+class CompraSinTasa extends ResultadoCompra {
+  const CompraSinTasa();
+}
+
 sealed class ResultadoPago {
   const ResultadoPago();
 }

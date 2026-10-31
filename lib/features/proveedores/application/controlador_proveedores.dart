@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:inventario/core/texto.dart';
+import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/proveedores/application/estado_proveedores.dart';
 import 'package:inventario/features/proveedores/domain/datos_proveedor.dart';
@@ -20,10 +21,14 @@ class ControladorProveedores extends ChangeNotifier {
     this._repositorio,
     this._existencias, {
     this._alRenombrar = const [],
+    this._transacciones = const SinTransaccion(),
   });
 
   final RepositorioProveedores _repositorio;
   final ControladorExistencias _existencias;
+
+  /// A rename reaches every record or none of them.
+  final Transacciones _transacciones;
 
   /// Other records that store the supplier by name, like incidents.
   final List<RenombrarProveedor> _alRenombrar;
@@ -114,13 +119,10 @@ class ControladorProveedores extends ChangeNotifier {
     Proveedor anterior,
     DatosProveedor datos,
   ) async {
-    final resultado = await _repositorio.actualizar(anterior.id, datos);
-    if (resultado case ProveedorGuardado(:final proveedor)) {
-      _estado = ProveedoresCargados([
-        for (final p in _todos) p.id == proveedor.id ? proveedor : p,
-      ]);
-      notifyListeners();
-      if (anterior.nombre != proveedor.nombre) {
+    final resultado = await _transacciones.enUna(() async {
+      final resultado = await _repositorio.actualizar(anterior.id, datos);
+      if (resultado case ProveedorGuardado(:final proveedor)
+          when anterior.nombre != proveedor.nombre) {
         await _existencias.renombrarProveedor(
           anterior.nombre,
           proveedor.nombre,
@@ -129,6 +131,13 @@ class ControladorProveedores extends ChangeNotifier {
           await renombrar(anterior.nombre, proveedor.nombre);
         }
       }
+      return resultado;
+    });
+    if (resultado case ProveedorGuardado(:final proveedor)) {
+      _estado = ProveedoresCargados([
+        for (final p in _todos) p.id == proveedor.id ? proveedor : p,
+      ]);
+      notifyListeners();
     }
     return resultado;
   }

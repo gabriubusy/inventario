@@ -182,7 +182,11 @@ class _DialogoSalidaState extends State<DialogoSalida> {
     final lote = _loteElegido;
     if (_producto == null || lote == null) return null;
     final medida = _medida;
-    final escrito = CampoCantidadVendida.leer(_cantidad, medida.decimales);
+    final escrito = CampoCantidadVendida.leer(
+      _cantidad,
+      medida.decimales,
+      unidad: medida.unidadEscrita,
+    );
     if (escrito <= 0) return null;
     return Salida(
       marca: lote.marca,
@@ -245,7 +249,10 @@ class _DialogoSalidaState extends State<DialogoSalida> {
     final quitada = _quitada;
     if (quitada == null) return;
     setState(() {
-      _ticket = _ticket.con(quitada.$1, quitada.$2);
+      // Priced again: the list may have changed while it was out.
+      _ticket = _ticket
+          .con(quitada.$1, quitada.$2)
+          .conLista(_ticket.lista, _actual);
       _quitada = null;
     });
   }

@@ -9,6 +9,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/features/productos/application/controlador_ajuste_precios.dart';
+import 'package:inventario/features/productos/domain/ajustar_precios.dart';
 import 'package:inventario/features/productos/domain/ambito_ajuste.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/lista_precio.dart';
@@ -100,8 +101,10 @@ class _DialogoAjustePreciosState extends State<DialogoAjustePrecios> {
     );
   }
 
+  bool get _bajaImposible => _cambio <= bajadaImposible;
+
   Future<void> _aplicar() async {
-    if (_aplicando || _cambio == 0) return;
+    if (_aplicando || _cambio == 0 || _bajaImposible) return;
     setState(() => _aplicando = true);
     final navegador = Navigator.of(context);
     final cuantos = await widget.ajuste.aplicar(_ambito, _lista, _cambio);
@@ -110,6 +113,9 @@ class _DialogoAjustePreciosState extends State<DialogoAjustePrecios> {
   }
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    // Ctrl+S saves in every window of the app.
+    const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+        unawaited(_aplicar()),
     const SingleActivator(LogicalKeyboardKey.keyQ, alt: true): () =>
         setState(() => _baja = false),
     const SingleActivator(LogicalKeyboardKey.keyW, alt: true): () =>
@@ -178,8 +184,9 @@ class _DialogoAjustePreciosState extends State<DialogoAjustePrecios> {
                   controller: _porcentaje,
                   decimales: decimalesDinero,
                   sufijo: '%',
+                  // No Enter here: typing the % must not change every
+                  // price before choosing which ones; Ctrl+S applies.
                   autofocus: true,
-                  onSubmitted: () => unawaited(_aplicar()),
                 ),
                 OpcionesAmbitoAjuste(
                   lista: _lista,
@@ -188,13 +195,30 @@ class _DialogoAjustePreciosState extends State<DialogoAjustePrecios> {
                   onLista: (lista) => setState(() => _lista = lista),
                   onAmbito: (ambito) => setState(() => _ambito = ambito),
                 ),
-                PrevistoAjuste(
-                  cambios: widget.ajuste.previsto(_ambito, _lista, _cambio),
-                  lista: _lista,
-                ),
+                if (_bajaImposible)
+                  Text(
+                    'No se puede bajar 100 % o más: los precios quedarían '
+                    'en cero o negativos.',
+                    style: tema.textTheme.bodyMedium?.copyWith(
+                      color: tema.colorScheme.error,
+                    ),
+                  )
+                else
+                  PrevistoAjuste(
+                    cambios: widget.ajuste.previsto(_ambito, _lista, _cambio),
+                    lista: _lista,
+                  ),
                 BotonesCrear(
-                  etiqueta: 'Aplicar',
-                  atajo: 'Ctrl+Enter',
+                  etiqueta: switch (_bajaImposible
+                      ? 0
+                      : widget.ajuste
+                            .previsto(_ambito, _lista, _cambio)
+                            .length) {
+                    0 => 'Aplicar',
+                    1 => 'Aplicar a 1 producto',
+                    final n => 'Aplicar a $n productos',
+                  },
+                  atajo: 'Ctrl+S',
                   guardando: _aplicando,
                   onCrear: () => unawaited(_aplicar()),
                 ),

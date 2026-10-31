@@ -152,6 +152,7 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
     final cantidad = CampoCantidadRecibida.leer(
       _cantidad,
       forma.unidad.decimales,
+      unidad: forma.unidad,
     );
     if (cantidad <= 0) return null;
     return DatosIncidencia(

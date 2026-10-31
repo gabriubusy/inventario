@@ -62,13 +62,18 @@ class GestorRespaldosArchivos implements GestorRespaldos {
       }
     }
     final bytes = ZipEncoder().encode(zip);
-    final archivo = File(
-      '${destino.path}${Platform.pathSeparator}'
-      '${nombreRespaldo(fecha, prefijo: prefijo)}',
-    );
+    // Never over another backup, even two in the same second.
+    var nombre = nombreRespaldo(fecha, prefijo: prefijo);
+    for (var n = 2; File(_ruta(destino, nombre)).existsSync(); n++) {
+      nombre = nombreRespaldo(fecha, prefijo: prefijo, copia: n);
+    }
+    final archivo = File(_ruta(destino, nombre));
     await archivo.writeAsBytes(bytes, flush: true);
     return RespaldoGuardado(ruta: archivo.path, bytes: bytes.length);
   }
+
+  static String _ruta(Directory carpeta, String nombre) =>
+      '${carpeta.path}${Platform.pathSeparator}$nombre';
 
   @override
   Future<List<ArchivoRespaldo>> enCarpeta(String carpeta) async {
@@ -121,28 +126,112 @@ class GestorRespaldosArchivos implements GestorRespaldos {
     }
   }
 
+  /// A backup that could not be applied is kept here, so the app still
+  /// starts with its current data.
+  static const fallido = 'restaurar-fallido.inventario';
+
   /// Run at start, before the database opens: puts a prepared backup in
   /// place of the database and the photos. True when it restored one.
   static Future<bool> aplicarRestauracionPendiente(Directory soporte) async {
     final separador = Platform.pathSeparator;
     final pendiente = File('${soporte.path}$separador$_pendiente');
     if (!pendiente.existsSync()) return false;
-    final zip = ZipDecoder().decodeBytes(await pendiente.readAsBytes());
-    for (final sufijo in ['', '-wal', '-shm']) {
-      final viejo = File('${soporte.path}$separador$nombreBase$sufijo');
-      if (viejo.existsSync()) await viejo.delete();
+    final temporal = Directory('${soporte.path}${separador}restaurando');
+    try {
+      await _extraer(pendiente, temporal);
+    } on FormatException {
+      await _descartar(pendiente, temporal);
+      return false;
+    } on FileSystemException {
+      await _descartar(pendiente, temporal);
+      return false;
+      // A truncated entry can fail inside the inflater with a RangeError.
+    } on RangeError {
+      await _descartar(pendiente, temporal);
+      return false;
     }
-    final imagenes = Directory('${soporte.path}$separador$carpetaImagenes');
-    if (imagenes.existsSync()) await imagenes.delete(recursive: true);
-    for (final entrada in zip.files) {
-      if (!entrada.isFile || entrada.name == _manifiesto) continue;
-      final destino = File(
-        '${soporte.path}$separador${entrada.name.replaceAll('/', separador)}',
-      );
-      await destino.parent.create(recursive: true);
-      await destino.writeAsBytes(entrada.content, flush: true);
+    // Only with everything extracted is the current data set aside; it
+    // comes back if the new one can't be put in place.
+    final ruta = '${soporte.path}$separador';
+    final actuales = [
+      for (final sufijo in ['', '-wal', '-shm'])
+        if (File('$ruta$nombreBase$sufijo').existsSync())
+          File('$ruta$nombreBase$sufijo'),
+      if (Directory('$ruta$carpetaImagenes').existsSync())
+        Directory('$ruta$carpetaImagenes'),
+    ];
+    final apartados = <FileSystemEntity>[];
+    try {
+      for (final actual in actuales) {
+        apartados.add(await actual.rename('${actual.path}$_apartado'));
+      }
+      await File('${temporal.path}$separador$nombreBase')
+          .rename('$ruta$nombreBase');
+      final nuevas = Directory('${temporal.path}$separador$carpetaImagenes');
+      if (nuevas.existsSync()) await nuevas.rename('$ruta$carpetaImagenes');
+    } on FileSystemException {
+      await _reponer(apartados, ruta);
+      await _descartar(pendiente, temporal);
+      return false;
     }
+    for (final apartado in apartados) {
+      await apartado.delete(recursive: true);
+    }
+    await temporal.delete(recursive: true);
     await pendiente.delete();
     return true;
+  }
+
+  static const _apartado = '.anterior';
+
+  /// Puts the set-aside data back where it was.
+  static Future<void> _reponer(
+    List<FileSystemEntity> apartados,
+    String ruta,
+  ) async {
+    final base = File('$ruta$nombreBase');
+    if (base.existsSync()) await base.delete();
+    final imagenes = Directory('$ruta$carpetaImagenes');
+    if (imagenes.existsSync()) await imagenes.delete(recursive: true);
+    for (final apartado in apartados) {
+      await apartado.rename(
+        apartado.path.substring(0, apartado.path.length - _apartado.length),
+      );
+    }
+  }
+
+  static Future<void> _extraer(File pendiente, Directory temporal) async {
+    final separador = Platform.pathSeparator;
+    if (temporal.existsSync()) await temporal.delete(recursive: true);
+    final zip = ZipDecoder().decodeBytes(await pendiente.readAsBytes());
+    if (zip.findFile(nombreBase) == null) {
+      throw const FormatException('El respaldo no trae la base de datos');
+    }
+    for (final entrada in zip.files) {
+      if (!entrada.isFile || entrada.name == _manifiesto) continue;
+      final partes = entrada.name.split('/');
+      // A name that climbs out of the folder was not written by us.
+      if (partes.any((p) => p.isEmpty || p == '..' || p.contains(':'))) {
+        throw FormatException('Nombre no válido: ${entrada.name}');
+      }
+      final destino = File(
+        '${temporal.path}$separador${partes.join(separador)}',
+      );
+      final contenido = entrada.content;
+      // The library does not check it: a damaged entry is caught here.
+      if (entrada.crc32 case final esperado?
+          when getCrc32(contenido) != esperado) {
+        throw FormatException('Dañado: ${entrada.name}');
+      }
+      await destino.parent.create(recursive: true);
+      await destino.writeAsBytes(contenido, flush: true);
+    }
+  }
+
+  static Future<void> _descartar(File pendiente, Directory temporal) async {
+    if (temporal.existsSync()) await temporal.delete(recursive: true);
+    await pendiente.rename(
+      '${pendiente.parent.path}${Platform.pathSeparator}$fallido',
+    );
   }
 }

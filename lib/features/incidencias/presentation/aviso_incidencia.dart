@@ -23,6 +23,7 @@ void mostrarIncidenciaRegistrada(
           'Incidencia registrada · ${incidencia.proveedor} · '
           '${incidencia.producto}$afectado',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => unawaited(_deshacer(mensajero, incidencias)),
@@ -67,6 +68,7 @@ Future<void> responderIncidencia(
               ? 'Incidencia reabierta · ${incidencia.producto}'
               : 'Resuelta · ${incidencia.producto}: ${respuesta.etiqueta}',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => unawaited(

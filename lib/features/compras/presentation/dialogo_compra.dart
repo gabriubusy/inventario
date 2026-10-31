@@ -7,6 +7,7 @@ import 'package:inventario/app/botones_crear.dart';
 import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/medio_pago.dart';
+import 'package:inventario/core/texto.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/domain/compra.dart';
 import 'package:inventario/features/compras/domain/linea_compra.dart';
@@ -84,15 +85,47 @@ class _DialogoCompraState extends State<DialogoCompra> {
   String? _error;
   var _guardando = false;
 
+  var _registrada = false;
+
   @override
   void initState() {
     super.initState();
     _proveedor.addListener(_refrescar);
     _dias.addListener(_refrescar);
+    _retomarBorrador();
+  }
+
+  /// Picks up the invoice left half typed, unless it was opened for
+  /// another supplier.
+  void _retomarBorrador() {
+    final borrador = widget.compras.borrador;
+    if (borrador == null) return;
+    final pedido = normalizarParaBusqueda(widget.proveedorInicial);
+    if (pedido.isNotEmpty &&
+        pedido != normalizarParaBusqueda(borrador.proveedor)) {
+      return;
+    }
+    _proveedor.text = borrador.proveedor;
+    _factura.text = borrador.factura;
+    _lineas.addAll(borrador.lineas);
+    _credito = borrador.credito;
+    _dias.text = borrador.dias;
+    _medio = borrador.medio;
   }
 
   @override
   void dispose() {
+    // Esc closes the window but never throws away the typed lines.
+    if (!_registrada && _lineas.isNotEmpty) {
+      widget.compras.borrador = (
+        proveedor: _proveedor.text,
+        factura: _factura.text,
+        lineas: List.of(_lineas),
+        credito: _credito,
+        dias: _dias.text,
+        medio: _medio,
+      );
+    }
     _proveedor.dispose();
     _factura.dispose();
     _dias.dispose();
@@ -143,10 +176,18 @@ class _DialogoCompraState extends State<DialogoCompra> {
     setState(() => _guardando = false);
     switch (resultado) {
       case CompraRegistrada(:final compra):
+        _registrada = true;
+        widget.compras.borrador = null;
         mostrarCompraRegistrada(mensajero, widget.compras, compra);
         navegador.pop();
       case CompraSinProducto(:final producto):
         setState(() => _error = '$producto ya no existe; quítalo de la lista');
+      case CompraSinTasa():
+        setState(
+          () => _error =
+              'Falta la tasa de hoy para pagar en bolívares (Ctrl+T en el '
+              'inicio), o págala en dólares o a crédito',
+        );
     }
   }
 

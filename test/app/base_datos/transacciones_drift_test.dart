@@ -73,11 +73,14 @@ class _MovimientosQueFallan implements RepositorioMovimientos {
   Future<Movimiento> anotar(Movimiento movimiento) => throw _DiscoLleno();
 
   @override
-  Future<void> anular(String id) async {}
+  Future<void> anular(String id, {DateTime? el}) async {}
 
   @override
   Future<List<Movimiento>> obtenerTodos() async => const [];
 
   @override
   Future<void> quitar(String id) async {}
+
+  @override
+  Future<void> renombrarProveedor(String anterior, String nuevo) async {}
 }

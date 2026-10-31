@@ -164,6 +164,16 @@ void main() {
     expect(guardado('p2').cantidad, 2800);
   });
 
+  testWidgets('grams can be typed: "250 g" sells a quarter kilo', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'molida');
+    await escribirYEnter(tester, '250 g');
+    expect(find.text('Propia · 0,25 kg'), findsOneWidget);
+    expect(salidas.ticketEnCurso.total, 155);
+  });
+
   testWidgets('a second line only gets what the first one left', (
     tester,
   ) async {

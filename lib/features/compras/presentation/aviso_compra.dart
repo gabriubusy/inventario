@@ -28,6 +28,7 @@ void mostrarCompraRegistrada(
           'Pedido registrado · ${compra.proveedor} · $productos · '
           '${formatearDolares(compra.total)} · $pago',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => unawaited(_deshacer(mensajero, compras)),

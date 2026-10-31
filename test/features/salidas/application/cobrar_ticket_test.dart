@@ -95,6 +95,14 @@ void main() {
     },
   );
 
+  test('the history keeps what was charged even if the price moved', () async {
+    // The ticket's line was priced at $5,00/kg; the brand now says $6,20.
+    await salidas.cobrar(Ticket([linea(molida, 1000, 500)]), const [
+      PagoVenta(medio: MedioPago.efectivoDolares, monto: 500),
+    ]);
+    expect(movimientos.ventasDeHoy.single.importe, 500);
+  });
+
   test('undo puts every product back and forgets the sale', () async {
     await salidas.cobrar(ticket, efectivo);
     expect(await salidas.deshacer(), isTrue);

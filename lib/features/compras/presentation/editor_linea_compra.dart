@@ -63,6 +63,17 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
     super.dispose();
   }
 
+  // The brand index points into this supplier's lots: another supplier has
+  // other lots, so the choice starts again.
+  @override
+  void didUpdateWidget(covariant EditorLineaCompra oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (normalizarParaBusqueda(oldWidget.proveedor) !=
+        normalizarParaBusqueda(widget.proveedor)) {
+      _lote = null;
+    }
+  }
+
   List<LoteMarca> get _lotes {
     final producto = _producto;
     if (producto == null) return const [];
@@ -134,7 +145,11 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
         forma: forma,
         marca: lote == null ? _marca.text.trim() : _lotes[lote].marca,
         piezas: forma.cuentaPiezas ? CampoCantidadRecibida.leer(_piezas, 0) : 0,
-        cantidad: CampoCantidadRecibida.leer(_cantidad, forma.unidad.decimales),
+        cantidad: CampoCantidadRecibida.leer(
+          _cantidad,
+          forma.unidad.decimales,
+          unidad: forma.unidad,
+        ),
         costo: CampoCantidadRecibida.leer(_costo, decimalesDinero),
       ),
     );
@@ -218,6 +233,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                     focusNode: _focoCantidad,
                     decimales: producto.forma.unidad.decimales,
                     sufijo: producto.forma.unidad.simbolo,
+                    unidad: producto.forma.unidad,
                   ),
                 ),
                 Expanded(

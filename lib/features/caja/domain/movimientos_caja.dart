@@ -9,6 +9,7 @@ import 'package:inventario/features/devoluciones_proveedor/domain/devolucion_pro
 import 'package:inventario/features/gastos/domain/gasto.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
+import 'package:inventario/features/salidas/domain/resumen_cobro.dart';
 import 'package:inventario/features/salidas/domain/venta.dart';
 
 /// Everything that moved money while [caja] was open, newest first.
@@ -39,12 +40,20 @@ List<MovimientoCaja> movimientosDeCaja({
     for (final pago in venta.pagos) {
       montos[pago.medio] = (montos[pago.medio] ?? 0) + pago.monto;
     }
-    final pagado = venta.pagos.fold(
-      0,
-      (suma, p) => suma + p.enDolares(venta.tasa ?? 0),
+    // The same change the payment window showed, Bs included.
+    final cobro = ResumenCobro(
+      total: venta.total,
+      pagos: venta.pagos,
+      tasa: venta.tasa ?? 0,
     );
-    final vuelto = pagado - venta.total;
-    if (vuelto > 0) _restarEfectivo(montos, vuelto, venta);
+    if (cobro.vuelto > 0) {
+      _restarEfectivo(
+        montos,
+        cobro.vuelto,
+        venta,
+        bolivares: cobro.vueltoEnBolivares,
+      );
+    }
     final lineasVenta = lineas.where((l) => l.ventaId == venta.id).length;
     movimientos.add(
       MovimientoCaja(
@@ -63,7 +72,9 @@ List<MovimientoCaja> movimientosDeCaja({
         (linea.tipo == TipoMovimiento.venta && linea.anulada) ||
         linea.tipo == TipoMovimiento.devolucionCliente;
     final importe = linea.importe;
-    if (!devuelta || importe == null || !caja.incluye(linea.fecha)) continue;
+    // The money leaves when it is cancelled, not when it was sold.
+    final cuando = linea.anuladaEl ?? linea.fecha;
+    if (!devuelta || importe == null || !caja.incluye(cuando)) continue;
     final montos = <MedioPago, int>{};
     final medio = linea.medioReembolso;
     final reembolso = medio == null
@@ -81,7 +92,7 @@ List<MovimientoCaja> movimientosDeCaja({
     }
     movimientos.add(
       MovimientoCaja(
-        fecha: linea.fecha,
+        fecha: cuando,
         tipo: TipoMovimientoCaja.devolucion,
         detalle: linea.tipo == TipoMovimiento.venta
             ? 'Venta anulada · ${linea.producto}'
@@ -173,7 +184,14 @@ Map<MedioPago, int> saldosDeCaja(List<MovimientoCaja> movimientos) {
 int totalEnDolares(Map<MedioPago, int> saldos, int? tasa) => saldos.entries
     .fold(0, (suma, e) => suma + (aDolares(e.value, e.key.moneda, tasa) ?? 0));
 
-void _restarEfectivo(Map<MedioPago, int> montos, int dolares, Venta? venta) {
+/// [bolivares], when known, is the exact amount in Bs; else [dolares] is
+/// converted at the sale's rate.
+void _restarEfectivo(
+  Map<MedioPago, int> montos,
+  int dolares,
+  Venta? venta, {
+  int? bolivares,
+}) {
   final enDolares =
       venta == null ||
       venta.tasa == null ||
@@ -184,7 +202,7 @@ void _restarEfectivo(Map<MedioPago, int> montos, int dolares, Venta? venta) {
   } else {
     montos[MedioPago.efectivoBolivares] =
         (montos[MedioPago.efectivoBolivares] ?? 0) -
-        dividirRedondeando(dolares * venta.tasa!, 100);
+        (bolivares ?? dividirRedondeando(dolares * venta.tasa!, 100));
   }
 }
 

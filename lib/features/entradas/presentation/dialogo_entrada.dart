@@ -177,6 +177,7 @@ class _DialogoEntradaState extends State<DialogoEntrada> {
     final cantidad = CampoCantidadRecibida.leer(
       _cantidad,
       forma.unidad.decimales,
+      unidad: forma.unidad,
     );
     final marca = lote?.marca ?? _marca.text.trim();
     if (marca.isEmpty || cantidad <= 0) return null;

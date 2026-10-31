@@ -6,7 +6,8 @@ import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/domain/vender.dart';
 
 /// The history line of [salida] out of [antes] (the product right before
-/// it), with its amount, cost and rate copied as they are now.
+/// it), with its amount, cost and rate copied as they are now. A ticket
+/// line passes [cobrado], the amount the customer actually paid for it.
 Movimiento movimientoDeVenta(
   Producto antes,
   Salida salida, {
@@ -14,6 +15,7 @@ Movimiento movimientoDeVenta(
   int? tasa,
   String? ventaId,
   ListaPrecio lista = ListaPrecio.detal,
+  ({int? importe})? cobrado,
 }) {
   final lote = antes.lotes[indiceLoteDeSalida(antes, salida)];
   return Movimiento(
@@ -26,13 +28,16 @@ Movimiento movimientoDeVenta(
     proveedor: salida.proveedor,
     piezas: salida.piezas,
     cantidad: salida.cantidad,
-    importe: importeDeSalida(
-      antes,
-      lote,
-      salida.cantidad,
-      presentacion: salida.presentacion,
-      lista: lista,
-    ),
+    importe: switch (cobrado) {
+      (:final importe) => importe,
+      null => importeDeSalida(
+        antes,
+        lote,
+        salida.cantidad,
+        presentacion: salida.presentacion,
+        lista: lista,
+      ),
+    },
     abrioPieza: abrePieza(lote, salida.modo),
     costo: costoDeSalida(antes, lote, salida.cantidad),
     tasa: tasa,

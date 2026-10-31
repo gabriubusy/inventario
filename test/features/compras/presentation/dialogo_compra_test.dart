@@ -147,6 +147,20 @@ void main() {
     expect(compras.deudaDe('Frigorífico 1'), 0);
   });
 
+  testWidgets('Esc keeps the typed lines for the next time', (tester) async {
+    await abrir(tester);
+    await elegir(tester, 'molida', 'Carne molida');
+    await tester.enterText(campo('Cantidad'), '2');
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Añadir'));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+    expect(find.byType(DialogoCompra), findsNothing);
+    await tester.tap(find.text('abrir'));
+    await tester.pumpAndSettle();
+    expect(find.text('1 producto · Total'), findsOneWidget);
+  });
+
   testWidgets('an empty invoice is not registered', (tester) async {
     await abrir(tester);
     await tester.tap(find.widgetWithText(FilledButton, 'Registrar pedido'));

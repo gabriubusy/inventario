@@ -26,11 +26,18 @@ class ArchivoRespaldo {
   int get hashCode => Object.hash(ruta, nombre, fecha, bytes);
 }
 
-/// "inventario 2026-10-29 1512.inventario": sorts by date by name alone.
-String nombreRespaldo(DateTime fecha, {String prefijo = 'inventario'}) {
+/// "inventario 2026-10-29 151207.inventario": sorts by date by name alone.
+/// [copia] tells apart two made in the same second: "… 151207 (2)".
+String nombreRespaldo(
+  DateTime fecha, {
+  String prefijo = 'inventario',
+  int copia = 1,
+}) {
   String dos(int n) => n.toString().padLeft(2, '0');
+  final repetido = copia > 1 ? ' ($copia)' : '';
   return '$prefijo ${fecha.year}-${dos(fecha.month)}-${dos(fecha.day)} '
-      '${dos(fecha.hour)}${dos(fecha.minute)}.inventario';
+      '${dos(fecha.hour)}${dos(fecha.minute)}${dos(fecha.second)}'
+      '$repetido.inventario';
 }
 
 /// "4,2 MB", "820 KB".

@@ -1,5 +1,6 @@
 import 'package:inventario/core/texto.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
+import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 
 /// Which products a bulk price change touches.
@@ -7,6 +8,15 @@ sealed class AmbitoAjuste {
   const AmbitoAjuste();
 
   bool incluye(Producto producto);
+
+  /// Which brands of an included product move their Detal price.
+  bool incluyeLote(LoteMarca lote) => true;
+
+  /// Mayor and Especial rules belong to the whole product, every brand.
+  bool incluyeRegla(Producto producto) => incluye(producto);
+
+  /// Packs have one price for every brand; only a whole-product scope moves it.
+  bool get incluyePresentaciones => true;
 }
 
 class TodosLosProductos extends AmbitoAjuste {
@@ -45,12 +55,21 @@ class DeProveedor extends AmbitoAjuste {
   final String proveedor;
 
   @override
-  bool incluye(Producto producto) {
-    final buscado = normalizarParaBusqueda(proveedor);
-    return producto.lotes.any(
-      (l) => normalizarParaBusqueda(l.proveedor) == buscado,
-    );
-  }
+  bool incluye(Producto producto) => producto.lotes.any(incluyeLote);
+
+  /// Other suppliers' brands of the same product keep their price.
+  @override
+  bool incluyeLote(LoteMarca lote) =>
+      normalizarParaBusqueda(lote.proveedor) ==
+      normalizarParaBusqueda(proveedor);
+
+  @override
+  bool get incluyePresentaciones => false;
+
+  /// A rule moves every brand's price, so only when all come from it.
+  @override
+  bool incluyeRegla(Producto producto) =>
+      producto.lotes.isNotEmpty && producto.lotes.every(incluyeLote);
 
   @override
   bool operator ==(Object other) =>

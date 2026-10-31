@@ -82,10 +82,10 @@ class _DialogoCobroState extends State<DialogoCobro> {
 
   /// What is still owed, in the chosen way's currency.
   int get _faltaEnMoneda {
-    final falta = _resumenCon(_pagos).falta;
+    final cobro = _resumenCon(_pagos);
     return switch (_medio.moneda) {
-      Moneda.dolares => falta,
-      Moneda.bolivares => dividirRedondeando(falta * widget.tasa, 100),
+      Moneda.dolares => cobro.falta,
+      Moneda.bolivares => cobro.faltaEnBolivares,
     };
   }
 
@@ -124,7 +124,13 @@ class _DialogoCobroState extends State<DialogoCobro> {
     ],
   );
 
+  /// A typed amount that doesn't cover the total.
+  bool get _escritoCorto =>
+      _monto.text.trim().isNotEmpty && _resumenCon(_todos).falta > 0;
+
   Future<void> _registrar() async {
+    // Enter never does nothing: a short amount is one payment of several.
+    if (_escritoCorto) return _agregarPago();
     final pagos = _todos;
     if (_registrando || !_resumenCon(pagos).puedeRegistrarse) return;
     setState(() => _registrando = true);
@@ -221,10 +227,13 @@ class _DialogoCobroState extends State<DialogoCobro> {
                       ),
                   ],
                 ),
-                PanelCobro(cobro: mostrado),
+                PanelCobro(cobro: mostrado, escritoCorto: _escritoCorto),
                 BotonesCrear(
-                  etiqueta: 'Registrar venta',
-                  guardando: _registrando || !cobro.puedeRegistrarse,
+                  etiqueta: _escritoCorto
+                      ? 'Añadir este pago'
+                      : 'Registrar venta',
+                  guardando:
+                      _registrando || !_escritoCorto && !cobro.puedeRegistrarse,
                   onCrear: () => unawaited(_registrar()),
                 ),
                 Text(

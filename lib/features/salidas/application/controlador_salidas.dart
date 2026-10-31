@@ -5,7 +5,6 @@ import 'package:inventario/features/movimientos/application/controlador_movimien
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
-import 'package:inventario/features/productos/domain/lista_precio.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
 import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
@@ -59,7 +58,13 @@ class ControladorSalidas extends ChangeNotifier {
   final _ultimoModo = <String, ModoVenta>{};
   _UltimaVenta? _ultima;
 
-  bool get puedeDeshacer => _ultima != null;
+  /// Only while the sale is still the latest movement: after a purchase or a
+  /// loss, Ctrl+Z must not reach back to an older sale.
+  bool get puedeDeshacer {
+    final ultima = _ultima;
+    if (ultima == null) return false;
+    return _movimientos?.sonLosUltimos(ultima.anotados) ?? true;
+  }
 
   /// The ticket being rung up; kept when its window closes, so Esc never
   /// loses it. Emptied once it is paid.
@@ -181,7 +186,7 @@ class ControladorSalidas extends ChangeNotifier {
   /// (false) when something else changed one of them since, to not lose it.
   Future<bool> deshacer() async {
     final ultima = _ultima;
-    if (ultima == null) return false;
+    if (ultima == null || !puedeDeshacer) return false;
     _ultima = null;
     notifyListeners();
     if (ultima.cambios.any((c) => _buscar(c.despues.id) != c.despues)) {
@@ -259,7 +264,7 @@ class ControladorSalidas extends ChangeNotifier {
           linea.salida,
           tasa,
           ventaId: ventaId.isEmpty ? null : ventaId,
-          lista: ticket.lista,
+          cobrado: (importe: linea.importe),
         ),
       );
       if (anotado != null) anotados.add(anotado);
@@ -273,14 +278,14 @@ class ControladorSalidas extends ChangeNotifier {
     Salida salida,
     int? tasa, {
     String? ventaId,
-    ListaPrecio lista = ListaPrecio.detal,
+    ({int? importe})? cobrado,
   }) => movimientoDeVenta(
     antes,
     salida,
     fecha: DateTime.now(),
     tasa: tasa,
     ventaId: ventaId,
-    lista: lista,
+    cobrado: cobrado,
   );
 
   void _recordarModo(String productoId, Salida salida) {

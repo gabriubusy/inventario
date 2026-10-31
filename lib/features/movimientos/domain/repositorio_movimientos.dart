@@ -9,6 +9,9 @@ abstract interface class RepositorioMovimientos {
   /// Only to undo the sale or entry it records.
   Future<void> quitar(String id);
 
-  /// Marks a sale as cancelled; it is kept, crossed out.
-  Future<void> anular(String id);
+  /// Marks a sale as cancelled [el] that moment; it is kept, crossed out.
+  Future<void> anular(String id, {DateTime? el});
+
+  /// So a cancelled or returned sale goes back to the renamed brand lot.
+  Future<void> renombrarProveedor(String anterior, String nuevo);
 }

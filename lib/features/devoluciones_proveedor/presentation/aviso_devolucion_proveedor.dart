@@ -21,6 +21,7 @@ void mostrarDevolucionRegistrada(
           '${formatearDolares(devolucion.total)} · '
           '${devolucion.compensacion.etiqueta}',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => unawaited(_deshacer(mensajero, devoluciones)),

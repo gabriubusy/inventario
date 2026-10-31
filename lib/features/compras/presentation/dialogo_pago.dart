@@ -13,14 +13,7 @@ import 'package:inventario/features/compras/application/controlador_compras.dart
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
 import 'package:inventario/features/compras/domain/resultados_compra.dart';
 import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
-
-const _teclasMedio = [
-  LogicalKeyboardKey.digit1,
-  LogicalKeyboardKey.digit2,
-  LogicalKeyboardKey.digit3,
-  LogicalKeyboardKey.digit4,
-  LogicalKeyboardKey.digit5,
-];
+import 'package:inventario/features/salidas/presentation/opciones_medio_pago.dart';
 
 Future<void> mostrarDialogoPago(
   BuildContext context, {
@@ -139,6 +132,7 @@ class _DialogoPagoState extends State<DialogoPago> {
                 '${widget.cuenta.compra.proveedor} · '
                 '${debe <= 0 ? 'factura pagada' : 'debe ${formatearDolares(debe)}'}',
               ),
+              persist: false,
               action: SnackBarAction(
                 label: 'Deshacer',
                 onPressed: () => unawaited(widget.compras.deshacerPago()),
@@ -154,10 +148,14 @@ class _DialogoPagoState extends State<DialogoPago> {
     }
   }
 
+  // Each way keeps its number from the sale window, even with one missing.
   Map<ShortcutActivator, VoidCallback> get _atajos => {
-    for (final (i, tecla) in _teclasMedio.indexed)
-      SingleActivator(tecla, alt: true): () =>
-          _elegirMedio(MedioPago.paraProveedores[i]),
+    // Ctrl+S saves in every window of the app.
+    const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+        unawaited(_registrar()),
+    for (final medio in MedioPago.paraProveedores)
+      SingleActivator(teclasMedioPago[medio.index], alt: true): () =>
+          _elegirMedio(medio),
     const SingleActivator(LogicalKeyboardKey.keyT, alt: true): _pagarTodo,
   };
 
@@ -201,17 +199,7 @@ class _DialogoPagoState extends State<DialogoPago> {
                 ),
                 ConEtiqueta(
                   etiqueta: 'Cómo se paga',
-                  ayuda: lineasAyuda(
-                    [for (final m in MedioPago.paraProveedores) m.etiqueta],
-                    [
-                      for (
-                        var i = 1;
-                        i <= MedioPago.paraProveedores.length;
-                        i++
-                      )
-                        'Alt+$i',
-                    ],
-                  ).join('\n'),
+                  ayuda: ayudaMediosPago(MedioPago.paraProveedores),
                   child: ExcludeFocus(
                     child: Wrap(
                       spacing: espaciado.sm,
@@ -276,11 +264,12 @@ class _DialogoPagoState extends State<DialogoPago> {
                   ),
                 BotonesCrear(
                   etiqueta: 'Registrar pago',
+                  atajo: 'Ctrl+S',
                   guardando: _guardando,
                   onCrear: () => unawaited(_registrar()),
                 ),
                 Text(
-                  'Alt+1–5 cómo se paga · Alt+T pagar todo · Enter registra '
+                  'Alt+1… cómo se paga · Alt+T pagar todo · Enter registra '
                   '· Esc cierra',
                   textAlign: TextAlign.center,
                   style: tema.textTheme.bodySmall?.copyWith(

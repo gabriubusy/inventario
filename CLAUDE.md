@@ -128,6 +128,30 @@ test/                    # misma estructura que lib/
   - Listas de precios (`ListaPrecio`: Detal, Mayor, Especial). Detal es el precio de cada marca; Mayor y Especial tienen una regla por producto (`ReglaPrecio`: `MargenSobreCosto` en centésimas de % sobre el costo de la marca, o `PrecioFijo` por kg/l/und), tabla `ReglasPrecio` (schemaVersion 8). Sin regla, o margen sin costo, vale Detal (`precioDeLote`, `precioDePresentacion`, que escala por el tamaño del paquete). En la ventana del producto, sección "Listas de precios" plegada mientras no haya reglas (Alt+L la abre y va a Mayor) con "Queda" por marca. En Vender, Alt+L cambia la lista de todo el ticket y recalcula las líneas (`Ticket.conLista`); la venta guarda su lista (`Venta.lista`, columna `ventas.lista`) y el siguiente ticket vuelve a Detal. Ajuste masivo desde F4 (Ctrl+Shift+A, `DialogoAjustePrecios`, `ControladorAjustePrecios`): sube/baja (Alt+Q/W) un %, lista Alt+1–3, a todos / una categoría / un proveedor (Alt+A/S/D; repetir la tecla pasa a la siguiente), con vista previa; Enter o Ctrl+Enter aplica en una transacción (`ajustarPrecios`: en Mayor/Especial mueve la regla para que el precio final cambie igual) y "Deshacer" en el aviso si nada cambió después.
   - Instalador: `installer/inventario.iss` (Inno Setup, por usuario, sin administrador). Antes hay que compilar con `flutter build windows --release`, que necesita Visual Studio con C++. Los datos quedan en AppData al desinstalar.
 
+- Arreglos del QA (octubre 2026):
+  - Ctrl+Z en el inicio solo deshace la venta si sigue siendo el último movimiento del historial (`sonLosUltimos`); tras un pedido, una merma o un conteo ya no la alcanza.
+  - El historial guarda el importe que se cobró en el ticket, no el precio del momento de cobrar.
+  - Los reportes restan las devoluciones de cliente del periodo. Al volver al stock, la devolución guarda su costo proporcional; si va a merma, no. La última devolución parcial se lleva lo que quede, para no pasarse del vendido.
+  - El cobro en Bs se calcula en unidades exactas (céntimos de $ × tasa), con media centésima de Bs de tolerancia por el redondeo del monto exacto.
+  - Una anulación cuenta en la caja abierta cuando se anuló (`Movimiento.anuladaEl`, schemaVersion 9).
+  - Sin tasa del día no se registra un pedido de contado en Bs (`CompraSinTasa`) ni un gasto en Bs.
+  - El ajuste masivo no deja bajar 100 % o más; "por proveedor" solo toca las marcas de ese proveedor y no las presentaciones.
+  - Renombrar un proveedor también renombra el historial y va todo en una transacción.
+  - Restaurar extrae primero a `restaurando/` y solo entonces reemplaza; si falla, deja los datos y aparta el archivo como `restaurar-fallido.inventario`. Los respaldos llevan segundos en el nombre y nunca se pisan.
+
+- Cantidades en la unidad pequeña: los campos de peso o volumen (vender, pedido, merma, incidencia, devolución, entrada y conteo) aceptan "0,25", "0,25 kg", "250 g" o "250g" (y "500 ml" en litros) con `UnidadBase.leer`; el ejemplo se ve bajo el campo de la venta. Piezas y dinero siguen siendo solo números.
+
+- Mejoras de uso (QA de procesos, octubre 2026):
+  - Ctrl+S guarda en todas las ventanas que registran algo; Enter sigue valiendo donde ya valía. Los botones muestran "Ctrl+S".
+  - Cada forma de pago tiene el mismo Alt+número en Cobrar, gastos, devoluciones y abonos (`teclasMedioPago[medio.index]`), aunque falte alguna; solo Pedido F2 y Devolución a proveedor usan letras, porque ahí Alt+número elige la marca.
+  - Cobrar: un monto escrito que no alcanza se añade como pago parcial con Enter ("Añadir este pago"); "Falta" y el vuelto se ven en $ y Bs (`faltaEnBolivares`).
+  - Esc no pierde trabajo: el pedido F2 (`ControladorCompras.borrador`) y el conteo F9 (`ControladorConteo.borrador`) quedan como borrador, igual que el ticket de Vender.
+  - Inicio: aviso "La caja de hoy no está abierta" (`AvisoCaja`, `faltaAbrirHoy`); la cabecera deja a la vista Caja y Gasto y lleva el resto, con Ctrl+I y Ctrl+D, al "Menú". F10 en el inicio vuelve al ticket a medias si lo hay; si no, abre Cuentas.
+  - Cerrar caja: lo contado empieza vacío (hay que contarlo) y el cierre tiene "Deshacer" (`deshacerCierre`).
+  - F7: Mayús+Supr anula el ticket entero con una sola confirmación; no se ofrece anular una venta con devolución. Las listas siguen la fila elegida con ↑/↓ (`SeguirElegido`).
+  - Gasto en efectivo $ por defecto. La tasa trae la última escrita y seleccionada, y un salto de más del 10 % pide un segundo Enter. El ajuste masivo no aplica con Enter en "Cuánto" y su botón dice a cuántos productos aplica.
+  - Los avisos con "Deshacer" se cierran solos (`persist: false`). El resumen del día cuenta tickets, no líneas, y resta lo devuelto.
+
 ## Decisiones pendientes
 
 Registrar aquí cuando se decidan:

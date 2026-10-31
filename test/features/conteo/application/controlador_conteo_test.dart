@@ -7,6 +7,7 @@ import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
+import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -76,5 +77,27 @@ void main() {
     expect(producto('s'), salchicha);
     expect(producto('m'), molida);
     expect(movimientos.todos, isEmpty);
+  });
+
+  test('undo works with two brands of the same product', () async {
+    await conteo.guardar(const [
+      ConteoLote(productoId: 's', marca: 'Marca D', cantidad: 32),
+      ConteoLote(productoId: 's', marca: 'Marca E', cantidad: 15),
+    ]);
+    expect(await conteo.deshacer(), 0);
+    expect(producto('s'), salchicha);
+    expect(movimientos.todos, isEmpty);
+  });
+
+  test('a lot changed since keeps its count in the kardex', () async {
+    await conteo.guardar(conteos);
+    await existencias.actualizarProducto(
+      'm',
+      DatosProducto.desde(producto('m').copyWith(minimo: 9)),
+    );
+    expect(await conteo.deshacer(), 1);
+    expect(producto('s'), salchicha);
+    expect(producto('m').cantidad, 3400);
+    expect(movimientos.todos.single.productoId, 'm');
   });
 }

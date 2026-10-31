@@ -26,6 +26,9 @@ sealed class MedidaVenta {
 
   /// The price [importe] uses: the lot's per unit, or the pack's, in [lista].
   int? precio(Producto producto, LoteMarca lote, ListaPrecio lista);
+
+  /// The unit typed, so "250 g" can be read too; null for packs.
+  UnidadBase? get unidadEscrita;
 }
 
 /// Typed straight in kg, l or und; priced with the brand's price.
@@ -51,6 +54,9 @@ class MedidaEnUnidad extends MedidaVenta {
   @override
   int? precio(Producto producto, LoteMarca lote, ListaPrecio lista) =>
       precioDeLote(producto, lote, lista);
+
+  @override
+  UnidadBase get unidadEscrita => unidad;
 }
 
 /// Typed in packs, with up to three decimals; priced with the pack's price,
@@ -79,4 +85,7 @@ class MedidaEnPresentacion extends MedidaVenta {
   @override
   int? precio(Producto producto, LoteMarca lote, ListaPrecio lista) =>
       precioDePresentacion(producto, presentacion, lote, lista);
+
+  @override
+  UnidadBase? get unidadEscrita => null;
 }

@@ -16,13 +16,20 @@ enum DestinoDevolucion {
   final String detalle;
 }
 
+/// The returns already made from [venta].
+Iterable<Movimiento> devolucionesDe(
+  Movimiento venta,
+  List<Movimiento> movimientos,
+) => movimientos.where(
+  (m) => m.tipo == TipoMovimiento.devolucionCliente && m.origenId == venta.id,
+);
+
 /// How much of [venta] customers already brought back, scaled like it.
-int yaDevuelto(Movimiento venta, List<Movimiento> movimientos) => movimientos
-    .where(
-      (m) =>
-          m.tipo == TipoMovimiento.devolucionCliente && m.origenId == venta.id,
-    )
-    .fold(0, (total, m) => total + m.cantidad);
+int yaDevuelto(Movimiento venta, List<Movimiento> movimientos) =>
+    devolucionesDe(
+      venta,
+      movimientos,
+    ).fold(0, (total, m) => total + m.cantidad);
 
 /// The most that can still come back from [venta].
 int devolvible(Movimiento venta, List<Movimiento> movimientos) =>
@@ -56,8 +63,14 @@ int? reembolsoEnMoneda(int importe, MedioPago medio, int? tasa) =>
 
 /// The share of the sale's amount handed back for [cantidad]; null when
 /// the sale had no price.
-int? importeDevuelto(Movimiento venta, int cantidad) {
-  final importe = venta.importe;
-  if (importe == null || venta.cantidad == 0) return null;
-  return dividirRedondeando(importe * cantidad, venta.cantidad);
-}
+int? importeDevuelto(Movimiento venta, int cantidad) =>
+    proporcional(venta.importe, cantidad, venta.cantidad);
+
+/// [total] × [parte] / [de], rounded; null without a total.
+int? proporcional(int? total, int parte, int de) =>
+    total == null || de == 0 ? null : dividirRedondeando(total * parte, de);
+
+/// What is left of [total] after the [previos] parts; null without a total.
+int? restante(int? total, Iterable<int?> previos) => total == null
+    ? null
+    : previos.fold<int>(total, (queda, p) => queda - (p ?? 0));

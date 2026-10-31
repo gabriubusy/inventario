@@ -138,6 +138,7 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
     final cantidad = CampoCantidadRecibida.leer(
       _cantidad,
       forma.unidad.decimales,
+      unidad: forma.unidad,
     );
     if (cantidad <= 0) return null;
     return Ajuste(
@@ -176,6 +177,9 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
   }
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    // Ctrl+S saves in every window of the app.
+    const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+        unawaited(_registrar()),
     for (final (i, tecla) in teclasTipoAjuste.indexed)
       SingleActivator(tecla, alt: true): () =>
           _elegirTipo(TipoAjuste.values[i]),
@@ -277,6 +281,7 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
                   ],
                   BotonesCrear(
                     etiqueta: 'Registrar ${_tipo.etiqueta.toLowerCase()}',
+                    atajo: 'Ctrl+S',
                     guardando: _guardando,
                     onCrear: () => unawaited(_registrar()),
                   ),

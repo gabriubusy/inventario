@@ -29,7 +29,8 @@ void main() {
     );
     expect(cobro.pagado, 5381);
     expect(cobro.vuelto, 54);
-    expect(cobro.vueltoEnBolivares, 47914);
+    // From the exact excess ($ 0,5404…), not from the rounded $ 0,54.
+    expect(cobro.vueltoEnBolivares, 47953);
   });
 
   test('says what is still missing and does not let it through', () {
@@ -50,5 +51,46 @@ void main() {
     );
     expect(cobro.vueltoSinEfectivo, isTrue);
     expect(cobro.puedeRegistrarse, isFalse);
+  });
+
+  test('less than one cent short in bolívares is still short', () {
+    final cobro = ResumenCobro(
+      total: 1000,
+      tasa: 20000,
+      pagos: const [PagoVenta(medio: MedioPago.pagoMovil, monto: 199901)],
+    );
+    expect(cobro.falta, 1);
+    expect(cobro.puedeRegistrarse, isFalse);
+  });
+
+  test('change in bolívares comes from the exact amount paid', () {
+    final cobro = ResumenCobro(
+      total: 1000,
+      tasa: 3657,
+      pagos: const [
+        PagoVenta(medio: MedioPago.efectivoBolivares, monto: 40000),
+      ],
+    );
+    expect(cobro.vueltoEnBolivares, 3430);
+  });
+
+  test('the rest paid in bolívares closes the sale with no change', () {
+    final antes = ResumenCobro(
+      total: 100,
+      tasa: 3657,
+      pagos: const [PagoVenta(medio: MedioPago.pagoMovil, monto: 2000)],
+    );
+    final resto = antes.faltaEnBolivares;
+    final cobro = ResumenCobro(
+      total: 100,
+      tasa: 3657,
+      pagos: [
+        const PagoVenta(medio: MedioPago.pagoMovil, monto: 2000),
+        PagoVenta(medio: MedioPago.transferencia, monto: resto),
+      ],
+    );
+    expect(resto, 1657);
+    expect(cobro.vuelto, 0);
+    expect(cobro.puedeRegistrarse, isTrue);
   });
 }

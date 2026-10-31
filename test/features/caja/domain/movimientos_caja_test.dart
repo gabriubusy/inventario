@@ -192,6 +192,18 @@ void main() {
     expect(saldos[MedioPago.efectivoDolares], 2000 + 2240);
   });
 
+  test('a sale cancelled later counts in the till open at that moment', () {
+    final anulada = linea('v1').anulado(a(14));
+    final manana = caja.cerradaCon(fecha: a(12), contado: const {});
+    final tarde = Caja(id: 'k2', abierta: a(13), fondoDolares: 0);
+    bool tieneDevolucion(Caja c) => movimientosDeCaja(
+      caja: c,
+      lineas: [anulada],
+    ).any((m) => m.tipo == TipoMovimientoCaja.devolucion);
+    expect(tieneDevolucion(manana), isFalse);
+    expect(tieneDevolucion(tarde), isTrue);
+  });
+
   test('only what happened while the till was open counts', () {
     final cerrada = caja.cerradaCon(fecha: a(12), contado: const {});
     final gastos = [

@@ -222,7 +222,8 @@ class _Kardex extends StatelessWidget {
         FiltrosKardex(
           grupo: grupo,
           periodo: periodo,
-          marcas: [for (final l in producto.lotes) l.marca],
+          // One brand can come from two suppliers; the filter lists it once.
+          marcas: {for (final l in producto.lotes) l.marca}.toList(),
           marca: marca,
           onGrupo: onGrupo,
           onPeriodo: onPeriodo,

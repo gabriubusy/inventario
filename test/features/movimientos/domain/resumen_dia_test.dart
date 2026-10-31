@@ -13,6 +13,7 @@ Movimiento _mov(
   FormaConteo forma = FormaConteo.piezasYKilos,
   int cantidad = 1000,
   int? importe,
+  String? ventaId,
 }) => Movimiento(
   fecha: fecha,
   tipo: tipo,
@@ -22,6 +23,7 @@ Movimiento _mov(
   marca: 'Marca A',
   cantidad: cantidad,
   importe: importe,
+  ventaId: ventaId,
 );
 
 void main() {
@@ -79,5 +81,27 @@ void main() {
 
   test('nothing sold leaves no best seller', () {
     expect(ResumenDia.de(const [], hoy).masVendido, isNull);
+  });
+
+  test('a ticket with several products is one sale', () {
+    final resumen = ResumenDia.de([
+      _mov(hoy, importe: 500, ventaId: 'v1'),
+      _mov(hoy, id: 'p2', importe: 300, ventaId: 'v1'),
+    ], hoy);
+    expect(resumen.ventas, 1);
+  });
+
+  test('what came back today is no longer counted as sold', () {
+    final resumen = ResumenDia.de([
+      _mov(hoy, cantidad: 1000, importe: 620),
+      _mov(
+        hoy,
+        tipo: TipoMovimiento.devolucionCliente,
+        cantidad: 100,
+        importe: 62,
+      ),
+    ], hoy);
+    expect(resumen.gramos, 900);
+    expect(resumen.vendido, 558);
   });
 }

@@ -38,18 +38,15 @@ class _DialogoCerrarCajaState extends State<DialogoCerrarCaja> {
     final caja? => widget.caja.saldosDe(caja),
     null => const {},
   };
+  // Empty, not prefilled with what should be there: closing must mean
+  // the money was really counted.
   late final _contado = {
-    for (final MapEntry(key: medio, value: monto) in _esperado.entries)
-      medio: TextEditingController(
-        text: formatDecimal(
-          monto,
-          decimales: decimalesDinero,
-          minDecimales: decimalesDinero,
-        ),
-      )..addListener(() => setState(() {})),
+    for (final medio in _esperado.keys)
+      medio: TextEditingController()..addListener(() => setState(() {})),
   };
   final _nota = TextEditingController();
   var _guardando = false;
+  String? _error;
 
   @override
   void dispose() {
@@ -60,22 +57,39 @@ class _DialogoCerrarCajaState extends State<DialogoCerrarCaja> {
     super.dispose();
   }
 
-  int _leer(MedioPago medio) =>
-      parseDecimal(_contado[medio]!.text, decimales: decimalesDinero) ?? 0;
+  /// Null while that way was not counted yet.
+  int? _leer(MedioPago medio) =>
+      parseDecimal(_contado[medio]!.text, decimales: decimalesDinero);
 
   Future<void> _cerrar() async {
     if (_guardando) return;
+    if (_esperado.keys.any((m) => _leer(m) == null)) {
+      setState(
+        () => _error =
+            'Cuenta y escribe cada forma de pago (si no hay nada, escribe 0)',
+      );
+      return;
+    }
     setState(() => _guardando = true);
     final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
     await widget.caja.cerrar({
-      for (final medio in _esperado.keys) medio: _leer(medio),
+      for (final medio in _esperado.keys) medio: _leer(medio)!,
     }, nota: _nota.text.trim());
     if (!mounted) return;
     navegador.pop();
     mensajero
       ..hideCurrentSnackBar()
-      ..showSnackBar(const SnackBar(content: Text('Caja cerrada')));
+      ..showSnackBar(
+        SnackBar(
+          content: const Text('Caja cerrada'),
+          persist: false,
+          action: SnackBarAction(
+            label: 'Deshacer',
+            onPressed: () => unawaited(widget.caja.deshacerCierre()),
+          ),
+        ),
+      );
   }
 
   @override
@@ -106,8 +120,8 @@ class _DialogoCerrarCajaState extends State<DialogoCerrarCaja> {
                   icono: Icons.lock_clock_outlined,
                 ),
                 Text(
-                  'Cuenta lo que hay de cada forma de pago y escríbelo. Viene '
-                  'con lo que debería haber; cambia solo lo que no cuadre.',
+                  'Cuenta lo que hay de cada forma de pago y escríbelo; al '
+                  'lado verás si cuadra con lo que debería haber.',
                   style: tema.textTheme.bodyMedium?.copyWith(
                     color: colores.onSurfaceVariant,
                   ),
@@ -159,7 +173,17 @@ class _DialogoCerrarCajaState extends State<DialogoCerrarCaja> {
                         flex: 2,
                         child: Builder(
                           builder: (context) {
-                            final diferencia = _leer(medio) - esperado;
+                            final contado = _leer(medio);
+                            if (contado == null) {
+                              return Text(
+                                'Sin contar',
+                                textAlign: TextAlign.right,
+                                style: tema.textTheme.bodyMedium?.copyWith(
+                                  color: colores.onSurfaceVariant,
+                                ),
+                              );
+                            }
+                            final diferencia = contado - esperado;
                             return Text(
                               diferencia == 0
                                   ? 'Cuadra'
@@ -194,6 +218,13 @@ class _DialogoCerrarCajaState extends State<DialogoCerrarCaja> {
                   ),
                   onSubmitted: (_) => unawaited(_cerrar()),
                 ),
+                if (_error case final error?)
+                  Text(
+                    error,
+                    style: tema.textTheme.bodyMedium?.copyWith(
+                      color: colores.error,
+                    ),
+                  ),
                 BotonesCrear(
                   etiqueta: 'Cerrar caja',
                   atajo: 'Ctrl+S',

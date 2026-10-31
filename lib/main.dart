@@ -114,7 +114,9 @@ Future<void> main() async {
   final controladorProveedores = ControladorProveedores(
     proveedores,
     controladorExistencias,
+    transacciones: transacciones,
     alRenombrar: [
+      controladorMovimientos.renombrarProveedor,
       controladorIncidencias.renombrarProveedor,
       controladorCompras.renombrarProveedor,
       controladorDevolucionesProveedor.renombrarProveedor,

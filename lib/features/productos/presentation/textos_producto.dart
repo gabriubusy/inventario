@@ -32,14 +32,18 @@ String textoStock(Producto producto) {
   return desglose == null ? total : '$total $desglose';
 }
 
-/// "1 saco", "3 sacos", "2 cajas", formatted like any other quantity.
+/// "1 saco", "3 sacos", "2 sacos 15 kg", formatted like any other quantity.
 String textoPaquetes(Presentacion presentacion, int paquetes) {
   final nombre = presentacion.nombre.trim().toLowerCase();
-  final plural = RegExp('[aeiouáéíóú]\$').hasMatch(nombre)
-      ? '${nombre}s'
-      : '${nombre}es';
+  // Only the first word takes the plural: "saco 15 kg" → "sacos 15 kg".
+  final espacio = nombre.indexOf(' ');
+  final palabra = espacio == -1 ? nombre : nombre.substring(0, espacio);
+  final resto = espacio == -1 ? '' : nombre.substring(espacio);
+  final plural = RegExp('[aeiouáéíóú]\$').hasMatch(palabra)
+      ? '${palabra}s'
+      : '${palabra}es';
   return '${formatDecimal(paquetes, decimales: 0)} '
-      '${paquetes == 1 ? nombre : plural}';
+      '${paquetes == 1 ? nombre : '$plural$resto'}';
 }
 
 /// Total weight and average per piece; null for products without pieces.

@@ -32,9 +32,18 @@ class ResumenDia {
       for (final m in delDia)
         if (m.tipo == TipoMovimiento.venta && !m.anulada) m,
     ];
-    int sumar(UnidadBase unidad) => ventas
-        .where((m) => m.forma.unidad == unidad)
-        .fold(0, (total, m) => total + m.cantidad);
+    final devoluciones = [
+      for (final m in delDia)
+        if (m.tipo == TipoMovimiento.devolucionCliente) m,
+    ];
+    // What customers brought back today no longer counts as sold.
+    int sumar(UnidadBase unidad) {
+      int de(List<Movimiento> lineas) => lineas
+          .where((m) => m.forma.unidad == unidad)
+          .fold(0, (total, m) => total + m.cantidad);
+      return de(ventas) - de(devoluciones);
+    }
+
     final porProducto = <String, MasVendido>{};
     for (final m in ventas) {
       final previo = porProducto[m.productoId];
@@ -50,13 +59,17 @@ class ResumenDia {
       if (mas == null || p.importe > mas.importe) mas = p;
     }
     // Money handed back to customers today comes off what was sold.
-    final devuelto = delDia
-        .where((m) => m.tipo == TipoMovimiento.devolucionCliente)
-        .fold(0, (total, m) => total + (m.importe ?? 0));
+    final devuelto = devoluciones.fold(
+      0,
+      (total, m) => total + (m.importe ?? 0),
+    );
     return ResumenDia(
       vendido:
           ventas.fold(0, (total, m) => total + (m.importe ?? 0)) - devuelto,
-      ventas: ventas.length,
+      // One customer's ticket is one sale, however many products it has.
+      ventas:
+          ventas.where((m) => m.ventaId == null).length +
+          {for (final m in ventas) ?m.ventaId}.length,
       gramos: sumar(UnidadBase.kg),
       unidades: sumar(UnidadBase.unidad),
       entradas: delDia.where((m) => m.tipo == TipoMovimiento.entrada).length,
@@ -67,6 +80,8 @@ class ResumenDia {
   /// Dollar hundredths, minus customer refunds; sales without a price add
   /// nothing.
   final int vendido;
+
+  /// Tickets, not lines.
   final int ventas;
 
   /// Weight sold, scaled like [UnidadBase.kg].

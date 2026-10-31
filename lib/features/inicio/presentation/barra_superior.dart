@@ -21,10 +21,20 @@ class BarraSuperior extends StatelessWidget {
     required this.onBloquear,
     required this.onCambiarPin,
     this.onConfiguracion,
+    this.onGasto,
+    this.onIncidencia,
+    this.onDevolver,
   });
 
   /// Below this width the links fold into a menu instead of shrinking.
-  static const _anchoEnlaces = 1700.0;
+  static const _anchoEnlaces = 3400.0;
+  static const _anchoUnFijo = 1000.0;
+  static const _anchoDosFijos = 1100.0;
+
+  /// Ctrl+G, Ctrl+I and Ctrl+D, listed so they can be found; null hides.
+  final VoidCallback? onGasto;
+  final VoidCallback? onIncidencia;
+  final VoidCallback? onDevolver;
 
   final ControladorTasa tasa;
   final VoidCallback onTasa;
@@ -86,13 +96,34 @@ class BarraSuperior extends StatelessWidget {
               ),
               EnlacesCabecera(
                 compacto: limites.maxWidth < _anchoEnlaces,
+                // The till and expenses are daily: they stay in view
+                // while there is room for them.
+                fijos: limites.maxWidth >= _anchoDosFijos && onGasto != null
+                    ? 2
+                    : limites.maxWidth >= _anchoUnFijo
+                    ? 1
+                    : 0,
                 enlaces: [
+                  (texto: 'Caja', atajo: 'F11', onPressed: onCaja),
+                  if (onGasto case final gasto?)
+                    (texto: 'Gasto', atajo: 'Ctrl+G', onPressed: gasto),
                   (texto: 'Proveedores', atajo: 'F5', onPressed: onProveedores),
                   (texto: 'Incidencias', atajo: 'F6', onPressed: onIncidencias),
+                  if (onIncidencia case final incidencia?)
+                    (
+                      texto: 'Registrar incidencia',
+                      atajo: 'Ctrl+I',
+                      onPressed: incidencia,
+                    ),
+                  if (onDevolver case final devolver?)
+                    (
+                      texto: 'Devolver a proveedor',
+                      atajo: 'Ctrl+D',
+                      onPressed: devolver,
+                    ),
                   (texto: 'Kardex', atajo: 'F8', onPressed: onKardex),
                   (texto: 'Conteo', atajo: 'F9', onPressed: onConteo),
                   (texto: 'Cuentas', atajo: 'F10', onPressed: onCuentas),
-                  (texto: 'Caja', atajo: 'F11', onPressed: onCaja),
                   (texto: 'Reportes', atajo: 'F12', onPressed: onReportes),
                   if (onConfiguracion case final abrir?)
                     (texto: 'Configuración', atajo: 'Ctrl+,', onPressed: abrir),

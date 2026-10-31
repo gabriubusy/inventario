@@ -7,8 +7,10 @@ import 'package:inventario/features/proveedores/domain/suministro.dart';
 class TablaSuministros extends StatelessWidget {
   const TablaSuministros({super.key, required this.suministros});
 
-  static const _anchoMarca = 120.0;
-  static const _anchoHay = 220.0;
+  // Shares of the width, so a narrow sheet squeezes every column alike.
+  static const _flexProducto = 3;
+  static const _flexMarca = 2;
+  static const _flexHay = 3;
 
   final List<Suministro> suministros;
 
@@ -28,13 +30,16 @@ class TablaSuministros extends StatelessWidget {
           padding: EdgeInsets.only(bottom: espaciado.sm),
           child: Row(
             children: [
-              Expanded(child: Text('PRODUCTO', style: encabezado)),
-              SizedBox(
-                width: _anchoMarca,
+              Expanded(
+                flex: _flexProducto,
+                child: Text('PRODUCTO', style: encabezado),
+              ),
+              Expanded(
+                flex: _flexMarca,
                 child: Text('MARCA', style: encabezado),
               ),
-              SizedBox(
-                width: _anchoHay,
+              Expanded(
+                flex: _flexHay,
                 child: Text(
                   'HAY AHORA',
                   textAlign: TextAlign.right,
@@ -54,6 +59,7 @@ class TablaSuministros extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
+                    flex: _flexProducto,
                     child: Text(
                       s.producto.nombre,
                       style: tema.textTheme.bodyMedium?.copyWith(
@@ -61,12 +67,12 @@ class TablaSuministros extends StatelessWidget {
                       ),
                     ),
                   ),
-                  SizedBox(
-                    width: _anchoMarca,
+                  Expanded(
+                    flex: _flexMarca,
                     child: Text(s.lote.marca, style: tema.textTheme.bodySmall),
                   ),
-                  SizedBox(
-                    width: _anchoHay,
+                  Expanded(
+                    flex: _flexHay,
                     child: Text(
                       textoLote(s.producto, s.lote),
                       textAlign: TextAlign.right,

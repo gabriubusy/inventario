@@ -43,4 +43,11 @@ void main() {
     expect(importeDevuelto(venta, 1000), 900);
     expect(importeDevuelto(venta, 333), 300);
   });
+
+  test('the last part of a return takes what is left of the amount', () {
+    final partes = [proporcional(200, 1, 3), proporcional(200, 1, 3)];
+    expect(partes, [67, 67]);
+    expect(restante(200, partes), 66);
+    expect(restante(null, partes), isNull);
+  });
 }

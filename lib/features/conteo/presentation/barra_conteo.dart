@@ -54,23 +54,29 @@ class BarraConteo extends StatelessWidget {
                 ],
               ),
             ),
-            Expanded(
-              child: Text(
-                'Conteo físico',
-                style: tema.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
+            Text(
+              'Conteo físico',
+              maxLines: 1,
+              softWrap: false,
+              style: tema.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.w600,
               ),
             ),
-            SizedBox(
-              width: _anchoBuscador,
-              child: TextField(
-                controller: busqueda,
-                focusNode: focoBusqueda,
-                decoration: const InputDecoration(
-                  hintText: 'Buscar producto (Ctrl+K)',
-                  prefixIcon: Icon(Icons.search),
-                  isDense: true,
+            // The search gives way first when the window is narrow.
+            Expanded(
+              child: Align(
+                alignment: Alignment.centerRight,
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: _anchoBuscador),
+                  child: TextField(
+                    controller: busqueda,
+                    focusNode: focoBusqueda,
+                    decoration: const InputDecoration(
+                      hintText: 'Buscar producto (Ctrl+K)',
+                      prefixIcon: Icon(Icons.search),
+                      isDense: true,
+                    ),
+                  ),
                 ),
               ),
             ),

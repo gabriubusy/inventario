@@ -37,6 +37,13 @@ class ControladorMovimientos extends ChangeNotifier {
     return guardado;
   }
 
+  /// True when nothing was noted after [movimientos], so undoing them only
+  /// takes back the latest thing that happened.
+  bool sonLosUltimos(List<Movimiento> movimientos) {
+    final ids = {for (final m in movimientos) m.id};
+    return _todos.take(ids.length).every((m) => ids.contains(m.id));
+  }
+
   /// Today's sales, newest first, cancelled ones included.
   List<Movimiento> get ventasDeHoy => ventasDelDia(hoy);
 
@@ -48,8 +55,9 @@ class ControladorMovimientos extends ChangeNotifier {
 
   /// Keeps the sale in the list, crossed out; the stock goes back elsewhere.
   Future<void> anular(String id) async {
-    await _repositorio.anular(id);
-    _poner([for (final m in _todos) m.id == id ? m.anulado() : m]);
+    final el = _ahora();
+    await _repositorio.anular(id, el: el);
+    _poner([for (final m in _todos) m.id == id ? m.anulado(el) : m]);
   }
 
   Future<void> quitar(Movimiento movimiento) async {
@@ -58,6 +66,11 @@ class ControladorMovimientos extends ChangeNotifier {
       for (final m in _todos)
         if (m.id != movimiento.id) m,
     ]);
+  }
+
+  Future<void> renombrarProveedor(String anterior, String nuevo) async {
+    await _repositorio.renombrarProveedor(anterior, nuevo);
+    _poner(await _repositorio.obtenerTodos());
   }
 
   void _poner(List<Movimiento> movimientos) {

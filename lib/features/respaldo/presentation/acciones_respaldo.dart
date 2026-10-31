@@ -48,6 +48,7 @@ Future<void> respaldarAhora(
             content: Text(
               'No se encontró "$carpeta": ¿está conectado el pendrive?',
             ),
+            persist: false,
             action: SnackBarAction(
               label: 'Elegir otra',
               onPressed: () =>

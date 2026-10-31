@@ -41,10 +41,14 @@ Producto? vender(Producto producto, Salida salida) {
   }
   final abre = abrePieza(lote, salida.modo);
   final restante = lote.cantidad - salida.cantidad;
+  final piezas = lote.piezas - salida.piezas - (abre ? 1 : 0);
+  // Weight left with no whole piece holding it (the last piece weighed
+  // less than recorded) stays sellable as an open piece.
+  final sobrante = salida.modo != null && piezas == 0 && restante > 0;
   final vendido = lote.copyWith(
-    piezas: lote.piezas - salida.piezas - (abre ? 1 : 0),
+    piezas: piezas,
     // Nothing is left open once its weight is gone.
-    piezaAbierta: (lote.piezaAbierta || abre) && restante > 0,
+    piezaAbierta: (lote.piezaAbierta || abre || sobrante) && restante > 0,
     cantidad: restante,
   );
   return producto.copyWith(

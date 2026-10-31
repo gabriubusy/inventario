@@ -8,6 +8,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
 import 'package:inventario/features/caja/application/controlador_caja.dart';
+import 'package:inventario/features/caja/presentation/aviso_caja.dart';
 import 'package:inventario/features/caja/presentation/pantalla_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
@@ -201,6 +202,12 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
   void _registrarGasto() =>
       unawaited(mostrarDialogoGasto(context, gastos: widget.gastos));
+
+  /// F10 charges in the sale window; with a ticket left open, pressing it
+  /// here goes back to that ticket instead of the supplier accounts.
+  void _f10() => widget.salidas.ticketEnCurso.vacio
+      ? _abrirCuentas()
+      : _ejecutar(AccionRapida.salida);
 
   void _abrirCuentas() => unawaited(
     Navigator.of(context).push(
@@ -428,7 +435,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
     const SingleActivator(LogicalKeyboardKey.f7): _verVentasDeHoy,
     const SingleActivator(LogicalKeyboardKey.f8): _abrirKardex,
     const SingleActivator(LogicalKeyboardKey.f9): _abrirConteo,
-    const SingleActivator(LogicalKeyboardKey.f10): _abrirCuentas,
+    const SingleActivator(LogicalKeyboardKey.f10): _f10,
     const SingleActivator(LogicalKeyboardKey.f11): _abrirCaja,
     const SingleActivator(LogicalKeyboardKey.f12): _abrirReportes,
     const SingleActivator(LogicalKeyboardKey.keyG, control: true):
@@ -469,6 +476,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
                 onConfiguracion: widget.negocio == null
                     ? null
                     : _abrirConfiguracion,
+                onGasto: _registrarGasto,
+                onIncidencia: _registrarIncidencia,
+                onDevolver: _devolverAProveedor,
               ),
               ListenableBuilder(
                 listenable: widget.tasa,
@@ -476,6 +486,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
                     ? const SizedBox.shrink()
                     : AvisoTasa(controlador: widget.tasa, onPoner: _ponerTasa),
               ),
+              AvisoCaja(caja: widget.caja, onAbrir: _abrirCaja),
               if (widget.respaldo case final respaldo?)
                 AvisoRespaldo(respaldo: respaldo, onRespaldar: _respaldar),
               Expanded(

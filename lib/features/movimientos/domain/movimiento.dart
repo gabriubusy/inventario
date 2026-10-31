@@ -19,6 +19,7 @@ class Movimiento {
     this.costo,
     this.abrioPieza = false,
     this.anulada = false,
+    this.anuladaEl,
     this.tasa,
     this.nota = '',
     this.origenId,
@@ -58,6 +59,10 @@ class Movimiento {
   /// A cancelled sale stays in the list, crossed out, and counts for nothing.
   final bool anulada;
 
+  /// When it was cancelled, for the till open at that moment; null before
+  /// schema 9 and for what was never cancelled.
+  final DateTime? anuladaEl;
+
   /// Bs per dollar (hundredths) used for a sale, so old totals in Bs don't
   /// move with later rates; null when there was none.
   final int? tasa;
@@ -75,7 +80,13 @@ class Movimiento {
   /// else and for returns made before it was asked (taken as dollar cash).
   final MedioPago? medioReembolso;
 
-  Movimiento _con({String? id, DateTime? fecha, bool? anulada}) => Movimiento(
+  Movimiento _con({
+    String? id,
+    DateTime? fecha,
+    bool? anulada,
+    DateTime? anuladaEl,
+    String? proveedor,
+  }) => Movimiento(
     id: id ?? this.id,
     fecha: fecha ?? this.fecha,
     tipo: tipo,
@@ -83,13 +94,14 @@ class Movimiento {
     producto: producto,
     forma: forma,
     marca: marca,
-    proveedor: proveedor,
+    proveedor: proveedor ?? this.proveedor,
     piezas: piezas,
     cantidad: cantidad,
     importe: importe,
     costo: costo,
     abrioPieza: abrioPieza,
     anulada: anulada ?? this.anulada,
+    anuladaEl: anuladaEl ?? this.anuladaEl,
     tasa: tasa,
     nota: nota,
     origenId: origenId,
@@ -101,7 +113,9 @@ class Movimiento {
 
   Movimiento conFecha(DateTime fecha) => _con(fecha: fecha);
 
-  Movimiento anulado() => _con(anulada: true);
+  Movimiento anulado([DateTime? el]) => _con(anulada: true, anuladaEl: el);
+
+  Movimiento conProveedor(String proveedor) => _con(proveedor: proveedor);
 
   @override
   bool operator ==(Object other) =>
@@ -120,6 +134,7 @@ class Movimiento {
       other.costo == costo &&
       other.abrioPieza == abrioPieza &&
       other.anulada == anulada &&
+      other.anuladaEl == anuladaEl &&
       other.tasa == tasa &&
       other.nota == nota &&
       other.origenId == origenId &&
@@ -142,6 +157,7 @@ class Movimiento {
     costo,
     abrioPieza,
     anulada,
+    anuladaEl,
     tasa,
     nota,
     origenId,

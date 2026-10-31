@@ -71,6 +71,61 @@ void main() {
     expect(reporte.filas.single[2], '2');
   });
 
+  test('a customer return comes off the sales and the profit', () {
+    final devolucion = Movimiento(
+      id: 'd1',
+      fecha: hoy,
+      tipo: TipoMovimiento.devolucionCliente,
+      productoId: 'Queso',
+      producto: 'Queso',
+      forma: FormaConteo.porKilo,
+      marca: 'A',
+      cantidad: 1000,
+      importe: 1000,
+      costo: 700,
+      origenId: 'Quesov1',
+    );
+    final movimientos = [venta('Queso', 1000, 700), devolucion];
+    final ventas = construirReporte(
+      TipoReporte.ventas,
+      PeriodoReporte.hoy,
+      datos(movimientos: movimientos),
+      hoy,
+    );
+    expect(ventas.cifras.first.valor, r'$ 0,00');
+    expect(ventas.filas.single[1], '1');
+    final ganancia = construirReporte(
+      TipoReporte.ganancia,
+      PeriodoReporte.hoy,
+      datos(movimientos: movimientos),
+      hoy,
+    );
+    expect(ganancia.cifras.last.valor, r'$ 0,00');
+  });
+
+  test('an older return without its cost takes its share of the sale', () {
+    final vieja = Movimiento(
+      id: 'd2',
+      fecha: hoy,
+      tipo: TipoMovimiento.devolucionCliente,
+      productoId: 'Queso',
+      producto: 'Queso',
+      forma: FormaConteo.porKilo,
+      marca: 'A',
+      cantidad: 500,
+      importe: 500,
+      origenId: 'Quesov1',
+    );
+    final ganancia = construirReporte(
+      TipoReporte.ganancia,
+      PeriodoReporte.hoy,
+      datos(movimientos: [venta('Queso', 1000, 700), vieja]),
+      hoy,
+    );
+    // Sold $10 − $5 back; cost $7 − $3,50 back: $1,50.
+    expect(ganancia.cifras.last.valor, r'$ 1,50');
+  });
+
   test('profit is sales minus their cost minus expenses', () {
     final reporte = construirReporte(
       TipoReporte.ganancia,

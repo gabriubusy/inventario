@@ -146,6 +146,7 @@ class _PantallaProductosState extends State<PantallaProductos> {
               ? 'Precios ajustados en 1 producto'
               : 'Precios ajustados en $cuantos productos',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => unawaited(_deshacerAjuste(ajuste)),
@@ -168,37 +169,57 @@ class _PantallaProductosState extends State<PantallaProductos> {
         .showSnackBar(
           SnackBar(
             content: Text('${guardado.nombre} guardado'),
+            persist: false,
             action: SnackBarAction(
               label: 'Deshacer',
-              onPressed: () => unawaited(_deshacer(anterior)),
+              onPressed: () => unawaited(_deshacer(anterior, guardado)),
             ),
           ),
         );
     unawaited(
-      aviso.closed.then(
-        (razon) => widget.fotos.soltarSustituida(
-          anterior: anterior.imagenId,
-          actual: guardado.imagenId,
-          deshecho: razon == SnackBarClosedReason.action,
-        ),
-      ),
+      aviso.closed.then((razon) async {
+        // Undo decides about the photo itself, once it knows it worked.
+        if (razon == SnackBarClosedReason.action) return;
+        await _soltarFoto(anterior, guardado, deshecho: false);
+      }),
     );
   }
 
-  Future<void> _deshacer(Producto anterior) async {
-    final resultado = await widget.lista.existencias.actualizarProducto(
-      anterior.id,
-      DatosProducto.desde(anterior),
-    );
-    if (resultado is NombreRepetido && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No se pudo deshacer: ya hay otro producto con ese nombre',
-          ),
+  Future<void> _soltarFoto(
+    Producto anterior,
+    Producto guardado, {
+    required bool deshecho,
+  }) => widget.fotos.soltarSustituida(
+    anterior: anterior.imagenId,
+    actual: guardado.imagenId,
+    deshecho: deshecho,
+  );
+
+  /// Refused when the product changed after the save (a sale, an entry),
+  /// so that change is not lost.
+  Future<void> _deshacer(Producto anterior, Producto guardado) async {
+    final existencias = widget.lista.existencias;
+    final actual = existencias.productos
+        .where((p) => p.id == guardado.id)
+        .firstOrNull;
+    final resultado = actual != guardado
+        ? null
+        : await existencias.actualizarProducto(
+            anterior.id,
+            DatosProducto.desde(anterior),
+          );
+    final deshecho = resultado is ProductoGuardado;
+    await _soltarFoto(anterior, guardado, deshecho: deshecho);
+    if (deshecho || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          resultado is NombreRepetido
+              ? 'No se pudo deshacer: ya hay otro producto con ese nombre'
+              : 'No se pudo deshacer: el producto cambió después',
         ),
-      );
-    }
+      ),
+    );
   }
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {

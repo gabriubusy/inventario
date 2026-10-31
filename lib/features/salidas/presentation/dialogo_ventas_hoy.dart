@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/app/atajos_de_teclado.dart';
+import 'package:inventario/app/dialogo_confirmar.dart';
 import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/dinero.dart';
@@ -108,10 +109,26 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
 
   List<Movimiento> get _lineas => [for (final g in _grupos) ...g.lineas];
 
+  final _claveElegida = GlobalKey();
+
   void _mover(int pasos) {
     final total = _lineas.length;
     if (total == 0) return;
     setState(() => _elegida = (_elegida + pasos).clamp(0, total - 1));
+    // The list follows the arrows instead of leaving the choice off screen.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final fila = _claveElegida.currentContext;
+      if (fila != null && fila.mounted) {
+        unawaited(
+          Scrollable.ensureVisible(
+            fila,
+            alignmentPolicy: pasos > 0
+                ? ScrollPositionAlignmentPolicy.keepVisibleAtEnd
+                : ScrollPositionAlignmentPolicy.keepVisibleAtStart,
+          ),
+        );
+      }
+    });
   }
 
   void _cambiarDia(DateTime dia) {
@@ -176,6 +193,47 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
       );
   }
 
+  /// Shift+Supr: every line of [venta]'s ticket that can still be
+  /// cancelled, with one confirmation instead of one per product.
+  Future<void> _anularTicket(Movimiento venta) async {
+    final ventaId = venta.ventaId;
+    if (_anulando || !_esHoy || ventaId == null) return _anular(venta);
+    final todas = widget.movimientos.todos;
+    final lineas = [
+      for (final m in widget.movimientos.ventasDelDia(_dia))
+        if (m.ventaId == ventaId && !m.anulada && yaDevuelto(m, todas) == 0) m,
+    ];
+    if (lineas.isEmpty) return;
+    final mensajero = ScaffoldMessenger.of(context);
+    final confirmada = await confirmar(
+      context,
+      titulo: 'Anular el ticket entero',
+      mensaje:
+          '${lineas.length == 1 ? '1 producto vuelve' : '${lineas.length} productos vuelven'} '
+          'al stock: ${lineas.map((l) => l.producto).join(', ')}.',
+      accion: 'Anular ticket',
+    );
+    if (!confirmada || !mounted) return;
+    setState(() => _anulando = true);
+    var anuladas = 0;
+    for (final linea in lineas) {
+      if (await widget.salidas.anular(linea) is VentaAnulada) anuladas++;
+    }
+    if (!mounted) return;
+    setState(() => _anulando = false);
+    mensajero
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text(
+            anuladas == lineas.length
+                ? 'Ticket anulado · el stock volvió a su sitio'
+                : 'Se anularon $anuladas de ${lineas.length} productos',
+          ),
+        ),
+      );
+  }
+
   bool _puedeDevolver(Movimiento venta) =>
       (widget.devoluciones?.devolvibleDe(venta) ?? 0) > 0;
 
@@ -205,6 +263,8 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
     const SingleActivator(LogicalKeyboardKey.arrowDown): () => _mover(1),
     const SingleActivator(LogicalKeyboardKey.delete): () =>
         _conElegida((v) => unawaited(_anular(v))),
+    const SingleActivator(LogicalKeyboardKey.delete, shift: true): () =>
+        _conElegida((v) => unawaited(_anularTicket(v))),
     const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): () =>
         _moverDia(-1),
     const SingleActivator(LogicalKeyboardKey.arrowRight, alt: true): () =>
@@ -269,10 +329,11 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
                       ),
                     ),
                     Text(
-                      '${grupos.length} ventas · ${formatearDolares(total)} · '
+                      '${grupos.length == 1 ? '1 venta' : '${grupos.length} ventas'}'
+                      ' · ${formatearDolares(total)} · '
                       '↑ ↓ elegir'
                       '${widget.devoluciones == null ? '' : ' · Alt+D devolver'}'
-                      '${_esHoy ? ' · Supr anular' : ''}',
+                      '${_esHoy ? ' · Supr anula el producto · Mayús+Supr el ticket' : ' · solo se anulan ventas de hoy; Alt+D devuelve'}',
                       style: tema.textTheme.bodyMedium?.copyWith(
                         color: colores.onSurfaceVariant,
                       ),
@@ -289,39 +350,47 @@ class _DialogoVentasHoyState extends State<DialogoVentasHoy> {
                         ),
                       )
                     else
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxHeight: DialogoVentasHoy._altoLista,
-                        ),
-                        child: ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: filas.length,
-                          itemBuilder: (context, i) {
-                            final fila = filas[i];
-                            final indice = fila.linea;
-                            if (indice == null) {
-                              return EncabezadoTicket(
-                                grupo: fila.grupo,
-                                pagada: _pagadas[fila.grupo.ventaId],
-                              );
-                            }
-                            final venta = lineas[indice];
-                            return FilaVentaHoy(
-                              venta: venta,
-                              elegida: indice == _elegida,
-                              devuelto: yaDevuelto(
+                      // Gives way on a short screen instead of overflowing.
+                      Flexible(
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxHeight: DialogoVentasHoy._altoLista,
+                          ),
+                          child: ListView.builder(
+                            shrinkWrap: true,
+                            itemCount: filas.length,
+                            itemBuilder: (context, i) {
+                              final fila = filas[i];
+                              final indice = fila.linea;
+                              if (indice == null) {
+                                return EncabezadoTicket(
+                                  grupo: fila.grupo,
+                                  pagada: _pagadas[fila.grupo.ventaId],
+                                );
+                              }
+                              final venta = lineas[indice];
+                              final devuelto = yaDevuelto(
                                 venta,
                                 widget.movimientos.todos,
-                              ),
-                              onElegir: () => setState(() => _elegida = indice),
-                              onDevolver: _puedeDevolver(venta)
-                                  ? () => _devolver(venta)
-                                  : null,
-                              onAnular: _esHoy
-                                  ? () => unawaited(_anular(venta))
-                                  : null,
-                            );
-                          },
+                              );
+                              return FilaVentaHoy(
+                                key: indice == _elegida ? _claveElegida : null,
+                                venta: venta,
+                                elegida: indice == _elegida,
+                                devuelto: devuelto,
+                                onElegir: () =>
+                                    setState(() => _elegida = indice),
+                                onDevolver: _puedeDevolver(venta)
+                                    ? () => _devolver(venta)
+                                    : null,
+                                // A sale with a return can't be cancelled
+                                // whole, so it isn't offered.
+                                onAnular: _esHoy && devuelto == 0
+                                    ? () => unawaited(_anular(venta))
+                                    : null,
+                              );
+                            },
+                          ),
                         ),
                       ),
                   ],

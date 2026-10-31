@@ -112,9 +112,16 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
   /// "Se le devuelven 5.494,63 Bs ($ 6,20 a la tasa de esa venta)", in the
   /// currency of the chosen way, for what is typed.
   String? get _reembolso {
-    final cantidad = CampoCantidadRecibida.leer(_cantidad, _decimales);
+    final cantidad = CampoCantidadRecibida.leer(
+      _cantidad,
+      _decimales,
+      unidad: widget.venta.forma.unidad,
+    );
     if (cantidad <= 0 || cantidad > _maximo) return null;
-    final importe = importeDevuelto(widget.venta, cantidad);
+    final importe = widget.devoluciones.importeADevolver(
+      widget.venta,
+      cantidad,
+    );
     if (importe == null) return 'La venta no tenía precio';
     final tasa = widget.venta.tasa;
     final monto =
@@ -132,7 +139,11 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
 
   Future<void> _registrar() async {
     if (_guardando || !(_formulario.currentState?.validate() ?? false)) return;
-    final cantidad = CampoCantidadRecibida.leer(_cantidad, _decimales);
+    final cantidad = CampoCantidadRecibida.leer(
+      _cantidad,
+      _decimales,
+      unidad: widget.venta.forma.unidad,
+    );
     setState(() => _guardando = true);
     final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
@@ -158,6 +169,7 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                 '+${unidad.formatear(cantidad)} · ${_destino.etiqueta}'
                 '${importe == null ? '' : ' · ${formatearDolares(importe)}'}',
               ),
+              persist: false,
               action: SnackBarAction(
                 label: 'Deshacer',
                 onPressed: () => unawaited(widget.devoluciones.deshacer()),
@@ -178,6 +190,9 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
   }
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    // Ctrl+S saves in every window of the app.
+    const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+        unawaited(_registrar()),
     for (final (i, tecla) in _teclasDestino.indexed)
       SingleActivator(tecla, alt: true): () =>
           setState(() => _destino = DestinoDevolucion.values[i]),
@@ -240,6 +255,7 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                     focusNode: _focoCantidad,
                     decimales: _decimales,
                     sufijo: unidad.simbolo,
+                    unidad: unidad,
                     maximo: _maximo,
                   ),
                   ConEtiqueta(
@@ -293,6 +309,7 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                   ),
                   BotonesCrear(
                     etiqueta: 'Registrar devolución',
+                    atajo: 'Ctrl+S',
                     guardando: _guardando,
                     onCrear: () => unawaited(_registrar()),
                   ),

@@ -28,9 +28,17 @@ class ControladorAjustePrecios {
     int porcentaje,
   ) => [
     for (final producto in _existencias.productos)
-      if (ambito.incluye(producto))
-        if (ajustarPrecios(producto, lista, porcentaje) case final despues
-            when despues != producto)
+      if (lista == ListaPrecio.detal
+          ? ambito.incluye(producto)
+          : ambito.incluyeRegla(producto))
+        if (ajustarPrecios(
+              producto,
+              lista,
+              porcentaje,
+              lote: ambito.incluyeLote,
+              presentaciones: ambito.incluyePresentaciones,
+            )
+            case final despues when despues != producto)
           (antes: producto, despues: despues),
   ];
 

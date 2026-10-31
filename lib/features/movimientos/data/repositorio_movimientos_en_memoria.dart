@@ -1,3 +1,4 @@
+import 'package:inventario/core/texto.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/repositorio_movimientos.dart';
 
@@ -25,9 +26,19 @@ class RepositorioMovimientosEnMemoria implements RepositorioMovimientos {
       _movimientos.removeWhere((m) => m.id == id);
 
   @override
-  Future<void> anular(String id) async {
+  Future<void> anular(String id, {DateTime? el}) async {
     final indice = _movimientos.indexWhere((m) => m.id == id);
-    if (indice >= 0) _movimientos[indice] = _movimientos[indice].anulado();
+    if (indice >= 0) _movimientos[indice] = _movimientos[indice].anulado(el);
+  }
+
+  @override
+  Future<void> renombrarProveedor(String anterior, String nuevo) async {
+    final clave = normalizarParaBusqueda(anterior);
+    for (final (i, m) in _movimientos.indexed) {
+      if (normalizarParaBusqueda(m.proveedor) == clave) {
+        _movimientos[i] = m.conProveedor(nuevo);
+      }
+    }
   }
 
   // Skips ids already taken by the initial movements.

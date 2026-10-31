@@ -85,6 +85,7 @@ class FilaPresentacion extends StatelessWidget {
             decimales: forma.unidad.decimales,
             sufijo: forma.unidad.simbolo,
             obligatorio: _enUso,
+            positivo: true,
           ),
         ),
         Expanded(

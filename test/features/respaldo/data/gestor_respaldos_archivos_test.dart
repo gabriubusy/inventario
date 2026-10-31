@@ -44,11 +44,51 @@ void main() {
     );
     expect(resultado, isA<RespaldoGuardado>());
     expect(
-      File('${pendrive.path}/inventario 2026-10-29 1512.inventario')
+      File('${pendrive.path}/inventario 2026-10-29 151200.inventario')
           .existsSync(),
       isTrue,
     );
   });
+
+  test('two backups in the same second do not overwrite each other', () async {
+    final fecha = DateTime(2026, 10, 29, 15, 12);
+    final rutas = await conBase((db) async {
+      final gestor = GestorRespaldosArchivos(db, soporte);
+      final a = await gestor.respaldar(pendrive.path, fecha: fecha);
+      final b = await gestor.respaldar(pendrive.path, fecha: fecha);
+      return {(a as RespaldoGuardado).ruta, (b as RespaldoGuardado).ruta};
+    });
+    expect(rutas, hasLength(2));
+  });
+
+  test(
+    'a broken pending backup leaves the data and lets the app start',
+    () async {
+      await conBase(
+        (db) =>
+            RepositorioNegocioDrift(db)
+                .guardar(const DatosNegocio(nombre: 'La Esquina')),
+      );
+      File('${soporte.path}/restaurar.inventario').writeAsStringSync('roto');
+      expect(
+        await GestorRespaldosArchivos.aplicarRestauracionPendiente(soporte),
+        isFalse,
+      );
+      expect(
+        (await conBase((db) => RepositorioNegocioDrift(db).leer())).nombre,
+        'La Esquina',
+      );
+      expect(File('${soporte.path}/imagenes/foto.jpg').existsSync(), isTrue);
+      expect(
+        File('${soporte.path}/${GestorRespaldosArchivos.fallido}').existsSync(),
+        isTrue,
+      );
+      expect(
+        await GestorRespaldosArchivos.aplicarRestauracionPendiente(soporte),
+        isFalse,
+      );
+    },
+  );
 
   test('a missing folder is said, not an error', () async {
     final resultado = await conBase(

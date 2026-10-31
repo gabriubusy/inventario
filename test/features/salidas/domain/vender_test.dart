@@ -53,6 +53,19 @@ void main() {
     expect(despues.lotes.last, marcaB);
   });
 
+  test('grams left after the last whole piece can still be sold', () {
+    final unaPieza = queso.copyWith(
+      lotes: [marcaA.copyWith(piezas: 1, cantidad: 4000)],
+    );
+    final lote = vender(
+      unaPieza,
+      deA(ModoVenta.piezaEntera, 3950),
+    )!.lotes.single;
+    expect(lote.piezas, 0);
+    expect(lote.cantidad, 50);
+    expect(disponibleParaVender(lote, ModoVenta.porPeso), 50);
+  });
+
   test('selling by weight with no open piece opens one', () {
     final despues = vender(queso, deA(ModoVenta.porPeso, 750))!;
     expect(despues.lotes.first.piezas, 9);

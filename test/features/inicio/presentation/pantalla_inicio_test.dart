@@ -355,9 +355,16 @@ void main() {
   testWidgets('a wide window shows the header links side by side', (
     tester,
   ) async {
-    await mostrar(tester, ventana: const Size(2400, 900));
+    await mostrar(tester, ventana: const Size(3500, 900));
     expect(find.text('Menú'), findsNothing);
     expect(find.text('Cambiar PIN'), findsOneWidget);
+  });
+
+  testWidgets('a laptop keeps the till and expenses in view', (tester) async {
+    await mostrar(tester, ventana: const Size(1366, 760));
+    expect(find.text('Caja'), findsOneWidget);
+    expect(find.text('Gasto'), findsOneWidget);
+    expect(find.text('Menú'), findsOneWidget);
   });
 
   testWidgets('Ctrl+L locks the session', (tester) async {

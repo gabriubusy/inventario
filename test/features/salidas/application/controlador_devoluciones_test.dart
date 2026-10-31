@@ -84,6 +84,40 @@ void main() {
     expect(movimientos.todos, contains(vendida));
   });
 
+  test('the last part brings back only its own share of the cost', () async {
+    final conCosto = await movimientos.anotar(
+      Movimiento(
+        fecha: DateTime.now(),
+        tipo: TipoMovimiento.venta,
+        productoId: 'p1',
+        producto: 'Carne molida',
+        forma: FormaConteo.porKilo,
+        marca: 'Propia',
+        proveedor: 'Frigorífico 1',
+        cantidad: 2000,
+        importe: 1240,
+        costo: 1000,
+      ),
+    );
+    await devoluciones.devolver(
+      conCosto,
+      cantidad: 1000,
+      destino: DestinoDevolucion.merma,
+    );
+    await devoluciones.devolver(
+      conCosto,
+      cantidad: 1000,
+      destino: DestinoDevolucion.stock,
+    );
+    final ultima = movimientos.todos.firstWhere(
+      (m) =>
+          m.tipo == TipoMovimiento.devolucionCliente &&
+          m.origenId == conCosto.id &&
+          m.costo != 0,
+    );
+    expect(ultima.costo, 500);
+  });
+
   test('goods in good shape go back to their lot and refund', () async {
     final resultado = await devoluciones.devolver(
       venta,

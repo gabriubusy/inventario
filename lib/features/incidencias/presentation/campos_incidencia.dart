@@ -42,7 +42,11 @@ class CamposIncidencia extends StatelessWidget {
       marca: lote.marca,
       proveedor: lote.proveedor,
       piezas: CampoCantidadRecibida.leer(piezas, 0),
-      cantidad: CampoCantidadRecibida.leer(cantidad, unidad.decimales),
+      cantidad: CampoCantidadRecibida.leer(
+        cantidad,
+        unidad.decimales,
+        unidad: unidad,
+      ),
     );
     if (restado == null) return 'Solo hay ${textoLote(producto, lote)}';
     final despues =
@@ -83,6 +87,7 @@ class CamposIncidencia extends StatelessWidget {
                 focusNode: focoCantidad,
                 decimales: forma.unidad.decimales,
                 sufijo: forma.unidad.simbolo,
+                unidad: forma.unidad,
                 maximo: sacar ? lote.cantidad : null,
               ),
             ),

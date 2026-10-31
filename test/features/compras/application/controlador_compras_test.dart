@@ -99,6 +99,44 @@ void main() {
     expect(compras.cuentas, hasLength(1));
   });
 
+  test('undo works with two lines of the same product', () async {
+    await compras.registrar(
+      Compra(
+        fecha: hoy,
+        proveedor: 'Frigorífico 1',
+        lineas: const [
+          linea,
+          LineaCompra(
+            productoId: 'm',
+            producto: 'Carne molida',
+            forma: FormaConteo.porKilo,
+            marca: 'Nueva',
+            cantidad: 2000,
+            costo: 400,
+          ),
+        ],
+        vence: DateTime(2026, 11, 11),
+      ),
+    );
+    expect(await compras.deshacerCompra(), isTrue);
+    expect(existencias.productos.single, molida);
+    expect(movimientos.todos, isEmpty);
+  });
+
+  test('cash in bolívares without today\'s rate is refused', () async {
+    tasa = null;
+    final resultado = await compras.registrar(
+      Compra(
+        fecha: hoy,
+        proveedor: 'Frigorífico 1',
+        lineas: const [linea],
+        medio: MedioPago.pagoMovil,
+      ),
+    );
+    expect(resultado, isA<CompraSinTasa>());
+    expect(lote(), molida.lotes.single);
+  });
+
   test('undo takes the goods and the invoice back', () async {
     await compras.registrar(aCredito());
     expect(await compras.deshacerCompra(), isTrue);

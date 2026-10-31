@@ -50,6 +50,19 @@ class ControladorCaja extends ChangeNotifier {
     return null;
   }
 
+  /// Nothing opened today yet: the home screen reminds to open it. Once
+  /// today's till is closed it stops asking.
+  bool get faltaAbrirHoy {
+    final hoy = _ahora();
+    return !_cajas.any(
+      (c) =>
+          c.estaAbierta ||
+          c.abierta.year == hoy.year &&
+              c.abierta.month == hoy.month &&
+              c.abierta.day == hoy.day,
+    );
+  }
+
   /// The last closed till, to show how it ended.
   Caja? get ultimaCerrada {
     Caja? ultima;
@@ -81,21 +94,34 @@ class ControladorCaja extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Returns the till already open instead of opening a second one, even
+  /// when Enter is pressed twice while the first is being saved.
   Future<Caja> abrir({
     required int fondoDolares,
     required int fondoBolivares,
   }) async {
-    final abierta = await _repositorio.abrir(
+    if (abierta case final ya?) return ya;
+    final enCurso = _abriendo;
+    if (enCurso != null) return enCurso;
+    final abriendo = _repositorio.abrir(
       Caja(
         abierta: _ahora(),
         fondoDolares: fondoDolares,
         fondoBolivares: fondoBolivares,
       ),
     );
-    _cajas = [..._cajas, abierta];
-    notifyListeners();
-    return abierta;
+    _abriendo = abriendo;
+    try {
+      final nueva = await abriendo;
+      _cajas = [..._cajas, nueva];
+      notifyListeners();
+      return nueva;
+    } finally {
+      _abriendo = null;
+    }
   }
+
+  Future<Caja>? _abriendo;
 
   /// Closes the open till with what was counted of each way of paying.
   Future<Caja?> cerrar(Map<MedioPago, int> contado, {String nota = ''}) async {
@@ -107,8 +133,24 @@ class ControladorCaja extends ChangeNotifier {
       nota: nota,
     );
     await _repositorio.cerrar(cerrada);
+    _antesDelCierre = caja;
     _cajas = [for (final c in _cajas) c.id == caja.id ? cerrada : c];
     notifyListeners();
     return cerrada;
+  }
+
+  Caja? _antesDelCierre;
+
+  /// Opens again the till just closed (a wrong count), unless another one
+  /// was opened since.
+  Future<bool> deshacerCierre() async {
+    final antes = _antesDelCierre;
+    _antesDelCierre = null;
+    if (antes == null || abierta != null) return false;
+    // Saving the open version writes its closing fields back to empty.
+    await _repositorio.cerrar(antes);
+    _cajas = [for (final c in _cajas) c.id == antes.id ? antes : c];
+    notifyListeners();
+    return true;
   }
 }

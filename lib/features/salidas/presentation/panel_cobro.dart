@@ -6,9 +6,12 @@ import 'package:inventario/features/salidas/domain/resumen_cobro.dart';
 
 /// What is still missing, or the change to hand back in $ and Bs.
 class PanelCobro extends StatelessWidget {
-  const PanelCobro({super.key, required this.cobro});
+  const PanelCobro({super.key, required this.cobro, this.escritoCorto = false});
 
   final ResumenCobro cobro;
+
+  /// The typed amount falls short: Enter adds it and asks for the rest.
+  final bool escritoCorto;
 
   @override
   Widget build(BuildContext context) {
@@ -28,7 +31,9 @@ class PanelCobro extends StatelessWidget {
         ? (
             'Falta',
             formatearDolares(cobro.falta),
-            'Enter la cobra exacta · Ctrl+M añade otro pago',
+            // In both currencies: the rest is often paid in bolívares.
+            'o ${formatearBolivares(cobro.faltaEnBolivares)} · '
+                '${escritoCorto ? 'Enter añade este pago y cobra el resto' : 'Enter la cobra exacta · Ctrl+M otro pago'}',
             colores.surfaceContainerLowest,
             colores.onSurface,
           )

@@ -32,14 +32,18 @@ Producto? sacarDeLote(
   final lote = producto.lotes[indice];
   if (!alcanza(lote, piezas: piezas, cantidad: cantidad)) return null;
   final restante = lote.cantidad - cantidad;
+  final quedan = lote.piezas - piezas;
+  // Weight left once the last piece went out stays sellable by weight.
+  final sobrante =
+      producto.forma.cuentaPiezas && piezas > 0 && quedan == 0 && restante > 0;
   return producto.copyWith(
     lotes: [
       for (final (i, l) in producto.lotes.indexed)
         i == indice
             ? l.copyWith(
-                piezas: l.piezas - piezas,
+                piezas: quedan,
                 // Nothing is left open once its weight is gone.
-                piezaAbierta: l.piezaAbierta && restante > 0,
+                piezaAbierta: (l.piezaAbierta || sobrante) && restante > 0,
                 cantidad: restante,
               )
             : l,

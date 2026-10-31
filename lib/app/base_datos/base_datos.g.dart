@@ -2895,6 +2895,17 @@ class $MovimientosTable extends Movimientos
       'CHECK ("anulada" IN (0, 1))',
     ),
   );
+  static const VerificationMeta _anuladaElMeta = const VerificationMeta(
+    'anuladaEl',
+  );
+  @override
+  late final GeneratedColumn<DateTime> anuladaEl = GeneratedColumn<DateTime>(
+    'anulada_el',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   static const VerificationMeta _tasaMeta = const VerificationMeta('tasa');
   @override
   late final GeneratedColumn<int> tasa = GeneratedColumn<int>(
@@ -2960,6 +2971,7 @@ class $MovimientosTable extends Movimientos
     costo,
     abrioPieza,
     anulada,
+    anuladaEl,
     tasa,
     nota,
     origenId,
@@ -3067,6 +3079,12 @@ class $MovimientosTable extends Movimientos
     } else if (isInserting) {
       context.missing(_anuladaMeta);
     }
+    if (data.containsKey('anulada_el')) {
+      context.handle(
+        _anuladaElMeta,
+        anuladaEl.isAcceptableOrUnknown(data['anulada_el']!, _anuladaElMeta),
+      );
+    }
     if (data.containsKey('tasa')) {
       context.handle(
         _tasaMeta,
@@ -3162,6 +3180,10 @@ class $MovimientosTable extends Movimientos
         DriftSqlType.bool,
         data['${effectivePrefix}anulada'],
       )!,
+      anuladaEl: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}anulada_el'],
+      ),
       tasa: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}tasa'],
@@ -3221,6 +3243,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
   final int? costo;
   final bool abrioPieza;
   final bool anulada;
+
+  /// When a sale was cancelled (schema 9).
+  final DateTime? anuladaEl;
   final int? tasa;
   final String nota;
   final String? origenId;
@@ -3245,6 +3270,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     this.costo,
     required this.abrioPieza,
     required this.anulada,
+    this.anuladaEl,
     this.tasa,
     required this.nota,
     this.origenId,
@@ -3280,6 +3306,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     }
     map['abrio_pieza'] = Variable<bool>(abrioPieza);
     map['anulada'] = Variable<bool>(anulada);
+    if (!nullToAbsent || anuladaEl != null) {
+      map['anulada_el'] = Variable<DateTime>(anuladaEl);
+    }
     if (!nullToAbsent || tasa != null) {
       map['tasa'] = Variable<int>(tasa);
     }
@@ -3318,6 +3347,9 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
           : Value(costo),
       abrioPieza: Value(abrioPieza),
       anulada: Value(anulada),
+      anuladaEl: anuladaEl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(anuladaEl),
       tasa: tasa == null && nullToAbsent ? const Value.absent() : Value(tasa),
       nota: Value(nota),
       origenId: origenId == null && nullToAbsent
@@ -3356,6 +3388,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
       costo: serializer.fromJson<int?>(json['costo']),
       abrioPieza: serializer.fromJson<bool>(json['abrioPieza']),
       anulada: serializer.fromJson<bool>(json['anulada']),
+      anuladaEl: serializer.fromJson<DateTime?>(json['anuladaEl']),
       tasa: serializer.fromJson<int?>(json['tasa']),
       nota: serializer.fromJson<String>(json['nota']),
       origenId: serializer.fromJson<String?>(json['origenId']),
@@ -3387,6 +3420,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
       'costo': serializer.toJson<int?>(costo),
       'abrioPieza': serializer.toJson<bool>(abrioPieza),
       'anulada': serializer.toJson<bool>(anulada),
+      'anuladaEl': serializer.toJson<DateTime?>(anuladaEl),
       'tasa': serializer.toJson<int?>(tasa),
       'nota': serializer.toJson<String>(nota),
       'origenId': serializer.toJson<String?>(origenId),
@@ -3412,6 +3446,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     Value<int?> costo = const Value.absent(),
     bool? abrioPieza,
     bool? anulada,
+    Value<DateTime?> anuladaEl = const Value.absent(),
     Value<int?> tasa = const Value.absent(),
     String? nota,
     Value<String?> origenId = const Value.absent(),
@@ -3432,6 +3467,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     costo: costo.present ? costo.value : this.costo,
     abrioPieza: abrioPieza ?? this.abrioPieza,
     anulada: anulada ?? this.anulada,
+    anuladaEl: anuladaEl.present ? anuladaEl.value : this.anuladaEl,
     tasa: tasa.present ? tasa.value : this.tasa,
     nota: nota ?? this.nota,
     origenId: origenId.present ? origenId.value : this.origenId,
@@ -3460,6 +3496,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
           ? data.abrioPieza.value
           : this.abrioPieza,
       anulada: data.anulada.present ? data.anulada.value : this.anulada,
+      anuladaEl: data.anuladaEl.present ? data.anuladaEl.value : this.anuladaEl,
       tasa: data.tasa.present ? data.tasa.value : this.tasa,
       nota: data.nota.present ? data.nota.value : this.nota,
       origenId: data.origenId.present ? data.origenId.value : this.origenId,
@@ -3487,6 +3524,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
           ..write('costo: $costo, ')
           ..write('abrioPieza: $abrioPieza, ')
           ..write('anulada: $anulada, ')
+          ..write('anuladaEl: $anuladaEl, ')
           ..write('tasa: $tasa, ')
           ..write('nota: $nota, ')
           ..write('origenId: $origenId, ')
@@ -3512,6 +3550,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
     costo,
     abrioPieza,
     anulada,
+    anuladaEl,
     tasa,
     nota,
     origenId,
@@ -3536,6 +3575,7 @@ class FilaMovimiento extends DataClass implements Insertable<FilaMovimiento> {
           other.costo == this.costo &&
           other.abrioPieza == this.abrioPieza &&
           other.anulada == this.anulada &&
+          other.anuladaEl == this.anuladaEl &&
           other.tasa == this.tasa &&
           other.nota == this.nota &&
           other.origenId == this.origenId &&
@@ -3558,6 +3598,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
   final Value<int?> costo;
   final Value<bool> abrioPieza;
   final Value<bool> anulada;
+  final Value<DateTime?> anuladaEl;
   final Value<int?> tasa;
   final Value<String> nota;
   final Value<String?> origenId;
@@ -3579,6 +3620,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     this.costo = const Value.absent(),
     this.abrioPieza = const Value.absent(),
     this.anulada = const Value.absent(),
+    this.anuladaEl = const Value.absent(),
     this.tasa = const Value.absent(),
     this.nota = const Value.absent(),
     this.origenId = const Value.absent(),
@@ -3601,6 +3643,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     this.costo = const Value.absent(),
     required bool abrioPieza,
     required bool anulada,
+    this.anuladaEl = const Value.absent(),
     this.tasa = const Value.absent(),
     required String nota,
     this.origenId = const Value.absent(),
@@ -3635,6 +3678,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     Expression<int>? costo,
     Expression<bool>? abrioPieza,
     Expression<bool>? anulada,
+    Expression<DateTime>? anuladaEl,
     Expression<int>? tasa,
     Expression<String>? nota,
     Expression<String>? origenId,
@@ -3657,6 +3701,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
       if (costo != null) 'costo': costo,
       if (abrioPieza != null) 'abrio_pieza': abrioPieza,
       if (anulada != null) 'anulada': anulada,
+      if (anuladaEl != null) 'anulada_el': anuladaEl,
       if (tasa != null) 'tasa': tasa,
       if (nota != null) 'nota': nota,
       if (origenId != null) 'origen_id': origenId,
@@ -3681,6 +3726,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     Value<int?>? costo,
     Value<bool>? abrioPieza,
     Value<bool>? anulada,
+    Value<DateTime?>? anuladaEl,
     Value<int?>? tasa,
     Value<String>? nota,
     Value<String?>? origenId,
@@ -3703,6 +3749,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
       costo: costo ?? this.costo,
       abrioPieza: abrioPieza ?? this.abrioPieza,
       anulada: anulada ?? this.anulada,
+      anuladaEl: anuladaEl ?? this.anuladaEl,
       tasa: tasa ?? this.tasa,
       nota: nota ?? this.nota,
       origenId: origenId ?? this.origenId,
@@ -3761,6 +3808,9 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
     if (anulada.present) {
       map['anulada'] = Variable<bool>(anulada.value);
     }
+    if (anuladaEl.present) {
+      map['anulada_el'] = Variable<DateTime>(anuladaEl.value);
+    }
     if (tasa.present) {
       map['tasa'] = Variable<int>(tasa.value);
     }
@@ -3801,6 +3851,7 @@ class MovimientosCompanion extends UpdateCompanion<FilaMovimiento> {
           ..write('costo: $costo, ')
           ..write('abrioPieza: $abrioPieza, ')
           ..write('anulada: $anulada, ')
+          ..write('anuladaEl: $anuladaEl, ')
           ..write('tasa: $tasa, ')
           ..write('nota: $nota, ')
           ..write('origenId: $origenId, ')
@@ -11141,6 +11192,7 @@ typedef $$MovimientosTableCreateCompanionBuilder =
       Value<int?> costo,
       required bool abrioPieza,
       required bool anulada,
+      Value<DateTime?> anuladaEl,
       Value<int?> tasa,
       required String nota,
       Value<String?> origenId,
@@ -11164,6 +11216,7 @@ typedef $$MovimientosTableUpdateCompanionBuilder =
       Value<int?> costo,
       Value<bool> abrioPieza,
       Value<bool> anulada,
+      Value<DateTime?> anuladaEl,
       Value<int?> tasa,
       Value<String> nota,
       Value<String?> origenId,
@@ -11250,6 +11303,11 @@ class $$MovimientosTableFilterComposer
 
   ColumnFilters<bool> get anulada => $composableBuilder(
     column: $table.anulada,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get anuladaEl => $composableBuilder(
+    column: $table.anuladaEl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11359,6 +11417,11 @@ class $$MovimientosTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<DateTime> get anuladaEl => $composableBuilder(
+    column: $table.anuladaEl,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   ColumnOrderings<int> get tasa => $composableBuilder(
     column: $table.tasa,
     builder: (column) => ColumnOrderings(column),
@@ -11440,6 +11503,9 @@ class $$MovimientosTableAnnotationComposer
   GeneratedColumn<bool> get anulada =>
       $composableBuilder(column: $table.anulada, builder: (column) => column);
 
+  GeneratedColumn<DateTime> get anuladaEl =>
+      $composableBuilder(column: $table.anuladaEl, builder: (column) => column);
+
   GeneratedColumn<int> get tasa =>
       $composableBuilder(column: $table.tasa, builder: (column) => column);
 
@@ -11504,6 +11570,7 @@ class $$MovimientosTableTableManager
                 Value<int?> costo = const Value.absent(),
                 Value<bool> abrioPieza = const Value.absent(),
                 Value<bool> anulada = const Value.absent(),
+                Value<DateTime?> anuladaEl = const Value.absent(),
                 Value<int?> tasa = const Value.absent(),
                 Value<String> nota = const Value.absent(),
                 Value<String?> origenId = const Value.absent(),
@@ -11525,6 +11592,7 @@ class $$MovimientosTableTableManager
                 costo: costo,
                 abrioPieza: abrioPieza,
                 anulada: anulada,
+                anuladaEl: anuladaEl,
                 tasa: tasa,
                 nota: nota,
                 origenId: origenId,
@@ -11548,6 +11616,7 @@ class $$MovimientosTableTableManager
                 Value<int?> costo = const Value.absent(),
                 required bool abrioPieza,
                 required bool anulada,
+                Value<DateTime?> anuladaEl = const Value.absent(),
                 Value<int?> tasa = const Value.absent(),
                 required String nota,
                 Value<String?> origenId = const Value.absent(),
@@ -11569,6 +11638,7 @@ class $$MovimientosTableTableManager
                 costo: costo,
                 abrioPieza: abrioPieza,
                 anulada: anulada,
+                anuladaEl: anuladaEl,
                 tasa: tasa,
                 nota: nota,
                 origenId: origenId,

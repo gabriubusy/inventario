@@ -25,6 +25,7 @@ void mostrarEntradaRegistrada(
           'Entrada registrada · ${producto.nombre} · '
           '${entrada.marca} +$cantidad',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer (Ctrl+Z)',
           onPressed: () => unawaited(deshacerEntrada(mensajero, entradas)),

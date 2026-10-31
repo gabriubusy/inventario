@@ -1,29 +1,43 @@
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/features/productos/domain/lista_precio.dart';
+import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/regla_precio.dart';
 
 const _cien = 10000;
 
+/// Lowering by this much or more would leave prices at zero or below.
+const bajadaImposible = -_cien;
+
 /// Raises (or lowers, when negative) [lista]'s prices of [producto] by
-/// [porcentaje] hundredths of a percent. Detal moves each brand's price and
-/// each pack's; Mayor and Especial move their rule so the result moves by
-/// the same share. A list without a rule is left alone (it follows Detal).
-Producto ajustarPrecios(Producto producto, ListaPrecio lista, int porcentaje) {
+/// [porcentaje] hundredths of a percent. Detal moves each brand's price for
+/// which [lote] holds, and each pack's when [presentaciones]; Mayor and
+/// Especial move their rule so the result moves by the same share. A list
+/// without a rule is left alone (it follows Detal).
+Producto ajustarPrecios(
+  Producto producto,
+  ListaPrecio lista,
+  int porcentaje, {
+  bool Function(LoteMarca lote)? lote,
+  bool presentaciones = true,
+}) {
+  if (porcentaje <= bajadaImposible) return producto;
   int subir(int valor) =>
       dividirRedondeando(valor * (_cien + porcentaje), _cien);
   if (lista == ListaPrecio.detal) {
     return producto.copyWith(
       lotes: [
-        for (final lote in producto.lotes)
-          switch (lote.precio) {
-            null => lote,
-            final precio => lote.copyWith(precio: subir(precio)),
+        for (final l in producto.lotes)
+          switch (l.precio) {
+            final precio? when lote?.call(l) ?? true => l.copyWith(
+              precio: subir(precio),
+            ),
+            _ => l,
           },
       ],
       presentaciones: [
         for (final p in producto.presentaciones)
-          p.copyWith(precio: subir(p.precio)),
+          presentaciones ? p.copyWith(precio: subir(p.precio)) : p,
       ],
     );
   }

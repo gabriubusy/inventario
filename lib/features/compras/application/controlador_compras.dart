@@ -4,6 +4,7 @@ import 'package:inventario/core/texto.dart';
 import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/compras/domain/compra.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
+import 'package:inventario/features/compras/domain/linea_compra.dart';
 import 'package:inventario/features/compras/domain/pago.dart';
 import 'package:inventario/features/compras/domain/recibir_linea.dart';
 import 'package:inventario/features/compras/domain/repositorio_compras.dart';
@@ -15,6 +16,16 @@ import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
+
+/// An invoice being typed in F2 and not registered yet.
+typedef BorradorCompra = ({
+  String proveedor,
+  String factura,
+  List<LineaCompra> lineas,
+  bool credito,
+  String dias,
+  MedioPago medio,
+});
 
 typedef _CambioCompra = ({
   Compra compra,
@@ -51,6 +62,10 @@ class ControladorCompras extends ChangeNotifier {
   DateTime get hoy => _ahora();
   int? get tasaDeHoy => _tasaDeHoy?.call();
   bool get puedeDeshacerCompra => _ultimaCompra != null;
+
+  /// Kept when F2 closes with lines still unregistered (Esc), so a long
+  /// invoice is not typed twice. Null once it is registered.
+  BorradorCompra? borrador;
 
   /// Newest first.
   List<Compra> get compras => _compras;
@@ -110,6 +125,9 @@ class ControladorCompras extends ChangeNotifier {
         return CompraSinProducto(linea.producto);
       }
     }
+    if (compra.medio?.moneda == Moneda.bolivares && tasaDeHoy == null) {
+      return const CompraSinTasa();
+    }
     final datos = Compra(
       fecha: _ahora(),
       proveedor: compra.proveedor,
@@ -165,14 +183,21 @@ class ControladorCompras extends ChangeNotifier {
     if (ultima == null) return false;
     _ultimaCompra = null;
     notifyListeners();
+    // Two lines of one product: its first "before" and its last "after".
+    final antes = <String, Producto>{};
+    final despues = <String, Producto>{};
     for (final p in ultima.productos) {
-      if (_buscar(p.despues.id) != p.despues) return false;
+      antes.putIfAbsent(p.antes.id, () => p.antes);
+      despues[p.despues.id] = p.despues;
+    }
+    for (final MapEntry(key: id, value: producto) in despues.entries) {
+      if (_buscar(id) != producto) return false;
     }
     await _transacciones.enUna(() async {
-      for (final p in ultima.productos.reversed) {
+      for (final producto in antes.values) {
         await _existencias.actualizarProducto(
-          p.antes.id,
-          DatosProducto.desde(p.antes),
+          producto.id,
+          DatosProducto.desde(producto),
         );
       }
       for (final anotado in ultima.anotados) {

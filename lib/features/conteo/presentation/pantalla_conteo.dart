@@ -44,10 +44,23 @@ class _PantallaConteoState extends State<PantallaConteo> {
   void initState() {
     super.initState();
     _busqueda.addListener(_refrescar);
+    for (final MapEntry(key: clave, value: texto)
+        in widget.conteo.borrador.entries) {
+      final campos = _camposDe(clave);
+      campos.piezas.text = texto.piezas;
+      campos.cantidad.text = texto.cantidad;
+    }
   }
 
   @override
   void dispose() {
+    // Kept for the next visit, like the open ticket in the sale window.
+    widget.conteo.borrador = {
+      for (final MapEntry(key: clave, value: campos) in _campos.entries)
+        if (campos.piezas.text.trim().isNotEmpty ||
+            campos.cantidad.text.trim().isNotEmpty)
+          clave: (piezas: campos.piezas.text, cantidad: campos.cantidad.text),
+    };
     _busqueda.dispose();
     _focoBusqueda.dispose();
     for (final campos in _campos.values) {
@@ -73,14 +86,21 @@ class _PantallaConteoState extends State<PantallaConteo> {
     return campos;
   });
 
+  /// Every brand of every product, searched or not.
+  List<_Fila> get _todas => [
+    for (final producto in widget.existencias.productos)
+      for (final lote in producto.lotes)
+        (producto: producto, lote: lote, clave: _clave(producto, lote)),
+  ];
+
+  /// The rows the search leaves on screen.
   List<_Fila> get _filas {
     final buscado = normalizarParaBusqueda(_busqueda.text);
+    if (buscado.isEmpty) return _todas;
     return [
-      for (final producto in widget.existencias.productos)
-        if (buscado.isEmpty ||
-            normalizarParaBusqueda(producto.nombre).contains(buscado))
-          for (final lote in producto.lotes)
-            (producto: producto, lote: lote, clave: _clave(producto, lote)),
+      for (final fila in _todas)
+        if (normalizarParaBusqueda(fila.producto.nombre).contains(buscado))
+          fila,
     ];
   }
 
@@ -92,6 +112,7 @@ class _PantallaConteoState extends State<PantallaConteo> {
     final cantidad = FilaConteo.leer(
       campos.cantidad.text,
       forma.unidad.decimales,
+      unidad: forma.unidad,
     );
     if (cantidad == null) return null;
     return ConteoLote(
@@ -105,8 +126,10 @@ class _PantallaConteoState extends State<PantallaConteo> {
     );
   }
 
+  // All rows, not only the searched ones: a count typed before searching
+  // for another product must not be lost.
   List<ConteoLote> get _conDiferencia => [
-    for (final fila in _filas)
+    for (final fila in _todas)
       if (_conteo(fila) case final conteo?)
         if (hayDiferencia(diferenciaConteo(fila.lote, conteo))) conteo,
   ];
@@ -140,6 +163,7 @@ class _PantallaConteoState extends State<PantallaConteo> {
                 ? 'Conteo guardado: 1 ajuste'
                 : 'Conteo guardado: $guardados ajustes',
           ),
+          persist: false,
           action: SnackBarAction(
             label: 'Deshacer',
             onPressed: () => unawaited(_deshacer(mensajero)),
@@ -205,7 +229,8 @@ class _PantallaConteoState extends State<PantallaConteo> {
                         children: [
                           Text(
                             'Escribe lo que hay en la tienda; Enter pasa al '
-                            'siguiente. Lo que dejes vacío no cambia.',
+                            'siguiente. Lo que dejes vacío no cambia. Si '
+                            'sales sin guardar, lo escrito te espera aquí.',
                             style: tema.textTheme.bodyMedium?.copyWith(
                               color: tema.colorScheme.onSurfaceVariant,
                             ),

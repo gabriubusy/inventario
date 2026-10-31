@@ -23,6 +23,9 @@ class Movimientos extends Table {
   IntColumn get costo => integer().nullable()();
   BoolColumn get abrioPieza => boolean()();
   BoolColumn get anulada => boolean()();
+
+  /// When a sale was cancelled (schema 9).
+  DateTimeColumn get anuladaEl => dateTime().nullable()();
   IntColumn get tasa => integer().nullable()();
   TextColumn get nota => text()();
   TextColumn get origenId => text().nullable()();

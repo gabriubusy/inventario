@@ -1,6 +1,7 @@
 import 'package:drift/drift.dart';
 import 'package:inventario/app/base_datos/base_datos.dart';
 import 'package:inventario/app/base_datos/nuevo_id.dart';
+import 'package:inventario/core/texto.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/repositorio_movimientos.dart';
 
@@ -29,10 +30,26 @@ class RepositorioMovimientosDrift implements RepositorioMovimientos {
       (_db.delete(_db.movimientos)..where((t) => t.id.equals(id))).go();
 
   @override
-  Future<void> anular(String id) =>
+  Future<void> anular(String id, {DateTime? el}) =>
       (_db.update(_db.movimientos)..where((t) => t.id.equals(id))).write(
-        const MovimientosCompanion(anulada: Value(true)),
+        MovimientosCompanion(anulada: const Value(true), anuladaEl: Value(el)),
       );
+
+  @override
+  Future<void> renombrarProveedor(String anterior, String nuevo) async {
+    final clave = normalizarParaBusqueda(anterior);
+    final nombres = await (_db.selectOnly(
+      _db.movimientos,
+      distinct: true,
+    )..addColumns([_db.movimientos.proveedor])).get();
+    for (final fila in nombres) {
+      final nombre = fila.read(_db.movimientos.proveedor)!;
+      if (normalizarParaBusqueda(nombre) != clave) continue;
+      await (_db.update(_db.movimientos)
+            ..where((t) => t.proveedor.equals(nombre)))
+          .write(MovimientosCompanion(proveedor: Value(nuevo)));
+    }
+  }
 
   /// Example history with its own ids, for a first run while developing.
   Future<void> sembrar(List<Movimiento> movimientos) => _db.batch(
@@ -54,6 +71,7 @@ class RepositorioMovimientosDrift implements RepositorioMovimientos {
     costo: Value(m.costo),
     abrioPieza: m.abrioPieza,
     anulada: m.anulada,
+    anuladaEl: Value(m.anuladaEl),
     tasa: Value(m.tasa),
     nota: m.nota,
     origenId: Value(m.origenId),
@@ -76,6 +94,7 @@ class RepositorioMovimientosDrift implements RepositorioMovimientos {
     costo: f.costo,
     abrioPieza: f.abrioPieza,
     anulada: f.anulada,
+    anuladaEl: f.anuladaEl,
     tasa: f.tasa,
     nota: f.nota,
     origenId: f.origenId,

@@ -27,10 +27,11 @@ Reporte construirReporte(
   DatosReportes datos,
   DateTime hoy,
 ) {
+  // Customer returns count against sales, on the day they happen.
   final ventas = [
     for (final m in datos.movimientos)
-      if (m.tipo == TipoMovimiento.venta &&
-          !m.anulada &&
+      if ((m.tipo == TipoMovimiento.venta && !m.anulada ||
+              m.tipo == TipoMovimiento.devolucionCliente) &&
           periodo.incluye(m.fecha, hoy))
         m,
   ];
@@ -38,9 +39,21 @@ Reporte construirReporte(
     for (final g in datos.gastos)
       if (periodo.incluye(g.fecha, hoy)) g,
   ];
+  final porId = {for (final m in datos.movimientos) m.id: m};
+  // Returns older than their own cost are taken as back to stock, with
+  // their share of the sale's cost.
+  int? costo(Movimiento m) {
+    if (m.costo != null || _esVenta(m)) return m.costo;
+    final venta = porId[m.origenId];
+    if (venta == null || venta.costo == null || venta.cantidad == 0) {
+      return null;
+    }
+    return dividirRedondeando(venta.costo! * m.cantidad, venta.cantidad);
+  }
+
   return switch (tipo) {
     TipoReporte.ventas => _ventas(ventas, hoy),
-    TipoReporte.ganancia => _ganancia(ventas, gastos),
+    TipoReporte.ganancia => _ganancia(ventas, gastos, costo),
     TipoReporte.masVendidos => _masVendidos(ventas),
     TipoReporte.inventario => _inventario(datos.productos),
     TipoReporte.cuentas => _cuentas(datos, periodo, hoy),
@@ -50,13 +63,20 @@ Reporte construirReporte(
 
 const _dinero = formatearDolares;
 
-String _tickets(Iterable<Movimiento> lineas) {
-  final tickets = {for (final l in lineas) l.ventaId ?? l.id}.length;
-  return formatDecimal(tickets, decimales: 0);
-}
+bool _esVenta(Movimiento m) => m.tipo == TipoMovimiento.venta;
 
+int _cuantosTickets(Iterable<Movimiento> lineas) =>
+    {for (final l in lineas.where(_esVenta)) l.ventaId ?? l.id}.length;
+
+String _tickets(Iterable<Movimiento> lineas) =>
+    formatDecimal(_cuantosTickets(lineas), decimales: 0);
+
+/// Returns subtract what their sale added.
 int _suma(Iterable<Movimiento> lineas, int? Function(Movimiento) valor) =>
-    lineas.fold(0, (total, l) => total + (valor(l) ?? 0));
+    lineas.fold(
+      0,
+      (total, l) => total + (valor(l) ?? 0) * (_esVenta(l) ? 1 : -1),
+    );
 
 Reporte _ventas(List<Movimiento> ventas, DateTime hoy) {
   final porDia = <DateTime, List<Movimiento>>{};
@@ -66,7 +86,7 @@ Reporte _ventas(List<Movimiento> ventas, DateTime hoy) {
   }
   final dias = porDia.keys.toList()..sort((a, b) => b.compareTo(a));
   final total = _suma(ventas, (m) => m.importe);
-  final tickets = {for (final l in ventas) l.ventaId ?? l.id}.length;
+  final tickets = _cuantosTickets(ventas);
   DateTime? mejor;
   for (final d in dias) {
     if (mejor == null ||
@@ -101,7 +121,7 @@ Reporte _ventas(List<Movimiento> ventas, DateTime hoy) {
         [
           formatearFechaLarga(d),
           _tickets(porDia[d]!),
-          formatDecimal(porDia[d]!.length, decimales: 0),
+          formatDecimal(porDia[d]!.where(_esVenta).length, decimales: 0),
           _dinero(_suma(porDia[d]!, (m) => m.importe)),
           formatearBolivares(
             _suma(
@@ -127,12 +147,16 @@ Map<String, List<Movimiento>> _porProducto(List<Movimiento> lineas) {
 int _enDolares(Iterable<Gasto> gastos) =>
     gastos.fold(0, (total, g) => total + (g.enDolares ?? 0));
 
-Reporte _ganancia(List<Movimiento> ventas, List<Gasto> gastos) {
+Reporte _ganancia(
+  List<Movimiento> ventas,
+  List<Gasto> gastos,
+  int? Function(Movimiento) costoDe,
+) {
   final vendido = _suma(ventas, (m) => m.importe);
-  final costo = _suma(ventas, (m) => m.costo);
+  final costo = _suma(ventas, costoDe);
   final gastado = _enDolares(gastos.where((g) => !g.esIngreso));
   final ganancia = vendido - costo - gastado;
-  final sinCosto = ventas.where((m) => m.costo == null).length;
+  final sinCosto = ventas.where((m) => _esVenta(m) && m.costo == null).length;
   String margen(int venta, int c) => venta == 0
       ? '—'
       : '${formatDecimal(dividirRedondeando((venta - c) * 1000, venta), decimales: 1)} %';
@@ -141,7 +165,7 @@ Reporte _ganancia(List<Movimiento> ventas, List<Gasto> gastos) {
       (
         nombre: grupo.first.producto,
         vendido: _suma(grupo, (m) => m.importe),
-        costo: _suma(grupo, (m) => m.costo),
+        costo: _suma(grupo, costoDe),
       ),
   ]..sort((a, b) => (b.vendido - b.costo).compareTo(a.vendido - a.costo));
   return Reporte(
@@ -179,11 +203,12 @@ Reporte _ganancia(List<Movimiento> ventas, List<Gasto> gastos) {
 
 Reporte _masVendidos(List<Movimiento> ventas) {
   final total = _suma(ventas, (m) => m.importe);
-  final grupos = _porProducto(ventas).values.toList()
-    ..sort(
-      (a, b) =>
-          _suma(b, (m) => m.importe).compareTo(_suma(a, (m) => m.importe)),
-    );
+  // A product only returned in the period was not sold in it.
+  final grupos =
+      _porProducto(ventas).values.where((g) => g.any(_esVenta)).toList()..sort(
+        (a, b) =>
+            _suma(b, (m) => m.importe).compareTo(_suma(a, (m) => m.importe)),
+      );
   return Reporte(
     titulo: 'Más vendidos',
     cifras: [
@@ -308,8 +333,16 @@ Reporte _cuentas(DatosReportes datos, PeriodoReporte periodo, DateTime hoy) {
       ),
       (titulo: 'Pagado en el periodo', valor: _dinero(pagado), detalle: ''),
     ],
-    columnas: const ['Proveedor', 'Facturas', 'Total', 'Abonado', 'Debe'],
-    numericas: const {1, 2, 3, 4},
+    // Returned goods lower the debt too, so the columns add up.
+    columnas: const [
+      'Proveedor',
+      'Facturas',
+      'Total',
+      'Abonado',
+      'Devuelto',
+      'Debe',
+    ],
+    numericas: const {1, 2, 3, 4, 5},
     filas: [
       for (final g in grupos)
         [
@@ -317,6 +350,7 @@ Reporte _cuentas(DatosReportes datos, PeriodoReporte periodo, DateTime hoy) {
           formatDecimal(g.length, decimales: 0),
           _dinero(suma(g, (c) => c.compra.total)),
           _dinero(suma(g, (c) => c.abonado)),
+          _dinero(suma(g, (c) => c.devuelto)),
           _dinero(suma(g, (c) => c.debe)),
         ],
     ],

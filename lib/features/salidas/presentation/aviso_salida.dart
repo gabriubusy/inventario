@@ -27,6 +27,7 @@ void mostrarSalidaRegistrada(
           'Salida registrada · ${producto.nombre} · '
           '${salida.marca} −$piezas$cantidad$dinero',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer (Ctrl+Z)',
           onPressed: () => unawaited(deshacerSalida(mensajero, salidas)),

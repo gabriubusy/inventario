@@ -24,7 +24,11 @@ void main() {
   });
 
   test('backup names sort by date and sizes read short', () {
-    expect(nombreRespaldo(hoy), 'inventario 2026-10-29 1512.inventario');
+    expect(nombreRespaldo(hoy), 'inventario 2026-10-29 151200.inventario');
+    expect(
+      nombreRespaldo(hoy, copia: 2),
+      'inventario 2026-10-29 151200 (2).inventario',
+    );
     expect(textoTamano(820 * 1024), '820 KB');
     expect(textoTamano(4404019), '4,2 MB');
   });

@@ -62,7 +62,8 @@ class _DialogoGastoState extends State<DialogoGasto> {
   final _nota = TextEditingController();
   var _ingreso = false;
   var _categoria = CategoriaGasto.servicios;
-  var _medio = MedioPago.efectivoBolivares;
+  // Dollars by default, like prices: "3" typed means $ 3, not Bs 3.
+  var _medio = MedioPago.efectivoDolares;
   String? _error;
   var _guardando = false;
 
@@ -108,6 +109,15 @@ class _DialogoGastoState extends State<DialogoGasto> {
       setState(() => _error = 'Escribe el monto');
       return;
     }
+    // Without a rate the reports could not count it in dollars.
+    if (_medio.moneda == Moneda.bolivares && widget.gastos.tasaDeHoy == null) {
+      setState(
+        () => _error =
+            'Falta la tasa de hoy para un monto en bolívares (Ctrl+T en el '
+            'inicio)',
+      );
+      return;
+    }
     if (_guardando) return;
     setState(() => _guardando = true);
     final mensajero = ScaffoldMessenger.of(context);
@@ -129,6 +139,7 @@ class _DialogoGastoState extends State<DialogoGasto> {
             '${gasto.categoria.etiqueta} · '
             '${textoEnMoneda(gasto.monto, gasto.medio.moneda)}',
           ),
+          persist: false,
           action: SnackBarAction(
             label: 'Deshacer',
             onPressed: () => unawaited(widget.gastos.deshacer()),
@@ -138,6 +149,9 @@ class _DialogoGastoState extends State<DialogoGasto> {
   }
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {
+    // Ctrl+S saves in every window of the app.
+    const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
+        unawaited(_registrar()),
     const SingleActivator(LogicalKeyboardKey.keyQ, alt: true): () =>
         _elegirTipo(false),
     const SingleActivator(LogicalKeyboardKey.keyW, alt: true): () =>
@@ -281,6 +295,7 @@ class _DialogoGastoState extends State<DialogoGasto> {
                   ),
                 BotonesCrear(
                   etiqueta: _ingreso ? 'Registrar ingreso' : 'Registrar gasto',
+                  atajo: 'Ctrl+S',
                   guardando: _guardando,
                   onCrear: () => unawaited(_registrar()),
                 ),

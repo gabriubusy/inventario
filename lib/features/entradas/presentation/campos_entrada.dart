@@ -110,6 +110,7 @@ class CamposEntrada extends StatelessWidget {
                 focusNode: focoCantidad,
                 decimales: unidad.decimales,
                 sufijo: unidad.simbolo,
+                unidad: unidad,
               ),
             ),
           ],

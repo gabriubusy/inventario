@@ -147,7 +147,10 @@ void main() {
     expect(find.text('Cambia 1 producto'), findsOneWidget);
     expect(find.textContaining(r'$ 9,80/kg → $ 10,78/kg'), findsOneWidget);
 
-    await tester.testTextInput.receiveAction(TextInputAction.done);
+    expect(find.text('Aplicar a 1 producto'), findsOneWidget);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyS);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
     await tester.pumpAndSettle();
     expect(guardado('p1').lotes.single.precio, 1078);
     await tester.tap(find.text('Deshacer'));

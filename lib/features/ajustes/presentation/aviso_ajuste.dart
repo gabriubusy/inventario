@@ -25,6 +25,7 @@ void mostrarAjusteRegistrado(
           '${ajuste.tipo.etiqueta} registrada · ${producto.nombre} · '
           '${ajuste.marca} −$cantidad',
         ),
+        persist: false,
         action: SnackBarAction(
           label: 'Deshacer',
           onPressed: () => unawaited(_deshacer(mensajero, ajustes)),

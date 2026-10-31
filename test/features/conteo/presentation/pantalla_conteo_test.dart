@@ -92,6 +92,31 @@ void main() {
     expect(find.text('Conteo guardado: 2 ajustes'), findsOneWidget);
   });
 
+  testWidgets('a count typed before searching for another product is kept', (
+    tester,
+  ) async {
+    await mostrar(tester);
+    await tester.enterText(campoDe('Carne molida', 'Contado'), '3,4');
+    await tester.enterText(
+      find.widgetWithText(TextField, 'Buscar producto (Ctrl+K)'),
+      'queso',
+    );
+    await tester.pump();
+    expect(find.widgetWithText(FilaConteo, 'Carne molida'), findsNothing);
+    await tester.enterText(campoDe('Queso blanco duro', 'Piezas'), '9');
+    await tester.enterText(campoDe('Queso blanco duro', 'Peso'), '7,5');
+    await tester.pump();
+    expect(find.text('Guardar 2 ajustes'), findsOneWidget);
+  });
+
+  testWidgets('leaving without saving keeps what was typed', (tester) async {
+    await mostrar(tester);
+    await tester.enterText(campoDe('Carne molida', 'Contado'), '3,4');
+    await tester.pumpWidget(const SizedBox());
+    await mostrar(tester);
+    expect(find.text('Guardar 1 ajuste'), findsOneWidget);
+  });
+
   testWidgets('rows left empty change nothing', (tester) async {
     await mostrar(tester);
     expect(find.text('Guardar 0 ajustes'), findsOneWidget);
