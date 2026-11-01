@@ -9,6 +9,7 @@ import 'package:inventario/features/compras/domain/linea_compra.dart';
 import 'package:inventario/features/compras/presentation/opciones_marca_compra.dart';
 import 'package:inventario/features/entradas/presentation/buscador_producto_entrada.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
 import 'package:inventario/features/entradas/presentation/producto_elegido.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -43,8 +44,11 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
   final _busqueda = TextEditingController();
   final _marca = TextEditingController();
   final _piezas = TextEditingController();
-  final _cantidad = TextEditingController();
+  final _cantidad = ControladorCantidad();
   final _costo = TextEditingController();
+
+  /// What the invoice says for the whole line, when it gives no unit cost.
+  final _total = TextEditingController();
   final _focoBusqueda = FocusNode();
   final _focoMarca = FocusNode();
   final _focoPiezas = FocusNode();
@@ -54,7 +58,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
 
   @override
   void dispose() {
-    for (final c in [_busqueda, _marca, _piezas, _cantidad, _costo]) {
+    for (final c in [_busqueda, _marca, _piezas, _cantidad, _costo, _total]) {
       c.dispose();
     }
     for (final f in [_focoBusqueda, _focoMarca, _focoPiezas, _focoCantidad]) {
@@ -124,10 +128,59 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
       _producto = null;
       _lote = null;
     });
-    for (final c in [_busqueda, _marca, _piezas, _cantidad, _costo]) {
+    for (final c in [_busqueda, _marca, _piezas, _cantidad, _costo, _total]) {
       c.clear();
     }
     _enfocarDespues(_focoBusqueda);
+  }
+
+  /// Puts a line already added back in the fields, to correct it.
+  void cargar(LineaCompra linea) {
+    final producto = widget.productos
+        .where((p) => p.id == linea.productoId)
+        .firstOrNull;
+    if (producto == null) return;
+    setState(() => _producto = producto);
+    final indice = _lotes.indexWhere(
+      (l) =>
+          normalizarParaBusqueda(l.marca) ==
+          normalizarParaBusqueda(linea.marca),
+    );
+    setState(() => _lote = indice == -1 ? null : indice);
+    final forma = producto.forma;
+    _marca.text = indice == -1 ? linea.marca : '';
+    _piezas.text = forma.cuentaPiezas
+        ? formatDecimal(linea.piezas, decimales: 0)
+        : '';
+    _cantidad.text = formatDecimal(
+      linea.cantidad,
+      decimales: forma.unidad.decimales,
+    );
+    _costo.text = formatDecimal(
+      linea.costo,
+      decimales: decimalesDinero,
+      minDecimales: decimalesDinero,
+    );
+    _total.clear();
+    _enfocarCantidades();
+  }
+
+  /// Cost per kg/l/und typed, or worked out from the line's total.
+  int? _costoLeido(Producto producto) {
+    final costo = parseDecimal(_costo.text, decimales: decimalesDinero);
+    if (costo != null) return costo;
+    final total = parseDecimal(_total.text, decimales: decimalesDinero);
+    final forma = producto.forma;
+    final cantidad = CampoCantidadRecibida.leer(
+      _cantidad,
+      forma.unidad.decimales,
+      unidad: forma.unidad,
+    );
+    if (total == null || cantidad <= 0) return null;
+    return dividirRedondeando(
+      total * forma.unidad.fraccionesPorUnidad,
+      cantidad,
+    );
   }
 
   /// Adds the line if it is complete; true when added.
@@ -150,7 +203,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
           forma.unidad.decimales,
           unidad: forma.unidad,
         ),
-        costo: CampoCantidadRecibida.leer(_costo, decimalesDinero),
+        costo: _costoLeido(producto)!,
       ),
     );
     _cambiarProducto();
@@ -251,14 +304,30 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                       labelText: 'Costo /${producto.forma.unidad.simbolo}',
                       prefixText: r'$ ',
                     ),
-                    validator: (t) {
-                      final valor = parseDecimal(
-                        t ?? '',
-                        decimales: decimalesDinero,
-                      );
-                      if (valor == null) return 'Falta';
+                    validator: (_) {
+                      final valor = _costoLeido(producto);
+                      if (valor == null) return 'Costo o total';
                       return valor <= 0 ? 'Mayor que 0' : null;
                     },
+                    onFieldSubmitted: (_) => _enterEnCosto(),
+                  ),
+                ),
+                // Some invoices only give the line's total.
+                Expanded(
+                  child: TextFormField(
+                    controller: _total,
+                    textAlign: TextAlign.right,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp('[0-9.,]')),
+                    ],
+                    textInputAction: TextInputAction.done,
+                    decoration: const InputDecoration(
+                      labelText: 'o Total',
+                      prefixText: r'$ ',
+                    ),
                     onFieldSubmitted: (_) => _enterEnCosto(),
                   ),
                 ),

@@ -177,7 +177,7 @@ void main() {
     await abrir(tester);
     await tester.enterText(campo('Nombre'), 'Queso de año');
     await tester.enterText(campo('Marca'), 'Marca A');
-    await tester.enterText(campo('Cantidad'), '8,2');
+    await tester.enterText(campo('Hay'), '8,2');
     await tester.enterText(campo('Precio'), '5,20');
     await tester.pump();
     expect(find.text('= 208,00 Bs'), findsOneWidget);
@@ -189,7 +189,7 @@ void main() {
     // The new row may land below the fold of the window.
     for (final (etiqueta, texto) in [
       ('Marca', 'Marca B'),
-      ('Cantidad', '11'),
+      ('Hay', '11'),
       ('Precio', '5,60'),
     ]) {
       await tester.ensureVisible(campo(etiqueta).last);
@@ -268,14 +268,14 @@ void main() {
     await abrir(tester);
     await tester.enterText(campo('Nombre'), 'Chorizo');
     await tester.enterText(campo('Marca'), 'Marca X');
-    await tester.enterText(campo('Cantidad'), '2');
+    await tester.enterText(campo('Hay'), '2');
     await conTecla(
       tester,
       LogicalKeyboardKey.controlLeft,
       LogicalKeyboardKey.keyM,
     );
     await tester.enterText(campo('Marca').last, 'marca x');
-    await tester.enterText(campo('Cantidad').last, '1');
+    await tester.enterText(campo('Hay').last, '1');
     await crear(tester);
     expect(find.text('Ya está arriba'), findsOneWidget);
     expect(creado('Chorizo'), isNull);
@@ -297,7 +297,7 @@ void main() {
     await tester.enterText(campo('Nombre'), 'Salchicha');
     await conTecla(tester, LogicalKeyboardKey.altLeft, LogicalKeyboardKey.keyR);
     await tester.enterText(campo('Marca'), 'Marca D');
-    await tester.enterText(campo('Cantidad'), '2,5');
+    await tester.enterText(campo('Hay'), '2,5');
     await crear(tester);
     expect(find.text('Solo enteros'), findsOneWidget);
     expect(creado('Salchicha'), isNull);
@@ -420,7 +420,7 @@ void main() {
       await tester.enterText(campo('Nombre'), 'Queso paisa');
       await tester.enterText(campo('Marca'), 'Marca Z');
       await tester.enterText(campo('Proveedor'), 'Lácteos Nuevo');
-      await tester.enterText(campo('Cantidad'), '3');
+      await tester.enterText(campo('Hay'), '3');
       await tester.ensureVisible(find.widgetWithText(FilledButton, 'Crear'));
       await tester.tap(find.widgetWithText(FilledButton, 'Crear'));
       await tester.pumpAndSettle();

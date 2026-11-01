@@ -186,7 +186,11 @@ class _DialogoDevolucionProveedorState
         mostrarDevolucionRegistrada(mensajero, widget.devoluciones, devolucion);
         navegador.pop();
       case DevolucionNoAlcanza(:final producto):
-        setState(() => _error = 'No hay tanto de $producto en esa marca');
+        setState(
+          () => _error =
+              'No hay tanto de $producto en esa marca, '
+              'o quedarían piezas sin peso',
+        );
       case DevolucionExcedeDeuda(:final debe):
         setState(
           () => _error =
@@ -194,7 +198,11 @@ class _DialogoDevolucionProveedorState
               'elige otra o devuelve dinero',
         );
       case DevolucionSinFactura():
-        setState(() => _error = 'No hay factura a crédito que descontar');
+        setState(
+          () => _error =
+              'Este proveedor no tiene facturas a crédito con deuda: elige '
+              'que devuelva el dinero (Alt+W) o que reponga (Alt+E)',
+        );
       case DevolucionSinTasa():
         setState(() => _error = 'Falta la tasa de hoy (Ctrl+T en el inicio)');
     }

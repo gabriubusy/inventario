@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:inventario/app/colores_estado.dart';
 import 'package:inventario/app/espaciado.dart';
@@ -58,6 +60,16 @@ class AvisoTasa extends StatelessWidget {
               Expanded(
                 child: Text(_texto, style: TextStyle(color: alertas.textoBajo)),
               ),
+              // The internet may be back; one click asks the BCV again.
+              if (controlador.sinRespuesta)
+                TextButton(
+                  onPressed: () =>
+                      unawaited(controlador.actualizarDesdeInternet()),
+                  style: TextButton.styleFrom(
+                    foregroundColor: alertas.textoBajo,
+                  ),
+                  child: const Text('Reintentar BCV'),
+                ),
               TextButton(
                 onPressed: onPoner,
                 style: TextButton.styleFrom(foregroundColor: alertas.textoBajo),

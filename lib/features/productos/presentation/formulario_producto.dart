@@ -98,8 +98,14 @@ class _FormularioProductoState extends State<FormularioProducto> {
   late final List<LoteEditable> _lotes = _lotesIniciales();
   late final _presentaciones = PresentacionesEditables.desde(widget.producto);
   late final _reglas = ReglasEditables.desde(widget.producto);
-  late var _categoria = widget.producto?.categoria ?? Categoria.carnes;
-  late var _forma = widget.producto?.forma ?? FormaConteo.porKilo;
+  late var _categoria =
+      widget.producto?.categoria ??
+      widget.controlador.ultimoCreado?.categoria ??
+      Categoria.carnes;
+  late var _forma =
+      widget.producto?.forma ??
+      widget.controlador.ultimoCreado?.forma ??
+      FormaConteo.porKilo;
   FocusNode? _focoPropio;
   var _guardando = false;
   var _repetido = false;

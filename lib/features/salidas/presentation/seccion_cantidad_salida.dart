@@ -96,7 +96,7 @@ class SeccionCantidadSalida extends StatelessWidget {
                 Expanded(
                   child: CampoCantidadVendida(
                     etiqueta: modo == ModoVenta.piezaEntera
-                        ? 'Peso de la pieza (en la balanza)'
+                        ? 'Peso de la pieza entera (en la balanza)'
                         : 'Cantidad',
                     controller: controller,
                     focusNode: focusNode,

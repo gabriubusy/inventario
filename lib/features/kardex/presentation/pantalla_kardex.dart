@@ -106,8 +106,8 @@ class _PantallaKardexState extends State<PantallaKardex> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(switch (_producto) {
-            final p? => 'Kardex · ${p.nombre}',
-            null => 'Kardex',
+            final p? => 'Historial · ${p.nombre}',
+            null => 'Historial del producto',
           }),
           actions: [
             TextButton(

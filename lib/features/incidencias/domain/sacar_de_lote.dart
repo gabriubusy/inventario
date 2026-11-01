@@ -18,8 +18,16 @@ int indiceLote(Producto producto, String marca, String proveedor) {
 bool alcanza(LoteMarca lote, {required int piezas, required int cantidad}) =>
     piezas <= lote.piezas && cantidad <= lote.cantidad;
 
-/// The product without the damaged goods; null when the lot is gone or
-/// does not hold that much.
+/// Whether whole pieces would stay behind with no weight at all, e.g.
+/// one piece of ten taking the whole 19,5 kg.
+bool dejaPiezasSinPeso(
+  LoteMarca lote, {
+  required int piezas,
+  required int cantidad,
+}) => cantidad > 0 && lote.piezas > piezas && cantidad >= lote.cantidad;
+
+/// The product without the damaged goods; null when the lot is gone, does
+/// not hold that much or would keep pieces without weight.
 Producto? sacarDeLote(
   Producto producto, {
   required String marca,
@@ -30,7 +38,10 @@ Producto? sacarDeLote(
   final indice = indiceLote(producto, marca, proveedor);
   if (indice == -1) return null;
   final lote = producto.lotes[indice];
-  if (!alcanza(lote, piezas: piezas, cantidad: cantidad)) return null;
+  if (!alcanza(lote, piezas: piezas, cantidad: cantidad) ||
+      dejaPiezasSinPeso(lote, piezas: piezas, cantidad: cantidad)) {
+    return null;
+  }
   final restante = lote.cantidad - cantidad;
   final quedan = lote.piezas - piezas;
   // Weight left once the last piece went out stays sellable by weight.

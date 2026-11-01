@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/colores_estado.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/seguir_elegido.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/core/fechas.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
@@ -65,98 +66,101 @@ class FilaCuenta extends StatelessWidget {
       EstadoCuenta.porVencer => (alertas.fondoBajo, alertas.textoBajo),
       _ => (colores.surfaceContainerHighest, colores.onSurfaceVariant),
     };
-    return Semantics(
-      selected: elegida,
-      button: true,
-      child: InkWell(
-        onTap: onElegir,
-        child: DecoratedBox(
-          decoration: BoxDecoration(
-            color: elegida ? colores.primary.withValues(alpha: 0.06) : null,
-            border: Border(
-              top: BorderSide(color: colores.outlineVariant),
-              left: BorderSide(
-                color: elegida ? colores.primary : Colors.transparent,
-                width: 3,
+    return SeguirElegido(
+      elegido: elegida,
+      child: Semantics(
+        selected: elegida,
+        button: true,
+        child: InkWell(
+          onTap: onElegir,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: elegida ? colores.primary.withValues(alpha: 0.06) : null,
+              border: Border(
+                top: BorderSide(color: colores.outlineVariant),
+                left: BorderSide(
+                  color: elegida ? colores.primary : Colors.transparent,
+                  width: 3,
+                ),
               ),
             ),
-          ),
-          child: Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: espaciado.md,
-              vertical: espaciado.md,
-            ),
-            child: ColumnasCuenta(
-              celdas: [
-                Text(
-                  compra.proveedor,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: base?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Text(
-                  compra.factura.isEmpty ? '—' : compra.factura,
-                  style: base,
-                ),
-                Text(
-                  formatearFechaCorta(compra.fecha, hoy),
-                  style: base?.copyWith(color: colores.onSurfaceVariant),
-                ),
-                Text(
-                  formatearDolares(compra.total),
-                  textAlign: TextAlign.right,
-                  style: base,
-                ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      cuenta.abonado == 0
-                          ? '—'
-                          : formatearDolares(cuenta.abonado),
-                      textAlign: TextAlign.right,
-                      style: base?.copyWith(color: colores.onSurfaceVariant),
-                    ),
-                    if (cuenta.devuelto > 0)
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: espaciado.md,
+                vertical: espaciado.md,
+              ),
+              child: ColumnasCuenta(
+                celdas: [
+                  Text(
+                    compra.proveedor,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: base?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Text(
+                    compra.factura.isEmpty ? '—' : compra.factura,
+                    style: base,
+                  ),
+                  Text(
+                    formatearFechaCorta(compra.fecha, hoy),
+                    style: base?.copyWith(color: colores.onSurfaceVariant),
+                  ),
+                  Text(
+                    formatearDolares(compra.total),
+                    textAlign: TextAlign.right,
+                    style: base,
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
                       Text(
-                        'Devuelto −${formatearDolares(cuenta.devuelto)}',
+                        cuenta.abonado == 0
+                            ? '—'
+                            : formatearDolares(cuenta.abonado),
                         textAlign: TextAlign.right,
-                        style: tema.textTheme.bodySmall?.copyWith(
-                          color: colores.onSurfaceVariant,
-                          fontFeatures: cifras,
+                        style: base?.copyWith(color: colores.onSurfaceVariant),
+                      ),
+                      if (cuenta.devuelto > 0)
+                        Text(
+                          'Devuelto −${formatearDolares(cuenta.devuelto)}',
+                          textAlign: TextAlign.right,
+                          style: tema.textTheme.bodySmall?.copyWith(
+                            color: colores.onSurfaceVariant,
+                            fontFeatures: cifras,
+                          ),
                         ),
+                    ],
+                  ),
+                  Text(
+                    formatearDolares(cuenta.debe < 0 ? 0 : cuenta.debe),
+                    textAlign: TextAlign.right,
+                    style: base?.copyWith(fontWeight: FontWeight.w600),
+                  ),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: DecoratedBox(
+                      decoration: BoxDecoration(
+                        color: fondo,
+                        borderRadius: BorderRadius.circular(espaciado.xxl),
                       ),
-                  ],
-                ),
-                Text(
-                  formatearDolares(cuenta.debe < 0 ? 0 : cuenta.debe),
-                  textAlign: TextAlign.right,
-                  style: base?.copyWith(fontWeight: FontWeight.w600),
-                ),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: fondo,
-                      borderRadius: BorderRadius.circular(espaciado.xxl),
-                    ),
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(
-                        horizontal: espaciado.sm,
-                        vertical: espaciado.xs / 2,
-                      ),
-                      child: Text(
-                        _vence,
-                        style: tema.textTheme.labelSmall?.copyWith(
-                          color: tinta,
-                          fontWeight: FontWeight.w600,
-                          fontFeatures: cifras,
+                      child: Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: espaciado.sm,
+                          vertical: espaciado.xs / 2,
+                        ),
+                        child: Text(
+                          _vence,
+                          style: tema.textTheme.labelSmall?.copyWith(
+                            color: tinta,
+                            fontWeight: FontWeight.w600,
+                            fontFeatures: cifras,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),

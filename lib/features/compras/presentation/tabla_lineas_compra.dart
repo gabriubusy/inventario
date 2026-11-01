@@ -10,11 +10,15 @@ class TablaLineasCompra extends StatelessWidget {
     super.key,
     required this.lineas,
     required this.onQuitar,
+    this.onCorregir,
     this.vacio = 'Aún no hay productos en la factura.',
   });
 
   final List<LineaCompra> lineas;
   final ValueChanged<int> onQuitar;
+
+  /// Takes the line back to the editor; hidden when null.
+  final ValueChanged<int>? onCorregir;
 
   /// Shown while there are no lines.
   final String vacio;
@@ -103,6 +107,14 @@ class TablaLineasCompra extends StatelessWidget {
                       ),
                     ),
                   ),
+                  if (onCorregir case final corregir?)
+                    ExcludeFocus(
+                      child: IconButton(
+                        tooltip: 'Corregir',
+                        icon: const Icon(Icons.edit_outlined),
+                        onPressed: () => corregir(i),
+                      ),
+                    ),
                   ExcludeFocus(
                     child: IconButton(
                       tooltip: 'Quitar',

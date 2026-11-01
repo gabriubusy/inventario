@@ -55,16 +55,23 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     super.dispose();
   }
 
+  DatosNegocio get _escritos => DatosNegocio(
+    nombre: _nombre.text.trim(),
+    rif: _rif.text.trim(),
+    direccion: _direccion.text.trim(),
+    telefono: _telefono.text.trim(),
+  );
+
+  /// Leaving keeps what was typed: it saves on the way out, no question.
+  Future<void> _salir() async {
+    final navegador = Navigator.of(context);
+    if (_escritos != widget.negocio.datos) await _guardar();
+    navegador.pop();
+  }
+
   Future<void> _guardar() async {
     final mensajero = ScaffoldMessenger.of(context);
-    await widget.negocio.guardar(
-      DatosNegocio(
-        nombre: _nombre.text.trim(),
-        rif: _rif.text.trim(),
-        direccion: _direccion.text.trim(),
-        telefono: _telefono.text.trim(),
-      ),
-    );
+    await widget.negocio.guardar(_escritos);
     mensajero
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -94,80 +101,86 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     final tema = Theme.of(context);
     final colores = tema.colorScheme;
     final espaciado = context.espaciado;
-    return AtajosDeTeclado(
-      atajos: _atajos,
-      child: Scaffold(
-        appBar: AppBar(
-          title: const Text('Configuración'),
-          actions: [
-            Padding(
-              padding: EdgeInsets.only(right: espaciado.xl),
-              child: FilledButton(
-                style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
-                onPressed: () => unawaited(_guardar()),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  spacing: espaciado.sm,
-                  children: [
-                    const Text('Guardar'),
-                    TeclaAtajo('Ctrl+S', color: colores.onPrimary),
-                  ],
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) unawaited(_salir());
+      },
+      child: AtajosDeTeclado(
+        atajos: _atajos,
+        child: Scaffold(
+          appBar: AppBar(
+            title: const Text('Configuración'),
+            actions: [
+              Padding(
+                padding: EdgeInsets.only(right: espaciado.xl),
+                child: FilledButton(
+                  style: FilledButton.styleFrom(minimumSize: const Size(0, 44)),
+                  onPressed: () => unawaited(_guardar()),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    spacing: espaciado.sm,
+                    children: [
+                      const Text('Guardar'),
+                      TeclaAtajo('Ctrl+S', color: colores.onPrimary),
+                    ],
+                  ),
                 ),
               ),
-            ),
-          ],
-        ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.all(espaciado.xl),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: PantallaConfiguracion._anchoMaximo,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                spacing: espaciado.lg,
-                children: [
-                  BloqueConfiguracion(
-                    titulo: 'Datos del negocio',
-                    detalle: 'Salen en los PDF de reportes',
-                    child: CamposNegocio(
-                      nombre: _nombre,
-                      rif: _rif,
-                      direccion: _direccion,
-                      telefono: _telefono,
-                      onGuardar: () => unawaited(_guardar()),
+            ],
+          ),
+          body: SingleChildScrollView(
+            padding: EdgeInsets.all(espaciado.xl),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  maxWidth: PantallaConfiguracion._anchoMaximo,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  spacing: espaciado.lg,
+                  children: [
+                    BloqueConfiguracion(
+                      titulo: 'Datos del negocio',
+                      detalle: 'Salen en los PDF de reportes',
+                      child: CamposNegocio(
+                        nombre: _nombre,
+                        rif: _rif,
+                        direccion: _direccion,
+                        telefono: _telefono,
+                        onGuardar: () => unawaited(_guardar()),
+                      ),
                     ),
-                  ),
-                  BloqueConfiguracion(
-                    titulo: 'Respaldo',
-                    child: SeccionRespaldo(
-                      respaldo: widget.respaldo,
-                      elegirCarpeta: widget.elegirCarpeta,
-                      elegirArchivo: widget.elegirArchivo,
+                    BloqueConfiguracion(
+                      titulo: 'Respaldo',
+                      child: SeccionRespaldo(
+                        respaldo: widget.respaldo,
+                        elegirCarpeta: widget.elegirCarpeta,
+                        elegirArchivo: widget.elegirArchivo,
+                      ),
                     ),
-                  ),
-                  BloqueConfiguracion(
-                    titulo: 'PIN de acceso',
-                    child: Align(
-                      alignment: Alignment.centerLeft,
-                      child: OutlinedButton(
-                        onPressed: widget.onCambiarPin,
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          spacing: espaciado.sm,
-                          children: [
-                            const Text('Cambiar PIN'),
-                            TeclaAtajo(
-                              'Ctrl+Shift+L',
-                              color: colores.onSurfaceVariant,
-                            ),
-                          ],
+                    BloqueConfiguracion(
+                      titulo: 'PIN de acceso',
+                      child: Align(
+                        alignment: Alignment.centerLeft,
+                        child: OutlinedButton(
+                          onPressed: widget.onCambiarPin,
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            spacing: espaciado.sm,
+                            children: [
+                              const Text('Cambiar PIN'),
+                              TeclaAtajo(
+                                'Ctrl+Shift+L',
+                                color: colores.onSurfaceVariant,
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ),

@@ -92,7 +92,21 @@ class _BuscadorState extends State<_Buscador> {
   late final _texto = TextEditingController(text: widget.controlador.busqueda);
 
   @override
+  void initState() {
+    super.initState();
+    widget.controlador.addListener(_seguir);
+  }
+
+  // Esc clears the search in the controller; the box follows.
+  void _seguir() {
+    if (_texto.text != widget.controlador.busqueda) {
+      _texto.text = widget.controlador.busqueda;
+    }
+  }
+
+  @override
   void dispose() {
+    widget.controlador.removeListener(_seguir);
     _texto.dispose();
     super.dispose();
   }

@@ -14,6 +14,7 @@ import 'package:inventario/features/entradas/presentation/aviso_entrada.dart';
 import 'package:inventario/features/entradas/presentation/buscador_producto_entrada.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
 import 'package:inventario/features/entradas/presentation/campos_entrada.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
 import 'package:inventario/features/entradas/presentation/opciones_marca.dart';
 import 'package:inventario/features/entradas/presentation/producto_elegido.dart';
 import 'package:inventario/features/entradas/presentation/vista_previa_entrada.dart';
@@ -78,7 +79,7 @@ class _DialogoEntradaState extends State<DialogoEntrada> {
   final _marca = TextEditingController();
   late final _proveedor = TextEditingController(text: widget.proveedorInicial);
   final _piezas = TextEditingController();
-  final _cantidad = TextEditingController();
+  final _cantidad = ControladorCantidad();
   final _nota = TextEditingController();
   final _focoBusqueda = FocusNode();
   final _focoMarca = FocusNode();

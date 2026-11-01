@@ -3,6 +3,7 @@ import 'package:inventario/features/productos/application/estado_existencias.dar
 import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/filtro_productos.dart';
+import 'package:inventario/features/productos/domain/forma_conteo.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/repositorio_productos.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
@@ -43,9 +44,14 @@ class ControladorExistencias extends ChangeNotifier {
   }
 
   /// Adds the product to the list as soon as the repository accepts it.
+  /// The last new product's category and way of counting: the next one is
+  /// usually alike, so the form starts with them.
+  ({Categoria categoria, FormaConteo forma})? ultimoCreado;
+
   Future<ResultadoGuardarProducto> crearProducto(DatosProducto datos) async {
     final resultado = await _repositorio.crear(datos);
     if (resultado case ProductoGuardado(:final producto)) {
+      ultimoCreado = (categoria: producto.categoria, forma: producto.forma);
       _estado = ExistenciasCargadas([...productos, producto]);
       notifyListeners();
     }

@@ -31,7 +31,6 @@ import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/presentation/dialogo_nuevo_producto.dart';
 import 'package:inventario/features/productos/presentation/pantalla_productos.dart';
-import 'package:inventario/features/productos/presentation/tarjeta_producto.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/data/repositorio_proveedores_en_memoria.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
@@ -173,63 +172,26 @@ void main() {
     await tester.pump();
   }
 
-  Finder enTarjeta(String texto) => find.descendant(
-    of: find.byType(TarjetaProducto),
-    matching: find.text(texto),
-  );
+  testWidgets('no stock cards on the home screen', (tester) async {
+    await mostrar(tester);
+    expect(find.text('Existencias'), findsNothing);
+  });
 
-  testWidgets('shows pieces, the open piece and the brands of a cheese', (
+  testWidgets('a banner names what is sold out and what runs low', (
     tester,
   ) async {
     await mostrar(tester);
-    expect(enTarjeta('3 piezas  +1 abierta · 16,4 kg'), findsOneWidget);
-    expect(enTarjeta('Marca F: 3 + 1 abierta'), findsOneWidget);
+    expect(
+      find.text('No tienes Queso guayanés · tienes poco Jamón de pierna.'),
+      findsOneWidget,
+    );
   });
 
-  testWidgets('lists every product with its stock and alert', (tester) async {
-    await mostrar(tester);
-    expect(find.byType(TarjetaProducto), findsNWidgets(3));
-    expect(enTarjeta('18,5 kg'), findsOneWidget);
-    expect(enTarjeta('Stock bajo'), findsOneWidget);
-    expect(enTarjeta('Agotado'), findsOneWidget);
-  });
-
-  testWidgets('search narrows the list ignoring accents', (tester) async {
-    await mostrar(tester);
-    await tester.enterText(find.byType(TextField), 'jamon');
-    await tester.pump();
-    expect(find.byType(TarjetaProducto), findsOneWidget);
-    expect(enTarjeta('Jamón de pierna'), findsOneWidget);
-  });
-
-  testWidgets('Esc clears the search', (tester) async {
-    await mostrar(tester);
-    await tester.enterText(find.byType(TextField), 'jamon');
-    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
-    await tester.pump();
-    expect(find.byType(TarjetaProducto), findsNWidgets(3));
-  });
-
-  testWidgets('says so when nothing matches', (tester) async {
-    await mostrar(tester);
-    await tester.enterText(find.byType(TextField), 'pescado');
-    await tester.pump();
-    expect(find.text('No hay productos que coincidan'), findsOneWidget);
-  });
-
-  testWidgets('a category chip filters the list', (tester) async {
-    await mostrar(tester);
-    await tester.tap(find.widgetWithText(ChoiceChip, 'Quesos'));
-    await tester.pump();
-    expect(find.byType(TarjetaProducto), findsOneWidget);
-    expect(enTarjeta('Queso guayanés'), findsOneWidget);
-  });
-
-  testWidgets('Ctrl+K moves the focus to the search box', (tester) async {
+  testWidgets('Ctrl+K opens Productos to search there', (tester) async {
     await mostrar(tester);
     await pulsarConControl(tester, LogicalKeyboardKey.keyK);
-    final campo = tester.widget<TextField>(find.byType(TextField));
-    expect(campo.focusNode?.hasFocus, isTrue);
+    await tester.pumpAndSettle();
+    expect(find.byType(PantallaProductos), findsOneWidget);
   });
 
   testWidgets('a sale shows up in the latest sales and the day total', (
@@ -340,31 +302,35 @@ void main() {
     );
   });
 
-  testWidgets('a narrow window folds the header links into a menu', (
+  testWidgets('Ctrl+R opens the rate calculator', (tester) async {
+    await mostrar(tester);
+    await pulsarConControl(tester, LogicalKeyboardKey.keyR);
+    await tester.pumpAndSettle();
+    expect(find.widgetWithText(TextField, 'Bolívares'), findsOneWidget);
+  });
+
+  testWidgets('the menu button opens the side menu with every screen', (
     tester,
   ) async {
     await mostrar(tester, ventana: const Size(920, 760));
     expect(find.text('Cambiar PIN'), findsNothing);
-    await tester.tap(find.text('Menú'));
+    await tester.tap(find.byTooltip('Menú'));
+    await tester.pumpAndSettle();
+    expect(find.byType(Drawer), findsOneWidget);
+    // A short window scrolls the menu to its last entries.
+    await tester.ensureVisible(find.text('Cambiar PIN'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cambiar PIN'));
     await tester.pumpAndSettle();
     expect(cambiosPin, 1);
-  });
-
-  testWidgets('a wide window shows the header links side by side', (
-    tester,
-  ) async {
-    await mostrar(tester, ventana: const Size(3500, 900));
-    expect(find.text('Menú'), findsNothing);
-    expect(find.text('Cambiar PIN'), findsOneWidget);
+    expect(find.byType(Drawer), findsNothing);
   });
 
   testWidgets('a laptop keeps the till and expenses in view', (tester) async {
     await mostrar(tester, ventana: const Size(1366, 760));
     expect(find.text('Caja'), findsOneWidget);
     expect(find.text('Gasto'), findsOneWidget);
-    expect(find.text('Menú'), findsOneWidget);
+    expect(find.byTooltip('Menú'), findsOneWidget);
   });
 
   testWidgets('Ctrl+L locks the session', (tester) async {
@@ -402,7 +368,7 @@ void main() {
     await tester.sendKeyEvent(LogicalKeyboardKey.escape);
     await tester.pumpAndSettle();
     expect(find.byType(PantallaProveedores), findsNothing);
-    expect(find.text('Existencias'), findsOneWidget);
+    expect(find.byType(PantallaInicio), findsOneWidget);
   });
 
   testWidgets("the header shows today's BCV rate and how much it moved", (
@@ -473,43 +439,5 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(DialogoNuevoProducto), findsOneWidget);
     expect(find.text('Próximamente: Registrar merma'), findsNothing);
-  });
-
-  testWidgets('home shortcuts work while typing in the search box', (
-    tester,
-  ) async {
-    await mostrar(tester);
-    await tester.enterText(find.byType(TextField), 'jam');
-    await tester.sendKeyEvent(LogicalKeyboardKey.f3);
-    await tester.pumpAndSettle();
-    expect(find.byType(DialogoAjuste), findsOneWidget);
-  });
-
-  testWidgets('a product created from home appears in the grid', (
-    tester,
-  ) async {
-    await mostrar(tester);
-    await tester.tap(find.text('Nuevo producto'));
-    await tester.pumpAndSettle();
-    await tester.enterText(
-      find.widgetWithText(TextFormField, 'Nombre'),
-      'Queso de año',
-    );
-    final crear = find.widgetWithText(FilledButton, 'Crear');
-    await tester.ensureVisible(crear);
-    await tester.pumpAndSettle();
-    await tester.tap(crear);
-    await tester.pumpAndSettle();
-    // The grid builds lazily under the day panel, so scroll down to it.
-    expect(
-      controlador.productos.map((p) => p.nombre),
-      contains('Queso de año'),
-    );
-    await tester.dragUntilVisible(
-      enTarjeta('Queso de año'),
-      find.byType(CustomScrollView),
-      const Offset(0, -200),
-    );
-    expect(enTarjeta('Queso de año'), findsOneWidget);
   });
 }

@@ -70,7 +70,8 @@ class SeccionLotes extends StatelessWidget {
                 children: [
                   TextSpan(
                     text: editando
-                        ? '· las existencias cambian con entradas, salidas y mermas'
+                        ? '· las existencias cambian con pedidos, ventas y '
+                              'mermas; para corregirlas, Conteo (F9)'
                         : '(opcional)',
                     style: TextStyle(
                       fontWeight: FontWeight.w400,

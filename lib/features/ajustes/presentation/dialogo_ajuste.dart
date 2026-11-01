@@ -16,6 +16,7 @@ import 'package:inventario/features/ajustes/presentation/selector_motivo.dart';
 import 'package:inventario/features/ajustes/presentation/selector_tipo_ajuste.dart';
 import 'package:inventario/features/entradas/presentation/buscador_producto_entrada.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
 import 'package:inventario/features/entradas/presentation/producto_elegido.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
@@ -61,7 +62,7 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
   final _formulario = GlobalKey<FormState>();
   final _busqueda = TextEditingController();
   final _piezas = TextEditingController();
-  final _cantidad = TextEditingController();
+  final _cantidad = ControladorCantidad();
   final _nota = TextEditingController();
   final _focoBusqueda = FocusNode();
   final _focoPiezas = FocusNode();
@@ -170,7 +171,9 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
       case AjusteSinExistencias():
         mensajero.showSnackBar(
           const SnackBar(
-            content: Text('Ya no hay tanto de esa marca; revisa la cantidad'),
+            content: Text(
+              'No se puede sacar eso de esa marca; revisa piezas y peso',
+            ),
           ),
         );
     }
@@ -214,27 +217,8 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
                     titulo: 'Registrar merma o pérdida',
                     icono: Icons.delete_outline,
                   ),
-                  ConEtiqueta(
-                    etiqueta: 'Qué pasó',
-                    ayuda: ayudaTipoAjuste,
-                    child: ExcludeFocus(
-                      child: SelectorTipoAjuste(
-                        elegido: _tipo,
-                        onElegir: _elegirTipo,
-                      ),
-                    ),
-                  ),
-                  ConEtiqueta(
-                    etiqueta: 'Motivo',
-                    ayuda: ayudaMotivos(_tipo.motivos),
-                    child: ExcludeFocus(
-                      child: SelectorMotivo(
-                        motivos: _tipo.motivos,
-                        elegido: _motivo,
-                        onElegir: (m) => setState(() => _motivo = m),
-                      ),
-                    ),
-                  ),
+                  // The product first, as when selling; what happened comes
+                  // after, already set to the usual merma.
                   if (producto == null)
                     BuscadorProductoEntrada(
                       productos: widget.existencias.productos,
@@ -267,6 +251,27 @@ class _DialogoAjusteState extends State<DialogoAjuste> {
                           ),
                         ),
                       ),
+                    ConEtiqueta(
+                      etiqueta: 'Qué pasó',
+                      ayuda: ayudaTipoAjuste,
+                      child: ExcludeFocus(
+                        child: SelectorTipoAjuste(
+                          elegido: _tipo,
+                          onElegir: _elegirTipo,
+                        ),
+                      ),
+                    ),
+                    ConEtiqueta(
+                      etiqueta: 'Motivo',
+                      ayuda: ayudaMotivos(_tipo.motivos),
+                      child: ExcludeFocus(
+                        child: SelectorMotivo(
+                          motivos: _tipo.motivos,
+                          elegido: _motivo,
+                          onElegir: (m) => setState(() => _motivo = m),
+                        ),
+                      ),
+                    ),
                     if (lote != null)
                       CamposAjuste(
                         producto: producto,

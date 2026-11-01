@@ -166,6 +166,7 @@ Reporte _ganancia(
         nombre: grupo.first.producto,
         vendido: _suma(grupo, (m) => m.importe),
         costo: _suma(grupo, costoDe),
+        conCosto: grupo.any((m) => _esVenta(m) && m.costo != null),
       ),
   ]..sort((a, b) => (b.vendido - b.costo).compareTo(a.vendido - a.costo));
   return Reporte(
@@ -193,8 +194,9 @@ Reporte _ganancia(
         [
           f.nombre,
           _dinero(f.vendido),
-          _dinero(f.costo),
-          margen(f.vendido, f.costo),
+          // Without any cost the margin would read 100 %, which it is not.
+          f.conCosto ? _dinero(f.costo) : 'sin costo',
+          f.conCosto ? margen(f.vendido, f.costo) : '—',
           _dinero(f.vendido - f.costo),
         ],
     ],

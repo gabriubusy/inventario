@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
 import 'package:inventario/features/incidencias/domain/sacar_de_lote.dart';
+import 'package:inventario/features/incidencias/presentation/texto_no_sale.dart';
 import 'package:inventario/features/productos/domain/lote_marca.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/presentation/textos_producto.dart';
@@ -31,24 +32,35 @@ class CamposAjuste extends StatelessWidget {
   /// Enter on the note.
   final VoidCallback onEnviar;
 
-  /// "Propia quedará: 3,8 kg → 3,4 kg" while the amounts fit.
-  String? _quedara() {
+  /// "Propia quedará: 3,8 kg → 3,4 kg", or why it can't (`ok: false`).
+  ({String texto, bool ok}) _quedara() {
+    final sacadas = CampoCantidadRecibida.leer(piezas, 0);
+    final sacado = CampoCantidadRecibida.leer(
+      cantidad,
+      producto.forma.unidad.decimales,
+      unidad: producto.forma.unidad,
+    );
     final restado = sacarDeLote(
       producto,
       marca: lote.marca,
       proveedor: lote.proveedor,
-      piezas: CampoCantidadRecibida.leer(piezas, 0),
-      cantidad: CampoCantidadRecibida.leer(
-        cantidad,
-        producto.forma.unidad.decimales,
-        unidad: producto.forma.unidad,
-      ),
+      piezas: sacadas,
+      cantidad: sacado,
     );
-    if (restado == null) return null;
+    if (restado == null) {
+      return (
+        texto: textoNoSale(producto, lote, piezas: sacadas, cantidad: sacado),
+        ok: false,
+      );
+    }
     final despues =
         restado.lotes[indiceLote(restado, lote.marca, lote.proveedor)];
-    return '${lote.marca} quedará: ${textoLote(producto, lote)} → '
-        '${textoLote(restado, despues)}';
+    return (
+      texto:
+          '${lote.marca} quedará: ${textoLote(producto, lote)} → '
+          '${textoLote(restado, despues)}',
+      ok: true,
+    );
   }
 
   @override
@@ -91,12 +103,17 @@ class CamposAjuste extends StatelessWidget {
         ListenableBuilder(
           listenable: Listenable.merge([piezas, cantidad]),
           builder: (context, _) {
-            final quedara = _quedara();
+            final vacio =
+                piezas.text.trim().isEmpty && cantidad.text.trim().isEmpty;
+            // Nothing typed yet: just what there is, nothing to warn about.
+            final quedara = vacio
+                ? (texto: 'Hay ${textoLote(producto, lote)}', ok: true)
+                : _quedara();
             return Text(
-              quedara ?? 'Solo hay ${textoLote(producto, lote)}',
+              quedara.texto,
               style: tema.textTheme.bodyMedium?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: quedara == null ? tema.colorScheme.error : null,
+                color: quedara.ok ? null : tema.colorScheme.error,
                 fontFeatures: const [FontFeature.tabularFigures()],
               ),
             );

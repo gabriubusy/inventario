@@ -12,6 +12,12 @@ void main() {
     expect(tasa.aBolivares(1), 40);
   });
 
+  test('converts bolívares to dollars, rounding to the cent', () {
+    expect(tasa.aDolares(38808), 980);
+    expect(tasa.aDolares(100000), 2525);
+    expect(tasa.aDolares(0), 0);
+  });
+
   test('belongs to its day whatever the time', () {
     expect(tasa.esDelDia(DateTime(2026, 10, 24, 23, 59)), isTrue);
     expect(tasa.esDelDia(DateTime(2026, 10, 25)), isFalse);

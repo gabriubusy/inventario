@@ -6,6 +6,7 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/botones_crear.dart';
 import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
 import 'package:inventario/features/entradas/presentation/producto_elegido.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/lista_precio.dart';
@@ -68,7 +69,7 @@ class DialogoSalida extends StatefulWidget {
 class _DialogoSalidaState extends State<DialogoSalida> {
   final _formulario = GlobalKey<FormState>();
   final _busqueda = TextEditingController();
-  final _cantidad = TextEditingController();
+  final _cantidad = ControladorCantidad();
   final _nota = TextEditingController();
   final _focoBusqueda = FocusNode();
   final _focoCantidad = FocusNode();

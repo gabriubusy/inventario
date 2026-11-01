@@ -18,6 +18,7 @@ import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/gastos/data/repositorio_gastos_en_memoria.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/data/repositorio_incidencias_en_memoria.dart';
+import 'package:inventario/features/inicio/presentation/pantalla_inicio.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/data/repositorio_movimientos_en_memoria.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
@@ -100,20 +101,18 @@ void main() {
     for (final digito in ['1', '2', '3', '4']) {
       await tester.tap(find.widgetWithText(OutlinedButton, digito));
     }
-    await tester.pump();
-    await tester.tap(find.widgetWithText(FilledButton, 'Entrar'));
+    // The fourth digit enters on its own.
     await tester.pumpAndSettle();
   }
 
   testWidgets('shows the home screen after entering the PIN', (tester) async {
     await entrar(tester);
-    expect(find.text('Existencias'), findsOneWidget);
+    expect(find.byType(PantallaInicio), findsOneWidget);
   });
 
   testWidgets('locking goes back to the PIN screen', (tester) async {
     await entrar(tester);
-    // At 1280 px the header links live in its menu.
-    await tester.tap(find.text('Menú'));
+    await tester.tap(find.byTooltip('Menú'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Bloquear'));
     await tester.pumpAndSettle();

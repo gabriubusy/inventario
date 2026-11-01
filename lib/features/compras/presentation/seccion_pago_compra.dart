@@ -4,7 +4,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/fechas.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
-import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
+import 'package:inventario/features/productos/presentation/interruptor_dos_opciones.dart';
 
 /// Alt+A, S, D, F, G pick each way of paying, in declaration order.
 const teclasMedio = [
@@ -59,24 +59,11 @@ class SeccionPagoCompra extends StatelessWidget {
       spacing: espaciado.md,
       children: [
         ExcludeFocus(
-          child: Row(
-            spacing: espaciado.sm,
-            children: [
-              Expanded(
-                child: OpcionSeleccionable(
-                  titulo: 'De contado',
-                  elegida: !credito,
-                  onPulsar: () => onCredito(false),
-                ),
-              ),
-              Expanded(
-                child: OpcionSeleccionable(
-                  titulo: 'A crédito',
-                  elegida: credito,
-                  onPulsar: () => onCredito(true),
-                ),
-              ),
-            ],
+          child: InterruptorDosOpciones(
+            primera: 'De contado',
+            segunda: 'A crédito',
+            esSegunda: credito,
+            onCambiar: onCredito,
           ),
         ),
         if (credito)

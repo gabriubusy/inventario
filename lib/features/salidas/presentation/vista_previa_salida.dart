@@ -5,8 +5,10 @@ import 'package:inventario/features/productos/domain/estado_stock.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/presentation/etiqueta_estado.dart';
 import 'package:inventario/features/productos/presentation/textos_producto.dart';
+import 'package:inventario/features/salidas/domain/modo_venta.dart';
 import 'package:inventario/features/salidas/domain/salida.dart';
 import 'package:inventario/features/salidas/domain/vender.dart';
+import 'package:inventario/features/salidas/presentation/selector_modo_venta.dart';
 
 /// Before saving: whether a piece gets opened, how the brand is left and
 /// whether the product falls below its minimum. Only warns, never blocks.
@@ -31,11 +33,21 @@ class VistaPreviaSalida extends StatelessWidget {
     final espaciado = context.espaciado;
     final antes = producto.lotes[indice];
     const cifras = [FontFeature.tabularFigures()];
+    // A whole piece going out was easy to miss when only a cut was meant.
+    final aviso = switch (salida.modo) {
+      ModoVenta.piezaEntera =>
+        'Se va 1 pieza entera de '
+            '${producto.forma.unidad.formatear(salida.cantidad)}. '
+            '¿Solo un trozo? Por kilo · ${teclasModoVenta[ModoVenta.porPeso]!.$2}',
+      _ when abrePieza(antes, salida.modo) =>
+        '${antes.marca} no tiene pieza abierta: esta venta abre 1 pieza.',
+      _ => null,
+    };
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       spacing: espaciado.sm,
       children: [
-        if (abrePieza(antes, salida.modo))
+        if (aviso != null)
           DecoratedBox(
             decoration: BoxDecoration(
               color: alertas.fondoBajo,
@@ -43,10 +55,7 @@ class VistaPreviaSalida extends StatelessWidget {
             ),
             child: Padding(
               padding: EdgeInsets.all(espaciado.md),
-              child: Text(
-                '${antes.marca} no tiene pieza abierta: esta venta abre 1 pieza.',
-                style: TextStyle(color: alertas.textoBajo),
-              ),
+              child: Text(aviso, style: TextStyle(color: alertas.textoBajo)),
             ),
           ),
         DecoratedBox(

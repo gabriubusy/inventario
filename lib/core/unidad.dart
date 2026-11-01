@@ -40,19 +40,34 @@ enum UnidadBase {
     UnidadBase.unidad => const {},
   };
 
-  /// Reads what was typed as a stored quantity: "1,25", "1,25 kg", "250 g"
-  /// or "250g" for kilos; "500 ml" for litres. Null when it is not one.
-  int? leer(String texto) {
+  /// Whether grams or millilitres can be typed.
+  bool get tieneMinimo => _nombresMinimos.isNotEmpty;
+
+  /// Reads what was typed as a stored quantity: "1,25", "1.25", "1,25 kg",
+  /// "250 g" or "250g" for kilos; "500 ml" for litres. With [enMinimo] a bare
+  /// number is grams or millilitres. Null when it is not one.
+  int? leer(String texto, {bool enMinimo = false}) {
     final partes = RegExp(r'^([0-9.,]*)\s*([a-z]*)$')
         .firstMatch(texto.trim().toLowerCase());
     if (partes == null) return null;
     final numero = partes.group(1)!;
     final unidad = partes.group(2)!;
-    if (unidad.isEmpty || _nombres.contains(unidad)) {
-      return parseDecimal(numero, decimales: decimales);
+    final minimo =
+        _nombresMinimos.contains(unidad) ||
+        (unidad.isEmpty && enMinimo && tieneMinimo);
+    if (minimo) {
+      final minimos = parseDecimal(numero, decimales: 0);
+      return minimos == null ? null : minimos * fraccionesPorUnidad ~/ 1000;
     }
-    if (!_nombresMinimos.contains(unidad)) return null;
-    final minimos = parseDecimal(numero, decimales: 0);
-    return minimos == null ? null : minimos * fraccionesPorUnidad ~/ 1000;
+    if (unidad.isNotEmpty && !_nombres.contains(unidad)) return null;
+    return parseDecimal(_puntoDecimal(numero), decimales: decimales);
   }
+
+  /// Scales show "1.500" for 1,5 kg: a lone dot is the decimal separator here.
+  String _puntoDecimal(String numero) =>
+      decimales > 0 &&
+          !numero.contains(',') &&
+          '.'.allMatches(numero).length == 1
+      ? numero.replaceFirst('.', ',')
+      : numero;
 }

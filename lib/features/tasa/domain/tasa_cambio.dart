@@ -31,6 +31,11 @@ class TasaCambio {
   int aBolivares(int dolares) =>
       dividirRedondeando(dolares * bolivaresPorDolar, 100);
 
+  /// [bolivares] and the result are in hundredths; 0 without a valid rate.
+  int aDolares(int bolivares) => bolivaresPorDolar <= 0
+      ? 0
+      : dividirRedondeando(bolivares * 100, bolivaresPorDolar);
+
   /// Change from [anterior] in hundredths of a percent: 17 is +0,17 %.
   int? get variacion {
     final base = anterior;

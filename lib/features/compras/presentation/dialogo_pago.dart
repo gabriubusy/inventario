@@ -104,6 +104,8 @@ class _DialogoPagoState extends State<DialogoPago> {
   }
 
   Future<void> _registrar() async {
+    // Empty pays everything, as an empty amount charges exactly in a sale.
+    if (_monto.text.trim().isEmpty) _pagarTodo();
     final entregado = _entregado;
     if (_guardando || entregado == null || entregado <= 0) {
       setState(() => _error = 'Escribe cuánto se paga');
@@ -143,7 +145,9 @@ class _DialogoPagoState extends State<DialogoPago> {
         setState(() => _error = 'Solo se deben ${formatearDolares(debe)}');
       case PagoSinTasa():
         setState(
-          () => _error = 'Sin la tasa de hoy no se puede pagar en bolívares',
+          () => _error =
+              'Falta la tasa de hoy para pagar en bolívares: ponla con '
+              'Ctrl+T en el inicio, o paga en dólares',
         );
     }
   }
@@ -233,6 +237,7 @@ class _DialogoPagoState extends State<DialogoPago> {
                         ],
                         decoration: InputDecoration(
                           labelText: 'Monto en $_simbolo',
+                          hintText: 'Vacío = paga todo',
                         ),
                         onSubmitted: (_) => unawaited(_registrar()),
                       ),

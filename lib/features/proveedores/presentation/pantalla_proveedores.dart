@@ -61,6 +61,12 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
 
   void _volver() => unawaited(Navigator.of(context).maybePop());
 
+  /// Esc clears the search first, as in Productos, and then goes back.
+  void _escape() {
+    if (widget.controlador.busqueda.isEmpty) return _volver();
+    widget.controlador.buscar('');
+  }
+
   void _nuevo() =>
       unawaited(mostrarDialogoProveedor(context, widget.controlador));
 
@@ -127,7 +133,7 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
     const SingleActivator(LogicalKeyboardKey.keyI, control: true):
         _registrarIncidencia,
     const SingleActivator(LogicalKeyboardKey.keyD, control: true): _devolver,
-    const SingleActivator(LogicalKeyboardKey.escape): _volver,
+    const SingleActivator(LogicalKeyboardKey.escape): _escape,
     const SingleActivator(LogicalKeyboardKey.keyN, control: true): _nuevo,
     const SingleActivator(LogicalKeyboardKey.keyE, control: true): _editar,
     const SingleActivator(LogicalKeyboardKey.keyK, control: true):

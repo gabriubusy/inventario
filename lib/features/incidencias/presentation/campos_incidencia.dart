@@ -3,6 +3,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
 import 'package:inventario/features/incidencias/domain/sacar_de_lote.dart';
 import 'package:inventario/features/incidencias/presentation/casilla_sacar.dart';
+import 'package:inventario/features/incidencias/presentation/texto_no_sale.dart';
 import 'package:inventario/features/productos/presentation/textos_producto.dart';
 import 'package:inventario/features/proveedores/domain/suministro.dart';
 
@@ -37,18 +38,22 @@ class CamposIncidencia extends StatelessWidget {
   String? _quedara() {
     final (:producto, :lote) = suministro;
     final unidad = producto.forma.unidad;
+    final sacadas = CampoCantidadRecibida.leer(piezas, 0);
+    final sacado = CampoCantidadRecibida.leer(
+      cantidad,
+      unidad.decimales,
+      unidad: unidad,
+    );
     final restado = sacarDeLote(
       producto,
       marca: lote.marca,
       proveedor: lote.proveedor,
-      piezas: CampoCantidadRecibida.leer(piezas, 0),
-      cantidad: CampoCantidadRecibida.leer(
-        cantidad,
-        unidad.decimales,
-        unidad: unidad,
-      ),
+      piezas: sacadas,
+      cantidad: sacado,
     );
-    if (restado == null) return 'Solo hay ${textoLote(producto, lote)}';
+    if (restado == null) {
+      return textoNoSale(producto, lote, piezas: sacadas, cantidad: sacado);
+    }
     final despues =
         restado.lotes[indiceLote(restado, lote.marca, lote.proveedor)];
     return '${lote.marca} quedará en ${textoLote(restado, despues)}';

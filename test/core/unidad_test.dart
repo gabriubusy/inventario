@@ -27,6 +27,21 @@ void main() {
     expect(UnidadBase.unidad.leer('3 und'), 3);
   });
 
+  test('reads a lone dot as decimals, like a scale shows it', () {
+    expect(UnidadBase.kg.leer('0.5'), 500);
+    expect(UnidadBase.kg.leer('0.250'), 250);
+    expect(UnidadBase.kg.leer('1.500 kg'), 1500);
+    expect(UnidadBase.kg.leer('1.234,5'), 1234500);
+    expect(UnidadBase.unidad.leer('1.200'), 1200);
+  });
+
+  test('reads a bare number as grams when the field is in grams', () {
+    expect(UnidadBase.kg.leer('250', enMinimo: true), 250);
+    expect(UnidadBase.kg.leer('1,5 kg', enMinimo: true), 1500);
+    expect(UnidadBase.litro.leer('500', enMinimo: true), 500);
+    expect(UnidadBase.unidad.leer('3', enMinimo: true), 3);
+  });
+
   test('refuses what is not a quantity of that unit', () {
     expect(UnidadBase.kg.leer('250 ml'), isNull);
     expect(UnidadBase.kg.leer('12,5 g'), isNull);

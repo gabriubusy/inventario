@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/core/unidad.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
+import 'package:inventario/features/entradas/presentation/selector_unidad_minima.dart';
 
 /// The big amount field; Enter here registers the sale, for speed.
 class CampoCantidadVendida extends StatelessWidget {
@@ -45,17 +47,29 @@ class CampoCantidadVendida extends StatelessWidget {
     TextEditingController controller,
     int decimales, {
     UnidadBase? unidad,
-  }) => _valor(controller.text, decimales, unidad) ?? 0;
+  }) =>
+      _valor(
+        controller.text,
+        decimales,
+        unidad,
+        ControladorCantidad.de(controller),
+      ) ??
+      0;
 
-  static int? _valor(String texto, int decimales, UnidadBase? unidad) =>
-      unidad == null
+  static int? _valor(
+    String texto,
+    int decimales,
+    UnidadBase? unidad,
+    bool enMinimo,
+  ) => unidad == null
       ? parseDecimal(texto, decimales: decimales)
-      : unidad.leer(texto);
+      : unidad.leer(texto, enMinimo: enMinimo);
 
-  bool get _aceptaMinimo =>
-      unidad == UnidadBase.kg || unidad == UnidadBase.litro;
+  bool get _aceptaMinimo => unidad?.tieneMinimo ?? false;
 
   String get _ejemplo => switch (unidad) {
+    final UnidadBase u when ControladorCantidad.de(controller) =>
+      'Ej.: 250 ${u.simboloMinimo}',
     UnidadBase.kg => 'Ej.: 0,25 o 250 g',
     UnidadBase.litro => 'Ej.: 0,5 o 500 ml',
     _ => decimales == 0 ? 'Solo enteros' : 'Ej.: 2,5',
@@ -63,7 +77,12 @@ class CampoCantidadVendida extends StatelessWidget {
 
   String? _validar(String? texto) {
     if (texto == null || texto.trim().isEmpty) return 'Falta';
-    final valor = _valor(texto, decimales, unidad);
+    final valor = _valor(
+      texto,
+      decimales,
+      unidad,
+      ControladorCantidad.de(controller),
+    );
     if (valor == null) return _ejemplo;
     if (valor <= 0) return 'Mayor que 0';
     if (valor > disponible) {
@@ -73,9 +92,21 @@ class CampoCantidadVendida extends StatelessWidget {
     return null;
   }
 
+  /// The "kg | g" selector, while no unit was typed in the text.
+  Widget? _selector(bool conLetras) {
+    final unidad = this.unidad;
+    final controller = this.controller;
+    if (conLetras || !_aceptaMinimo || controller is! ControladorCantidad) {
+      return null;
+    }
+    return SelectorUnidadMinima(unidad: unidad!, controller: controller);
+  }
+
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
+    final conLetras = RegExp('[a-zA-Z]').hasMatch(controller.text);
+    final selector = _selector(conLetras);
     return TextFormField(
       controller: controller,
       focusNode: focusNode,
@@ -92,9 +123,8 @@ class CampoCantidadVendida extends StatelessWidget {
       decoration: InputDecoration(
         labelText: etiqueta,
         // "250 g" already says its unit; "kg" after it would contradict it.
-        suffixText: RegExp('[a-zA-Z]').hasMatch(controller.text)
-            ? null
-            : sufijo,
+        suffixText: conLetras || selector != null ? null : sufijo,
+        suffixIcon: selector,
         helperText: _aceptaMinimo ? _ejemplo : null,
       ),
       autovalidateMode: AutovalidateMode.onUserInteraction,

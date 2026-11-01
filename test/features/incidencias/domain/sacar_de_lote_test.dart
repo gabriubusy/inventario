@@ -42,6 +42,33 @@ void main() {
     expect(despues?.lotes.last, queso.lotes.last);
   });
 
+  test('refuses to leave whole pieces without any weight', () {
+    final uno = sacarDeLote(
+      queso,
+      marca: 'Marca A',
+      proveedor: 'Distribuidora 1',
+      piezas: 1,
+      cantidad: 8200,
+    );
+    expect(uno, isNull);
+    expect(
+      dejaPiezasSinPeso(queso.lotes.first, piezas: 1, cantidad: 8200),
+      isTrue,
+    );
+  });
+
+  test('takes all the weight when all the pieces go too', () {
+    final todo = sacarDeLote(
+      queso,
+      marca: 'Marca A',
+      proveedor: 'Distribuidora 1',
+      piezas: 10,
+      cantidad: 8200,
+    );
+    expect(todo?.lotes.first.piezas, 0);
+    expect(todo?.lotes.first.cantidad, 0);
+  });
+
   test('refuses to take more than the lot holds', () {
     expect(
       sacarDeLote(

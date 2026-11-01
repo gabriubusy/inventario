@@ -114,6 +114,6 @@ void main() {
     await tester.pump();
     await tester.tap(find.widgetWithText(ListTile, 'Carne molida'));
     await tester.pumpAndSettle();
-    expect(find.text('Kardex · Carne molida'), findsOneWidget);
+    expect(find.text('Historial · Carne molida'), findsOneWidget);
   });
 }

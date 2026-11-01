@@ -7,7 +7,9 @@ import 'package:inventario/app/botones_crear.dart';
 import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/listas.dart';
+import 'package:inventario/core/texto.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
 import 'package:inventario/features/incidencias/application/controlador_incidencias.dart';
 import 'package:inventario/features/incidencias/domain/datos_incidencia.dart';
 import 'package:inventario/features/incidencias/domain/resultado_incidencia.dart';
@@ -75,8 +77,9 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
   final _formulario = GlobalKey<FormState>();
   late final _proveedor = TextEditingController(text: widget.proveedorInicial);
   final _piezas = TextEditingController();
-  final _cantidad = TextEditingController();
+  final _cantidad = ControladorCantidad();
   final _nota = TextEditingController();
+  final _filtro = TextEditingController();
   final _focoProveedor = FocusNode();
   final _focoPiezas = FocusNode();
   final _focoCantidad = FocusNode();
@@ -91,11 +94,12 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
   void initState() {
     super.initState();
     _proveedor.addListener(_alCambiarProveedor);
+    _filtro.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
-    for (final c in [_proveedor, _piezas, _cantidad, _nota]) {
+    for (final c in [_proveedor, _piezas, _cantidad, _nota, _filtro]) {
       c.dispose();
     }
     for (final f in [_focoProveedor, _focoPiezas, _focoCantidad]) {
@@ -110,6 +114,28 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
   Suministro? get _suministro {
     final elegido = _elegido;
     return elegido == null ? null : _suministros[elegido];
+  }
+
+  /// A supplier with many products gets a search box; Alt+1… then counts
+  /// over what it leaves.
+  static const _conBuscador = 6;
+
+  /// Positions in [_suministros] that match the search, in order.
+  List<int> get _visibles {
+    final buscado = normalizarParaBusqueda(_filtro.text);
+    return [
+      for (final (i, s) in _suministros.indexed)
+        if (buscado.isEmpty ||
+            normalizarParaBusqueda('${s.producto.nombre} ${s.lote.marca}')
+                .contains(buscado))
+          i,
+    ];
+  }
+
+  /// Enter in the search box takes the first match.
+  void _elegirPrimero() {
+    final visibles = _visibles;
+    if (visibles.isNotEmpty) _elegir(visibles.first);
   }
 
   void _alCambiarProveedor() {
@@ -203,11 +229,15 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {
     for (final (i, tecla) in _teclasProducto.indexed)
-      SingleActivator(tecla, alt: true): () => _elegir(i),
+      SingleActivator(tecla, alt: true): () {
+        final visibles = _visibles;
+        if (i < visibles.length) _elegir(visibles[i]);
+      },
     for (final (i, tecla) in teclasTipoIncidencia.indexed)
       SingleActivator(tecla, alt: true): () =>
           _elegirTipo(TipoIncidencia.values[i]),
-    const SingleActivator(LogicalKeyboardKey.keyS, alt: true): () =>
+    // X, not S: Alt+S next to Ctrl+S (register) was too easy to mix up.
+    const SingleActivator(LogicalKeyboardKey.keyX, alt: true): () =>
         setState(() => _sacar = !_sacar),
     const SingleActivator(LogicalKeyboardKey.keyS, control: true): () =>
         unawaited(_registrar()),
@@ -245,13 +275,36 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
                   ),
                   ConEtiqueta(
                     etiqueta: '¿Con qué producto?',
-                    ayuda: 'Alt+1… elige el producto y su marca',
-                    child: ExcludeFocus(
-                      child: OpcionesSuministro(
-                        suministros: _suministros,
-                        elegido: _elegido,
-                        onElegir: _elegir,
-                      ),
+                    ayuda:
+                        'Alt+1… elige el producto y su marca · escribe para '
+                        'buscar y Enter toma el primero',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      spacing: espaciado.sm,
+                      children: [
+                        if (_suministros.length > _conBuscador)
+                          TextField(
+                            controller: _filtro,
+                            decoration: const InputDecoration(
+                              prefixIcon: Icon(Icons.search),
+                              hintText: 'Buscar producto o marca',
+                              isDense: true,
+                            ),
+                            onSubmitted: (_) => _elegirPrimero(),
+                          ),
+                        ExcludeFocus(
+                          child: OpcionesSuministro(
+                            suministros: [
+                              for (final i in _visibles) _suministros[i],
+                            ],
+                            elegido: switch (_elegido) {
+                              final elegido? => _visibles.indexOf(elegido),
+                              null => null,
+                            },
+                            onElegir: (i) => _elegir(_visibles[i]),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                   if (_faltaProducto)
@@ -296,7 +349,7 @@ class _DialogoIncidenciaState extends State<DialogoIncidencia> {
                     onCrear: () => unawaited(_registrar()),
                   ),
                   Text(
-                    'Alt+1… producto · Alt+Q–T qué pasó · Alt+S sacar del '
+                    'Alt+1… producto · Alt+Q–T qué pasó · Alt+X sacar del '
                     'inventario · Enter siguiente campo · Esc cierra',
                     textAlign: TextAlign.center,
                     style: tema.textTheme.bodySmall?.copyWith(

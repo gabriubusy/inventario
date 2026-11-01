@@ -29,7 +29,10 @@ import 'package:inventario/features/incidencias/presentation/dialogo_incidencia.
 import 'package:inventario/features/incidencias/presentation/pantalla_incidencias.dart';
 import 'package:inventario/features/inicio/presentation/accion_rapida.dart';
 import 'package:inventario/features/inicio/presentation/acciones_rapidas.dart';
+import 'package:inventario/features/inicio/presentation/aviso_stock.dart';
 import 'package:inventario/features/inicio/presentation/barra_superior.dart';
+import 'package:inventario/features/inicio/presentation/enlaces_cabecera.dart';
+import 'package:inventario/features/inicio/presentation/menu_lateral.dart';
 import 'package:inventario/features/inicio/presentation/panel_del_dia.dart';
 import 'package:inventario/features/kardex/presentation/pantalla_kardex.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
@@ -37,9 +40,7 @@ import 'package:inventario/features/productos/application/controlador_ajuste_pre
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/application/controlador_lista_productos.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
-import 'package:inventario/features/productos/presentation/cabecera_existencias.dart';
 import 'package:inventario/features/productos/presentation/dialogo_nuevo_producto.dart';
-import 'package:inventario/features/productos/presentation/grilla_productos.dart';
 import 'package:inventario/features/productos/presentation/pantalla_productos.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/presentation/pantalla_proveedores.dart';
@@ -56,6 +57,7 @@ import 'package:inventario/features/salidas/presentation/dialogo_salida.dart';
 import 'package:inventario/features/salidas/presentation/dialogo_ventas_hoy.dart';
 import 'package:inventario/features/tasa/application/controlador_tasa.dart';
 import 'package:inventario/features/tasa/presentation/aviso_tasa.dart';
+import 'package:inventario/features/tasa/presentation/dialogo_calculadora_tasa.dart';
 import 'package:inventario/features/tasa/presentation/dialogo_tasa.dart';
 import 'package:inventario/features/tasa/presentation/pedir_tasa_si_falta.dart';
 
@@ -121,8 +123,6 @@ class PantallaInicio extends StatefulWidget {
 }
 
 class _PantallaInicioState extends State<PantallaInicio> {
-  final _focoBusqueda = FocusNode();
-
   /// Ctrl+Z undoes whichever of entry or sale happened last.
   AccionRapida? _ultimoMovimiento;
 
@@ -137,7 +137,6 @@ class _PantallaInicioState extends State<PantallaInicio> {
   void dispose() {
     widget.entradas.removeListener(_alCambiarEntradas);
     widget.salidas.removeListener(_alCambiarSalidas);
-    _focoBusqueda.dispose();
     super.dispose();
   }
 
@@ -311,6 +310,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
 
   void _ponerTasa() => unawaited(mostrarDialogoTasa(context, widget.tasa));
 
+  void _abrirCalculadora() =>
+      unawaited(mostrarCalculadoraTasa(context, widget.tasa));
+
   void _abrirProveedores() => unawaited(
     Navigator.of(context).push(
       MaterialPageRoute<void>(
@@ -424,8 +426,9 @@ class _PantallaInicioState extends State<PantallaInicio> {
     const SingleActivator(LogicalKeyboardKey.keyB, control: true): _respaldar,
     for (final accion in AccionRapida.values)
       SingleActivator(accion.tecla): () => _ejecutar(accion),
+    // The stock lives in Productos now; Ctrl+K searches there.
     const SingleActivator(LogicalKeyboardKey.keyK, control: true):
-        _focoBusqueda.requestFocus,
+        _abrirProductos,
     const SingleActivator(LogicalKeyboardKey.keyN, control: true):
         _nuevoProducto,
     const SingleActivator(LogicalKeyboardKey.keyL, control: true):
@@ -447,9 +450,41 @@ class _PantallaInicioState extends State<PantallaInicio> {
     const SingleActivator(LogicalKeyboardKey.keyD, control: true):
         _devolverAProveedor,
     const SingleActivator(LogicalKeyboardKey.keyT, control: true): _ponerTasa,
+    const SingleActivator(LogicalKeyboardKey.keyR, control: true):
+        _abrirCalculadora,
     const SingleActivator(LogicalKeyboardKey.keyZ, control: true):
         _deshacerMovimiento,
   };
+
+  List<EnlaceCabecera> get _enlacesMenu => [
+    (texto: 'Caja', atajo: 'F11', onPressed: _abrirCaja),
+    (texto: 'Gasto o ingreso', atajo: 'Ctrl+G', onPressed: _registrarGasto),
+    (texto: 'Calculadora', atajo: 'Ctrl+R', onPressed: _abrirCalculadora),
+    (texto: 'Proveedores', atajo: 'F5', onPressed: _abrirProveedores),
+    (texto: 'Incidencias', atajo: 'F6', onPressed: _abrirIncidencias),
+    (
+      texto: 'Registrar incidencia',
+      atajo: 'Ctrl+I',
+      onPressed: _registrarIncidencia,
+    ),
+    (
+      texto: 'Devolver a proveedor',
+      atajo: 'Ctrl+D',
+      onPressed: _devolverAProveedor,
+    ),
+    (texto: 'Historial', atajo: 'F8', onPressed: _abrirKardex),
+    (texto: 'Conteo', atajo: 'F9', onPressed: _abrirConteo),
+    (texto: 'Cuentas', atajo: 'F10', onPressed: _abrirCuentas),
+    (texto: 'Reportes', atajo: 'F12', onPressed: _abrirReportes),
+    if (widget.negocio != null)
+      (texto: 'Configuración', atajo: 'Ctrl+,', onPressed: _abrirConfiguracion),
+    (
+      texto: 'Cambiar PIN',
+      atajo: 'Ctrl+Shift+L',
+      onPressed: widget.onCambiarPin,
+    ),
+    (texto: 'Bloquear', atajo: 'Ctrl+L', onPressed: widget.onBloquear),
+  ];
 
   @override
   Widget build(BuildContext context) {
@@ -459,26 +494,15 @@ class _PantallaInicioState extends State<PantallaInicio> {
       child: AtajosDeTeclado(
         atajos: _atajos,
         child: Scaffold(
+          drawer: MenuLateral(enlaces: _enlacesMenu),
           body: Column(
             children: [
               BarraSuperior(
                 tasa: widget.tasa,
                 onTasa: _ponerTasa,
-                onProveedores: _abrirProveedores,
-                onIncidencias: _abrirIncidencias,
-                onKardex: _abrirKardex,
-                onConteo: _abrirConteo,
-                onCuentas: _abrirCuentas,
+                onCalculadora: _abrirCalculadora,
                 onCaja: _abrirCaja,
-                onReportes: _abrirReportes,
-                onBloquear: widget.onBloquear,
-                onCambiarPin: widget.onCambiarPin,
-                onConfiguracion: widget.negocio == null
-                    ? null
-                    : _abrirConfiguracion,
                 onGasto: _registrarGasto,
-                onIncidencia: _registrarIncidencia,
-                onDevolver: _devolverAProveedor,
               ),
               ListenableBuilder(
                 listenable: widget.tasa,
@@ -489,6 +513,10 @@ class _PantallaInicioState extends State<PantallaInicio> {
               AvisoCaja(caja: widget.caja, onAbrir: _abrirCaja),
               if (widget.respaldo case final respaldo?)
                 AvisoRespaldo(respaldo: respaldo, onRespaldar: _respaldar),
+              AvisoStock(
+                existencias: widget.controlador,
+                onPedido: () => _ejecutar(AccionRapida.entrada),
+              ),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, limites) {
@@ -519,25 +547,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
                                     tasa: widget.tasa,
                                     onVerVentas: _verVentasDeHoy,
                                   ),
-                                  CabeceraExistencias(
-                                    controlador: widget.controlador,
-                                    focoBusqueda: _focoBusqueda,
-                                    onNuevoProducto: _nuevoProducto,
-                                  ),
                                 ],
                               ),
-                            ),
-                          ),
-                          SliverPadding(
-                            padding: EdgeInsets.fromLTRB(
-                              lateral,
-                              0,
-                              lateral,
-                              espaciado.xl,
-                            ),
-                            sliver: GrillaProductos(
-                              estado: widget.controlador.estado,
-                              productos: widget.controlador.visibles,
                             ),
                           ),
                         ],

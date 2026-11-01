@@ -147,6 +147,13 @@ class _DialogoCompraState extends State<DialogoCompra> {
     _error = null;
   });
 
+  /// Back to the editor to fix it; Enter adds it again.
+  void _corregir(int indice) {
+    final linea = _lineas[indice];
+    setState(() => _lineas.removeAt(indice));
+    _editor.currentState?.cargar(linea);
+  }
+
   Future<void> _registrar() async {
     final proveedor = _proveedor.text.trim();
     final vence = _vence;
@@ -269,6 +276,7 @@ class _DialogoCompraState extends State<DialogoCompra> {
                 TablaLineasCompra(
                   lineas: _lineas,
                   onQuitar: (i) => setState(() => _lineas.removeAt(i)),
+                  onCorregir: _corregir,
                 ),
                 ConEtiqueta(
                   etiqueta: '¿Cómo se paga?',

@@ -147,6 +147,32 @@ void main() {
     expect(compras.deudaDe('Frigorífico 1'), 0);
   });
 
+  testWidgets('the line total works out the cost per kg', (tester) async {
+    await abrir(tester);
+    await elegir(tester, 'molida', 'Carne molida');
+    await tester.enterText(campo('Cantidad'), '4');
+    await tester.enterText(campo('Costo /kg'), '');
+    await tester.enterText(campo('o Total'), '18');
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Añadir'));
+    await tester.pumpAndSettle();
+    expect(find.text(r'$ 18,00'), findsWidgets);
+  });
+
+  testWidgets('a line can be taken back to the editor and fixed', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'molida', 'Carne molida');
+    await tester.enterText(campo('Cantidad'), '2');
+    await tester.tap(find.widgetWithText(OutlinedButton, 'Añadir'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('Corregir'));
+    await tester.pumpAndSettle();
+    final cantidad = tester.widget<TextFormField>(campo('Cantidad'));
+    expect(cantidad.controller?.text, '2');
+    expect(find.text('Aún no hay productos en la factura.'), findsOneWidget);
+  });
+
   testWidgets('Esc keeps the typed lines for the next time', (tester) async {
     await abrir(tester);
     await elegir(tester, 'molida', 'Carne molida');

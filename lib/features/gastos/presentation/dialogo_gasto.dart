@@ -14,7 +14,7 @@ import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
 import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
 import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
-import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
+import 'package:inventario/features/productos/presentation/interruptor_dos_opciones.dart';
 import 'package:inventario/features/salidas/presentation/opciones_medio_pago.dart';
 
 const _teclasCategoria = [
@@ -198,24 +198,11 @@ class _DialogoGastoState extends State<DialogoGasto> {
                       'Gasto: sale dinero · Alt+Q\n'
                       'Ingreso: entra dinero que no es venta · Alt+W',
                   child: ExcludeFocus(
-                    child: Row(
-                      spacing: espaciado.sm,
-                      children: [
-                        Expanded(
-                          child: OpcionSeleccionable(
-                            titulo: 'Gasto',
-                            elegida: !_ingreso,
-                            onPulsar: () => _elegirTipo(false),
-                          ),
-                        ),
-                        Expanded(
-                          child: OpcionSeleccionable(
-                            titulo: 'Ingreso',
-                            elegida: _ingreso,
-                            onPulsar: () => _elegirTipo(true),
-                          ),
-                        ),
-                      ],
+                    child: InterruptorDosOpciones(
+                      primera: 'Gasto',
+                      segunda: 'Ingreso',
+                      esSegunda: _ingreso,
+                      onCambiar: _elegirTipo,
                     ),
                   ),
                 ),

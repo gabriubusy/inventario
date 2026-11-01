@@ -52,22 +52,24 @@ void main() {
   bool entrarHabilitado(WidgetTester tester) =>
       tester.widget<FilledButton>(botonEntrar()).onPressed != null;
 
-  testWidgets('fills one dot per digit and stops at four', (tester) async {
+  testWidgets('fills one dot per digit', (tester) async {
     await mostrar(tester);
     await teclear(tester, '12');
     expect(introducidos(tester), 2);
-
-    await teclear(tester, '3456');
-    expect(introducidos(tester), Pin.longitud);
+    expect(introducidos(tester), lessThan(Pin.longitud));
   });
 
-  testWidgets('enables Entrar only with the full PIN', (tester) async {
+  testWidgets('keeps Entrar off until the PIN is full', (tester) async {
     await mostrar(tester);
     await teclear(tester, '123');
     expect(entrarHabilitado(tester), isFalse);
+  });
 
-    await teclear(tester, '4');
-    expect(entrarHabilitado(tester), isTrue);
+  testWidgets('enters on its own with the fourth digit', (tester) async {
+    await mostrar(tester);
+    await teclear(tester, '1234');
+    await tester.pumpAndSettle();
+    expect(controlador.estado, isA<SesionAbierta>());
   });
 
   testWidgets('deletes the last digit', (tester) async {
@@ -78,20 +80,11 @@ void main() {
     expect(introducidos(tester), 1);
   });
 
-  testWidgets('opens the session with the right PIN', (tester) async {
-    await mostrar(tester);
-    await teclear(tester, '1234');
-    await tester.tap(botonEntrar());
-    await tester.pumpAndSettle();
-    expect(controlador.estado, isA<SesionAbierta>());
-  });
-
   testWidgets('shows an error and resets the dots on a wrong PIN', (
     tester,
   ) async {
     await mostrar(tester);
     await teclear(tester, '9999');
-    await tester.tap(botonEntrar());
     await tester.pumpAndSettle();
 
     expect(find.text('PIN incorrecto'), findsOneWidget);
@@ -105,11 +98,10 @@ void main() {
     await mostrar(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.digit1);
     await tester.sendKeyEvent(LogicalKeyboardKey.numpad2);
-    await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
     await tester.sendKeyEvent(LogicalKeyboardKey.digit9);
     await tester.sendKeyEvent(LogicalKeyboardKey.backspace);
+    await tester.sendKeyEvent(LogicalKeyboardKey.digit3);
     await tester.sendKeyEvent(LogicalKeyboardKey.digit4);
-    await tester.sendKeyEvent(LogicalKeyboardKey.enter);
     await tester.pumpAndSettle();
 
     expect(controlador.estado, isA<SesionAbierta>());

@@ -33,6 +33,9 @@ class OpcionSeleccionable extends StatelessWidget {
         onPressed: onPulsar,
         style: OutlinedButton.styleFrom(
           minimumSize: const Size.fromHeight(_alto),
+          // Desktop's compact density eats the vertical padding and the
+          // second line ends up touching the border.
+          visualDensity: VisualDensity.standard,
           alignment: Alignment.centerLeft,
           padding: EdgeInsets.symmetric(
             horizontal: espaciado.sm + 2,
@@ -60,7 +63,8 @@ class OpcionSeleccionable extends StatelessWidget {
                   fontWeight: elegida ? FontWeight.w600 : FontWeight.w500,
                 ),
               ),
-              if (detalle != null)
+              if (detalle != null) ...[
+                const SizedBox(height: 2),
                 Text(
                   detalle,
                   maxLines: 1,
@@ -69,6 +73,7 @@ class OpcionSeleccionable extends StatelessWidget {
                     color: colores.onSurfaceVariant,
                   ),
                 ),
+              ],
             ],
           ),
         ),

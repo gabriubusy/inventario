@@ -11,10 +11,11 @@ import 'package:inventario/core/fechas.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/features/entradas/presentation/campo_cantidad_recibida.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/presentation/textos_movimiento.dart';
 import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
-import 'package:inventario/features/productos/presentation/opcion_seleccionable.dart';
+import 'package:inventario/features/productos/presentation/interruptor_dos_opciones.dart';
 import 'package:inventario/features/salidas/application/controlador_devoluciones.dart';
 import 'package:inventario/features/salidas/domain/devolucion_cliente.dart';
 import 'package:inventario/features/salidas/domain/resultado_devolucion.dart';
@@ -76,7 +77,7 @@ class DialogoDevolucion extends StatefulWidget {
 class _DialogoDevolucionState extends State<DialogoDevolucion> {
   final _formulario = GlobalKey<FormState>();
   late final int _maximo = widget.devoluciones.devolvibleDe(widget.venta);
-  late final _cantidad = TextEditingController(
+  late final _cantidad = ControladorCantidad(
     text: formatDecimal(_maximo, decimales: _decimales),
   );
   final _nota = TextEditingController();
@@ -262,19 +263,15 @@ class _DialogoDevolucionState extends State<DialogoDevolucion> {
                     etiqueta: 'Qué se hace con lo devuelto',
                     ayuda: _ayudaDestino,
                     child: ExcludeFocus(
-                      child: Row(
-                        spacing: espaciado.sm,
-                        children: [
-                          for (final destino in DestinoDevolucion.values)
-                            Expanded(
-                              child: OpcionSeleccionable(
-                                titulo: destino.etiqueta,
-                                elegida: destino == _destino,
-                                onPulsar: () =>
-                                    setState(() => _destino = destino),
-                              ),
-                            ),
-                        ],
+                      child: InterruptorDosOpciones(
+                        primera: DestinoDevolucion.stock.etiqueta,
+                        segunda: DestinoDevolucion.merma.etiqueta,
+                        esSegunda: _destino == DestinoDevolucion.merma,
+                        onCambiar: (merma) => setState(
+                          () => _destino = merma
+                              ? DestinoDevolucion.merma
+                              : DestinoDevolucion.stock,
+                        ),
                       ),
                     ),
                   ),

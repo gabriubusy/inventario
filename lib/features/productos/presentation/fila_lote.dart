@@ -95,7 +95,8 @@ class FilaLote extends StatelessWidget {
         Expanded(
           flex: 8,
           child: CampoCantidad(
-            etiqueta: forma.cuentaPiezas ? 'Peso' : 'Cantidad',
+            // Short: the column is narrow and "Cantidad" got cut.
+            etiqueta: forma.cuentaPiezas ? 'Peso' : 'Hay',
             controller: lote.cantidad,
             decimales: unidad.decimales,
             sufijo: unidad.simbolo,

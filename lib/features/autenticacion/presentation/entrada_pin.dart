@@ -29,6 +29,8 @@ class _EntradaPinState extends State<EntradaPin> {
   void _anadir(String digito) {
     if (_cargando || _digitos.length >= Pin.longitud) return;
     setState(() => _digitos += digito);
+    // The fourth digit enters on its own: one key less every time.
+    if (_digitos.length == Pin.longitud) unawaited(_enviar());
   }
 
   void _borrar() {

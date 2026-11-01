@@ -62,7 +62,7 @@ void main() {
       await abrir(tester);
       await tester.enterText(campo('Nombre').first, 'Harina');
       await tester.enterText(campo('Marca'), 'Propia');
-      await tester.enterText(campo('Cantidad'), '10');
+      await tester.enterText(campo('Hay'), '10');
       await tester.enterText(campo('Costo'), '4');
       await tester.sendKeyDownEvent(LogicalKeyboardKey.altLeft);
       await tester.sendKeyEvent(LogicalKeyboardKey.keyL);

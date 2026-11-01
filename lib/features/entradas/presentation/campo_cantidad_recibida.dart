@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:inventario/core/numeros.dart';
 import 'package:inventario/core/unidad.dart';
+import 'package:inventario/features/entradas/presentation/controlador_cantidad.dart';
+import 'package:inventario/features/entradas/presentation/selector_unidad_minima.dart';
 
 /// Required amount received; zero is not an entry.
 class CampoCantidadRecibida extends StatelessWidget {
@@ -45,12 +47,23 @@ class CampoCantidadRecibida extends StatelessWidget {
     TextEditingController controller,
     int decimales, {
     UnidadBase? unidad,
-  }) => _valor(controller.text, decimales, unidad) ?? 0;
+  }) =>
+      _valor(
+        controller.text,
+        decimales,
+        unidad,
+        ControladorCantidad.de(controller),
+      ) ??
+      0;
 
-  static int? _valor(String texto, int decimales, UnidadBase? unidad) =>
-      unidad == null
+  static int? _valor(
+    String texto,
+    int decimales,
+    UnidadBase? unidad,
+    bool enMinimo,
+  ) => unidad == null
       ? parseDecimal(texto, decimales: decimales)
-      : unidad.leer(texto);
+      : unidad.leer(texto, enMinimo: enMinimo);
 
   String get _ejemplo => switch (unidad) {
     UnidadBase.kg => 'Ej.: 2,5 o 250 g',
@@ -61,7 +74,12 @@ class CampoCantidadRecibida extends StatelessWidget {
   String? _validar(String? texto) {
     final vacio = texto == null || texto.trim().isEmpty;
     if (vacio) return opcional ? null : 'Falta';
-    final valor = _valor(texto, decimales, unidad);
+    final valor = _valor(
+      texto,
+      decimales,
+      unidad,
+      ControladorCantidad.de(controller),
+    );
     if (valor == null) return _ejemplo;
     if (valor <= 0 && !opcional) return 'Mayor que 0';
     final maximo = this.maximo;
@@ -69,6 +87,29 @@ class CampoCantidadRecibida extends StatelessWidget {
       return 'Solo hay ${formatDecimal(maximo, decimales: decimales)}';
     }
     return null;
+  }
+
+  InputDecoration _decoracion() {
+    // A unit typed in the text wins over both the suffix and the selector.
+    final unidad = this.unidad;
+    final controller = this.controller;
+    final conLetras = RegExp('[a-zA-Z]').hasMatch(controller.text);
+    if (!conLetras &&
+        unidad != null &&
+        unidad.tieneMinimo &&
+        controller is ControladorCantidad) {
+      return InputDecoration(
+        labelText: etiqueta,
+        suffixIcon: SelectorUnidadMinima(
+          unidad: unidad,
+          controller: controller,
+        ),
+      );
+    }
+    return InputDecoration(
+      labelText: etiqueta,
+      suffixText: conLetras ? null : sufijo,
+    );
   }
 
   @override
@@ -85,12 +126,7 @@ class CampoCantidadRecibida extends StatelessWidget {
             : TextInputType.text,
         inputFormatters: [if (unidad == null) _numeros else _conUnidad],
         textInputAction: TextInputAction.next,
-        decoration: InputDecoration(
-          labelText: etiqueta,
-          suffixText: RegExp('[a-zA-Z]').hasMatch(controller.text)
-              ? null
-              : sufijo,
-        ),
+        decoration: _decoracion(),
         validator: _validar,
       ),
     );
