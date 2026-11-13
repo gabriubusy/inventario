@@ -6,7 +6,9 @@ import 'package:inventario/app/base_datos/abrir_base_datos.dart';
 import 'package:inventario/app/base_datos/sembrar_ejemplos.dart';
 import 'package:inventario/app/base_datos/transacciones_drift.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
+import 'package:inventario/features/autenticacion/application/controlador_bloqueo.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
+import 'package:inventario/features/autenticacion/data/almacen_bloqueo_preferencias.dart';
 import 'package:inventario/features/autenticacion/data/almacen_sesion_preferencias.dart';
 import 'package:inventario/features/autenticacion/data/cuentas_de_desarrollo.dart';
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_preferencias.dart';
@@ -131,10 +133,12 @@ Future<void> main() async {
   final controladorNegocio = ControladorNegocio(
     RepositorioNegocioDrift(baseDatos),
   );
+  final controladorBloqueo = ControladorBloqueo(AlmacenBloqueoPreferencias());
   final controladorRespaldo = ControladorRespaldo(
     await crearGestorRespaldosLocal(baseDatos),
     AlmacenAjustesRespaldoPreferencias(),
   );
+  unawaited(controladorBloqueo.cargar());
   unawaited(controladorNegocio.cargar());
   unawaited(controladorRespaldo.cargar());
   unawaited(controladorExistencias.cargar());
@@ -199,6 +203,7 @@ Future<void> main() async {
         controladorExistencias,
         transacciones: transacciones,
       ),
+      controladorBloqueo: controladorBloqueo,
     ),
   );
 }

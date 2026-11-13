@@ -5,6 +5,8 @@ import 'package:flutter/services.dart';
 import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
+import 'package:inventario/features/autenticacion/application/controlador_bloqueo.dart';
+import 'package:inventario/features/autenticacion/presentation/seccion_bloqueo.dart';
 import 'package:inventario/features/configuracion/application/controlador_negocio.dart';
 import 'package:inventario/features/configuracion/domain/datos_negocio.dart';
 import 'package:inventario/features/configuracion/presentation/bloque_configuracion.dart';
@@ -21,6 +23,7 @@ class PantallaConfiguracion extends StatefulWidget {
     required this.negocio,
     required this.respaldo,
     required this.onCambiarPin,
+    this.bloqueo,
     this.elegirCarpeta = elegirCarpetaDelEquipo,
     this.elegirArchivo = elegirRespaldoDelEquipo,
   });
@@ -30,6 +33,9 @@ class PantallaConfiguracion extends StatefulWidget {
   final ControladorNegocio negocio;
   final ControladorRespaldo respaldo;
   final VoidCallback onCambiarPin;
+
+  /// Locking on its own after a while idle; optional in tests.
+  final ControladorBloqueo? bloqueo;
   final ElegirCarpeta elegirCarpeta;
   final ElegirArchivoRespaldo elegirArchivo;
 
@@ -161,22 +167,27 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
                     ),
                     BloqueConfiguracion(
                       titulo: 'PIN de acceso',
-                      child: Align(
-                        alignment: Alignment.centerLeft,
-                        child: OutlinedButton(
-                          onPressed: widget.onCambiarPin,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            spacing: espaciado.sm,
-                            children: [
-                              const Text('Cambiar PIN'),
-                              TeclaAtajo(
-                                'Ctrl+Shift+L',
-                                color: colores.onSurfaceVariant,
-                              ),
-                            ],
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        spacing: espaciado.lg,
+                        children: [
+                          OutlinedButton(
+                            onPressed: widget.onCambiarPin,
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              spacing: espaciado.sm,
+                              children: [
+                                const Text('Cambiar PIN'),
+                                TeclaAtajo(
+                                  'Ctrl+Shift+L',
+                                  color: colores.onSurfaceVariant,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          if (widget.bloqueo case final bloqueo?)
+                            SeccionBloqueo(bloqueo: bloqueo),
+                        ],
                       ),
                     ),
                   ],

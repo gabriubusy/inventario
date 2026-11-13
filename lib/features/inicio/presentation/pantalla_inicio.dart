@@ -7,6 +7,7 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
 import 'package:inventario/features/ajustes/presentation/dialogo_ajuste.dart';
+import 'package:inventario/features/autenticacion/application/controlador_bloqueo.dart';
 import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/caja/presentation/aviso_caja.dart';
 import 'package:inventario/features/caja/presentation/pantalla_caja.dart';
@@ -87,6 +88,7 @@ class PantallaInicio extends StatefulWidget {
     this.negocio,
     this.respaldo,
     this.ajustePrecios,
+    this.bloqueo,
   });
 
   static const _anchoMaximo = 1240.0;
@@ -117,6 +119,9 @@ class PantallaInicio extends StatefulWidget {
   final ControladorNegocio? negocio;
   final ControladorRespaldo? respaldo;
   final ControladorAjustePrecios? ajustePrecios;
+
+  /// How long idle before locking itself, changed in Configuración.
+  final ControladorBloqueo? bloqueo;
 
   @override
   State<PantallaInicio> createState() => _PantallaInicioState();
@@ -409,6 +414,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
             negocio: negocio,
             respaldo: respaldo,
             onCambiarPin: widget.onCambiarPin,
+            bloqueo: widget.bloqueo,
           ),
         ),
       ),

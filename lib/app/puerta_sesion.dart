@@ -2,8 +2,10 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
+import 'package:inventario/features/autenticacion/application/controlador_bloqueo.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
 import 'package:inventario/features/autenticacion/application/estado_sesion.dart';
+import 'package:inventario/features/autenticacion/presentation/bloqueo_por_inactividad.dart';
 import 'package:inventario/features/autenticacion/presentation/dialogo_cambiar_pin.dart';
 import 'package:inventario/features/autenticacion/presentation/pantalla_inicio_sesion.dart';
 import 'package:inventario/features/caja/application/controlador_caja.dart';
@@ -51,6 +53,7 @@ class PuertaSesion extends StatelessWidget {
     this.controladorNegocio,
     this.controladorRespaldo,
     this.controladorAjustePrecios,
+    this.controladorBloqueo,
   });
 
   final ControladorSesion controladorSesion;
@@ -74,36 +77,53 @@ class PuertaSesion extends StatelessWidget {
   final ControladorRespaldo? controladorRespaldo;
   final ControladorAjustePrecios? controladorAjustePrecios;
 
+  /// Locking on its own after a while idle; optional in tests.
+  final ControladorBloqueo? controladorBloqueo;
+
+  /// Nothing watches the idle time until there is a setting for it.
+  Widget _vigilado(Widget pantalla) {
+    final bloqueo = controladorBloqueo;
+    if (bloqueo == null) return pantalla;
+    return BloqueoPorInactividad(
+      bloqueo: bloqueo,
+      onBloquear: controladorSesion.cerrarSesion,
+      child: pantalla,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: controladorSesion,
       builder: (context, _) => switch (controladorSesion.estado) {
-        SesionAbierta() => PantallaInicio(
-          controlador: controladorExistencias,
-          proveedores: controladorProveedores,
-          entradas: controladorEntradas,
-          salidas: controladorSalidas,
-          incidencias: controladorIncidencias,
-          movimientos: controladorMovimientos,
-          compras: controladorCompras,
-          gastos: controladorGastos,
-          caja: controladorCaja,
-          ajustes: controladorAjustes,
-          conteo: controladorConteo,
-          devoluciones: controladorDevoluciones,
-          devolucionesProveedor: controladorDevolucionesProveedor,
-          listaProductos: controladorListaProductos,
-          tasa: controladorTasa,
-          fotos: gestorFotos,
-          onBloquear: controladorSesion.cerrarSesion,
-          onCambiarPin: () =>
-              unawaited(mostrarDialogoCambiarPin(context, controladorSesion)),
-          negocio: controladorNegocio,
-          respaldo: controladorRespaldo,
-          ajustePrecios: controladorAjustePrecios,
-          exportador: ExportadorArchivos(
-            encabezado: () => controladorNegocio?.datos.encabezado ?? '',
+        SesionAbierta() => _vigilado(
+          PantallaInicio(
+            controlador: controladorExistencias,
+            proveedores: controladorProveedores,
+            entradas: controladorEntradas,
+            salidas: controladorSalidas,
+            incidencias: controladorIncidencias,
+            movimientos: controladorMovimientos,
+            compras: controladorCompras,
+            gastos: controladorGastos,
+            caja: controladorCaja,
+            ajustes: controladorAjustes,
+            conteo: controladorConteo,
+            devoluciones: controladorDevoluciones,
+            devolucionesProveedor: controladorDevolucionesProveedor,
+            listaProductos: controladorListaProductos,
+            tasa: controladorTasa,
+            fotos: gestorFotos,
+            onBloquear: controladorSesion.cerrarSesion,
+            onCambiarPin: () =>
+                unawaited(mostrarDialogoCambiarPin(context, controladorSesion)),
+            negocio: controladorNegocio,
+            respaldo: controladorRespaldo,
+            ajustePrecios: controladorAjustePrecios,
+            bloqueo: controladorBloqueo,
+            exportador: ExportadorArchivos(
+              encabezado: () => controladorNegocio?.datos.encabezado ?? '',
+            ),
           ),
         ),
         SesionCerrada() || IniciandoSesion() => PantallaInicioSesion(

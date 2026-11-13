@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventario/app/puerta_sesion.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/ajustes/application/controlador_ajustes.dart';
+import 'package:inventario/features/autenticacion/application/controlador_bloqueo.dart';
 import 'package:inventario/features/autenticacion/application/controlador_sesion.dart';
 import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
@@ -45,6 +46,7 @@ class InventarioApp extends StatelessWidget {
     this.controladorNegocio,
     this.controladorRespaldo,
     this.controladorAjustePrecios,
+    this.controladorBloqueo,
   });
 
   final ControladorSesion controladorSesion;
@@ -67,6 +69,7 @@ class InventarioApp extends StatelessWidget {
   final ControladorNegocio? controladorNegocio;
   final ControladorRespaldo? controladorRespaldo;
   final ControladorAjustePrecios? controladorAjustePrecios;
+  final ControladorBloqueo? controladorBloqueo;
 
   @override
   Widget build(BuildContext context) {
@@ -95,6 +98,7 @@ class InventarioApp extends StatelessWidget {
         controladorNegocio: controladorNegocio,
         controladorRespaldo: controladorRespaldo,
         controladorAjustePrecios: controladorAjustePrecios,
+        controladorBloqueo: controladorBloqueo,
       ),
     );
   }
