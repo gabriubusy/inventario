@@ -61,6 +61,9 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
     super.dispose();
   }
 
+  /// Ctrl+S twice in a row must not save twice.
+  var _guardando = false;
+
   DatosNegocio get _escritos => DatosNegocio(
     nombre: _nombre.text.trim(),
     rif: _rif.text.trim(),
@@ -76,8 +79,11 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
   }
 
   Future<void> _guardar() async {
+    if (_guardando) return;
+    _guardando = true;
     final mensajero = ScaffoldMessenger.of(context);
     await widget.negocio.guardar(_escritos);
+    _guardando = false;
     mensajero
       ..hideCurrentSnackBar()
       ..showSnackBar(
