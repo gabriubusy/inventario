@@ -6,6 +6,7 @@ import 'package:inventario/app/atajos_de_teclado.dart';
 import 'package:inventario/app/botones_crear.dart';
 import 'package:inventario/app/encabezado_dialogo.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/core/telefono.dart';
 import 'package:inventario/features/proveedores/application/controlador_proveedores.dart';
 import 'package:inventario/features/proveedores/domain/datos_proveedor.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
@@ -71,6 +72,13 @@ class _DialogoProveedorState extends State<DialogoProveedor> {
     if (texto == null || texto.trim().isEmpty) return 'Escribe el nombre';
     if (_repetido) return 'Ya existe un proveedor con ese nombre';
     return null;
+  }
+
+  /// Empty is fine; a number is only kept if it can be dialled.
+  String? _validarTelefono(String? texto) {
+    final escrito = texto?.trim() ?? '';
+    if (escrito.isEmpty || telefonoValido(escrito)) return null;
+    return 'Ej.: 0414-000.00.00';
   }
 
   void _nombreCambiado(String _) {
@@ -181,9 +189,10 @@ class _DialogoProveedorState extends State<DialogoProveedor> {
                       Expanded(
                         child: _Campo(
                           controller: _telefono,
-                          etiqueta: 'Teléfono',
+                          etiqueta: 'Teléfono (opcional)',
                           pista: '0414-000.00.00',
                           teclado: TextInputType.phone,
+                          validador: _validarTelefono,
                         ),
                       ),
                     ],
@@ -228,6 +237,7 @@ class _Campo extends StatelessWidget {
     required this.etiqueta,
     this.pista,
     this.teclado,
+    this.validador,
     this.onSubmitted,
   });
 
@@ -235,6 +245,7 @@ class _Campo extends StatelessWidget {
   final String etiqueta;
   final String? pista;
   final TextInputType? teclado;
+  final FormFieldValidator<String>? validador;
 
   /// Without it, Enter just moves to the next field.
   final VoidCallback? onSubmitted;
@@ -250,6 +261,7 @@ class _Campo extends StatelessWidget {
           ? TextInputAction.next
           : TextInputAction.done,
       decoration: InputDecoration(labelText: etiqueta, hintText: pista),
+      validator: validador,
       onFieldSubmitted: onSubmitted == null ? null : (_) => onSubmitted(),
     );
   }

@@ -141,6 +141,8 @@ test/                    # misma estructura que lib/
 
 - Cantidades en la unidad pequeña: los campos de peso o volumen (vender, pedido, merma, incidencia, devolución, entrada y conteo) aceptan "0,25", "0,25 kg", "250 g" o "250g" (y "500 ml" en litros) con `UnidadBase.leer`; el ejemplo se ve bajo el campo de la venta. Un punto solo es decimal ("0.250" = 250 g, como la balanza). Dentro del campo, el selector "kg | g" (`SelectorUnidadMinima`, fuera del orden de foco) hace que un número sin unidad se lea en gramos; el modo vive en el `ControladorCantidad` y se mantiene al limpiar el campo. Piezas y dinero siguen siendo solo números.
 
+- Nunca piezas sin peso: merma, incidencia y devolución a proveedor no dejan piezas enteras con 0 kg (`dejaPiezasSinPeso` en `sacarDeLote`; el aviso en rojo dice "Quedarían N piezas sin peso"). En Vender, "Pieza entera" avisa en ámbar "Se va 1 pieza entera de X kg. ¿Solo un trozo? Por kilo · Alt+K".
+
 - Mejoras de uso (QA de procesos, octubre 2026):
   - Ctrl+S guarda en todas las ventanas que registran algo; Enter sigue valiendo donde ya valía. Los botones muestran "Ctrl+S".
   - Cada forma de pago tiene el mismo Alt+número en Cobrar, gastos, devoluciones y abonos (`teclasMedioPago[medio.index]`), aunque falte alguna; solo Pedido F2 y Devolución a proveedor usan letras, porque ahí Alt+número elige la marca.
@@ -164,6 +166,9 @@ test/                    # misma estructura que lib/
   - Login: el 4.º dígito entra solo, sin Enter.
   - F5: Esc limpia primero la búsqueda. Configuración guarda los datos del negocio al salir si cambiaron.
   - F6 y F10 siguen la fila elegida con ↑/↓ (`SeguirElegido`).
+
+- Arreglos del QA (noviembre 2026):
+  - El teléfono del proveedor se valida con `telefonoValido` (`core/telefono.dart`): formato venezolano escrito como sea ("0414-000.00.00", "+58 414…", sin el 0); vacío sigue valiendo y la etiqueta dice "(opcional)".
 
 ## Decisiones pendientes
 
