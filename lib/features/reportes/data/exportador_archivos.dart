@@ -15,12 +15,16 @@ class ExportadorArchivos implements ExportadorReportes {
 
   static const _ladoLogo = 24.0;
 
+  // The print dialog can hand over a format without margins, and then the
+  // text sits on the very edge of the sheet.
+  static const _margen = pw.EdgeInsets.symmetric(horizontal: 40, vertical: 32);
+
   /// The shop's details on top of each PDF; read when printing, so a change
   /// in Configuración shows at once.
   final String Function()? encabezado;
 
   @override
-  Future<void> pdf(Reporte reporte, {required String subtitulo}) =>
+  Future<bool> pdf(Reporte reporte, {required String subtitulo}) =>
       Printing.layoutPdf(
         name: reporte.titulo,
         onLayout: (formato) => _documento(reporte, subtitulo, formato),
@@ -59,6 +63,7 @@ class ExportadorArchivos implements ExportadorReportes {
     doc.addPage(
       pw.MultiPage(
         pageFormat: formato,
+        margin: _margen,
         build: (_) => [
           if (negocio.isNotEmpty)
             pw.Text(_latin(negocio), style: const pw.TextStyle(fontSize: 10)),

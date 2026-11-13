@@ -72,7 +72,16 @@ class _PantallaReportesState extends State<PantallaReportes> {
     _periodo = valores[(_periodo.index + 1) % valores.length];
   });
 
-  Future<void> _pdf() => widget.exportador.pdf(_reporte, subtitulo: _subtitulo);
+  /// The print dialog saves the file where the user chooses, so the notice
+  /// only says it went through.
+  Future<void> _pdf() async {
+    final mensajero = ScaffoldMessenger.of(context);
+    final listo = await widget.exportador.pdf(_reporte, subtitulo: _subtitulo);
+    if (!listo) return;
+    mensajero.showSnackBar(
+      SnackBar(content: Text('PDF guardado o impreso · ${_tipo.etiqueta}')),
+    );
+  }
 
   Future<void> _excel() async {
     final mensajero = ScaffoldMessenger.of(context);

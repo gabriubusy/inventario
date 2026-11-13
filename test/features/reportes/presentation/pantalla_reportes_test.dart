@@ -27,8 +27,10 @@ class _ExportadorFalso implements ExportadorReportes {
   }
 
   @override
-  Future<void> pdf(Reporte reporte, {required String subtitulo}) async =>
-      exportados.add('pdf ${reporte.titulo}');
+  Future<bool> pdf(Reporte reporte, {required String subtitulo}) async {
+    exportados.add('pdf ${reporte.titulo}');
+    return true;
+  }
 }
 
 void main() {
@@ -106,6 +108,16 @@ void main() {
     await atajo(tester, LogicalKeyboardKey.altLeft, LogicalKeyboardKey.digit2);
     expect(find.text('30 %'), findsOneWidget);
     expect(find.text(r'$ 3,00'), findsWidgets);
+  });
+
+  testWidgets('Ctrl+P says the PDF went through', (tester) async {
+    await mostrar(tester);
+    await atajo(
+      tester,
+      LogicalKeyboardKey.controlLeft,
+      LogicalKeyboardKey.keyP,
+    );
+    expect(find.textContaining('PDF guardado o impreso'), findsOneWidget);
   });
 
   testWidgets('Ctrl+P and Ctrl+E export the report on screen', (tester) async {

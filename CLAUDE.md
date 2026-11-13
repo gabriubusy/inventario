@@ -170,6 +170,7 @@ test/                    # misma estructura que lib/
 - Arreglos del QA (noviembre 2026):
   - El teléfono del proveedor se valida con `telefonoValido` (`core/telefono.dart`): formato venezolano escrito como sea ("0414-000.00.00", "+58 414…", sin el 0); vacío sigue valiendo y la etiqueta dice "(opcional)".
   - `EditorLineaCompra` reparte sus campos en dos filas (marca, piezas y peso arriba; costo, total y Añadir abajo) porque en una sola el peso quedaba tapado por el selector "kg | g", que además ocupa menos.
+  - Los PDF llevan margen propio (`_margen` en `ExportadorArchivos`; el diálogo de impresión puede dar un formato sin márgenes) y, al volver, avisan "PDF guardado o impreso" (`ExportadorReportes.pdf` devuelve si se imprimió o se guardó).
 
 ## Decisiones pendientes
 
