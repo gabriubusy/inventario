@@ -3,6 +3,7 @@ import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
 import 'package:inventario/features/gastos/domain/gasto.dart';
 import 'package:inventario/features/gastos/domain/repositorio_gastos.dart';
+import 'package:inventario/features/gastos/domain/resultado_gasto.dart';
 
 /// Business expenses and other income (Ctrl+G); the last one can be undone.
 class ControladorGastos extends ChangeNotifier {
@@ -24,36 +25,42 @@ class ControladorGastos extends ChangeNotifier {
 
   Future<void> cargar() async => _poner(await _repositorio.obtenerTodos());
 
-  Future<Gasto> registrar({
+  Future<ResultadoGasto> registrar({
     required CategoriaGasto categoria,
     required MedioPago medio,
     required int monto,
     String nota = '',
   }) async {
+    final tasa = tasaDeHoy;
+    if (medio.moneda == Moneda.bolivares && tasa == null) {
+      return const GastoSinTasa();
+    }
     final guardado = await _repositorio.crear(
       Gasto(
         fecha: _ahora(),
         categoria: categoria,
         medio: medio,
         monto: monto,
-        tasa: tasaDeHoy,
+        tasa: tasa,
         nota: nota,
       ),
     );
     _ultimo = guardado;
     _poner([..._todos, guardado]);
-    return guardado;
+    return GastoRegistrado(guardado);
   }
 
-  Future<void> deshacer() async {
-    final ultimo = _ultimo;
-    if (ultimo == null) return;
+  /// Only while [gasto] is still the last one noted: another expense in
+  /// between means the notice no longer talks about what would be undone.
+  Future<bool> deshacer(Gasto gasto) async {
+    if (_ultimo?.id != gasto.id) return false;
     _ultimo = null;
-    await _repositorio.quitar(ultimo.id);
+    await _repositorio.quitar(gasto.id);
     _poner([
       for (final g in _todos)
-        if (g.id != ultimo.id) g,
+        if (g.id != gasto.id) g,
     ]);
+    return true;
   }
 
   void _poner(List<Gasto> gastos) {

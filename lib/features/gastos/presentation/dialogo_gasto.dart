@@ -9,10 +9,11 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/core/dinero.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/core/numeros.dart';
-import 'package:inventario/core/textos_dinero.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
 import 'package:inventario/features/gastos/application/controlador_gastos.dart';
 import 'package:inventario/features/gastos/domain/categoria_gasto.dart';
+import 'package:inventario/features/gastos/domain/resultado_gasto.dart';
+import 'package:inventario/features/gastos/presentation/aviso_gasto.dart';
 import 'package:inventario/features/productos/presentation/con_etiqueta.dart';
 import 'package:inventario/features/productos/presentation/interruptor_dos_opciones.dart';
 import 'package:inventario/features/salidas/presentation/opciones_medio_pago.dart';
@@ -109,43 +110,29 @@ class _DialogoGastoState extends State<DialogoGasto> {
       setState(() => _error = 'Escribe el monto');
       return;
     }
-    // Without a rate the reports could not count it in dollars.
-    if (_medio.moneda == Moneda.bolivares && widget.gastos.tasaDeHoy == null) {
-      setState(
-        () => _error =
-            'Falta la tasa de hoy para un monto en bolívares (Ctrl+T en el '
-            'inicio)',
-      );
-      return;
-    }
     if (_guardando) return;
     setState(() => _guardando = true);
     final mensajero = ScaffoldMessenger.of(context);
     final navegador = Navigator.of(context);
-    final gasto = await widget.gastos.registrar(
+    final resultado = await widget.gastos.registrar(
       categoria: _categoria,
       medio: _medio,
       monto: monto,
       nota: _nota.text.trim(),
     );
     if (!mounted) return;
-    navegador.pop();
-    mensajero
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Text(
-            '${gasto.esIngreso ? 'Ingreso' : 'Gasto'} registrado · '
-            '${gasto.categoria.etiqueta} · '
-            '${textoEnMoneda(gasto.monto, gasto.medio.moneda)}',
-          ),
-          persist: false,
-          action: SnackBarAction(
-            label: 'Deshacer',
-            onPressed: () => unawaited(widget.gastos.deshacer()),
-          ),
-        ),
-      );
+    setState(() => _guardando = false);
+    switch (resultado) {
+      case GastoRegistrado(:final gasto):
+        navegador.pop();
+        mostrarGastoRegistrado(mensajero, widget.gastos, gasto);
+      case GastoSinTasa():
+        setState(
+          () => _error =
+              'Falta la tasa de hoy para un monto en bolívares (Ctrl+T en el '
+              'inicio), o escríbelo en dólares',
+        );
+    }
   }
 
   Map<ShortcutActivator, VoidCallback> get _atajos => {
