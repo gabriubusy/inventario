@@ -200,6 +200,8 @@ class GestorRespaldosArchivos implements GestorRespaldos {
     }
   }
 
+  static final _separadores = RegExp(r'[/\\]');
+
   static Future<void> _extraer(File pendiente, Directory temporal) async {
     final separador = Platform.pathSeparator;
     if (temporal.existsSync()) await temporal.delete(recursive: true);
@@ -209,9 +211,12 @@ class GestorRespaldosArchivos implements GestorRespaldos {
     }
     for (final entrada in zip.files) {
       if (!entrada.isFile || entrada.name == _manifiesto) continue;
-      final partes = entrada.name.split('/');
-      // A name that climbs out of the folder was not written by us.
-      if (partes.any((p) => p.isEmpty || p == '..' || p.contains(':'))) {
+      // A name that climbs out of the folder was not written by us. Zips
+      // keep '/', but Windows also walks '\', so both split a name here.
+      final partes = entrada.name.split(_separadores);
+      if (partes.any(
+        (p) => p.isEmpty || p == '.' || p == '..' || p.contains(':'),
+      )) {
         throw FormatException('Nombre no válido: ${entrada.name}');
       }
       final destino = File(

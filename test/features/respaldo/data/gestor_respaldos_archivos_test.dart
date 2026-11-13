@@ -1,5 +1,8 @@
+import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
+import 'package:archive/archive.dart';
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/base_datos/base_datos.dart';
@@ -144,6 +147,56 @@ void main() {
     );
   });
 
+  /// The encoder here always writes '/', but a zip from another tool can
+  /// store '\' in a name, so those bytes go in by hand.
+  List<int> respaldoConEntrada(String nombre) {
+    final hueco = 'x' * nombre.length;
+    final zip = Archive()
+      ..addFile(
+        ArchiveFile.bytes(
+          GestorRespaldosArchivos.nombreBase,
+          Uint8List.fromList([1]),
+        ),
+      )
+      ..addFile(ArchiveFile.bytes(hueco, Uint8List.fromList([9])));
+    final bytes = ZipEncoder().encode(zip);
+    final buscado = ascii.encode(hueco);
+    final puesto = ascii.encode(nombre);
+    for (var i = 0; i + buscado.length <= bytes.length; i++) {
+      if (!_empiezaEn(bytes, i, buscado)) continue;
+      bytes.setRange(i, i + puesto.length, puesto);
+    }
+    return bytes;
+  }
+
+  /// A backup that someone else prepared can name its entries whatever it
+  /// likes; none of them may land outside the restore folder.
+  test(
+    'a backup with a name that climbs out of the folder is refused',
+    () async {
+      final fuera = File('${soporte.parent.path}/fuera.txt');
+      if (fuera.existsSync()) fuera.deleteSync();
+      for (final nombre in [
+        r'..\..\fuera.txt',
+        '../../fuera.txt',
+        r'imagenes\..\..\fuera.txt',
+        r'\fuera.txt',
+      ]) {
+        File('${soporte.path}/restaurar.inventario')
+            .writeAsBytesSync(respaldoConEntrada(nombre));
+
+        expect(
+          await GestorRespaldosArchivos.aplicarRestauracionPendiente(soporte),
+          isFalse,
+          reason: nombre,
+        );
+        expect(fuera.existsSync(), isFalse, reason: nombre);
+        expect(File('${soporte.path}/fuera.txt').existsSync(), isFalse);
+        File('${soporte.path}/${GestorRespaldosArchivos.fallido}').deleteSync();
+      }
+    },
+  );
+
   test('a file that is not a backup is refused', () async {
     final otro = File('${pendrive.path}/notas.inventario')
       ..writeAsStringSync('hola');
@@ -155,4 +208,11 @@ void main() {
     );
     expect(resultado, isA<RespaldoNoValido>());
   });
+}
+
+bool _empiezaEn(List<int> bytes, int desde, List<int> buscado) {
+  for (var j = 0; j < buscado.length; j++) {
+    if (bytes[desde + j] != buscado[j]) return false;
+  }
+  return true;
 }
