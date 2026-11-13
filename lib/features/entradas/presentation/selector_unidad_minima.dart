@@ -28,9 +28,13 @@ class SelectorUnidadMinima extends StatelessWidget {
           selected: {controller.enMinimo},
           onSelectionChanged: (valor) => controller.enMinimo = valor.first,
           showSelectedIcon: false,
-          style: const ButtonStyle(
+          style: ButtonStyle(
             visualDensity: VisualDensity.compact,
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            // Narrow, so the number keeps room in a row full of fields.
+            padding: WidgetStatePropertyAll(
+              EdgeInsets.symmetric(horizontal: context.espaciado.sm),
+            ),
           ),
         ),
       ),

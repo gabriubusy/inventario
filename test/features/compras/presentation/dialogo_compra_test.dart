@@ -7,6 +7,7 @@ import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
+import 'package:inventario/features/entradas/presentation/selector_unidad_minima.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/data/repositorio_productos_en_memoria.dart';
 import 'package:inventario/features/productos/domain/categoria.dart';
@@ -93,6 +94,16 @@ void main() {
     await tester.tap(find.widgetWithText(ListTile, nombre));
     await tester.pumpAndSettle();
   }
+
+  testWidgets('the weight field leaves room for the number by "kg | g"', (
+    tester,
+  ) async {
+    await abrir(tester);
+    await elegir(tester, 'queso', 'Queso blanco duro');
+    final peso = tester.getSize(campo('Peso'));
+    final selector = tester.getSize(find.byType(SelectorUnidadMinima));
+    expect(peso.width - selector.width, greaterThan(120));
+  });
 
   testWidgets('the supplier\'s brand comes with its last cost', (tester) async {
     await abrir(tester);

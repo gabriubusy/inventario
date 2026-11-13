@@ -253,13 +253,15 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                 ),
               ),
             ),
+            // Two rows: with everything in one, the quantity field was left
+            // too narrow to read what was typed next to the "kg | g" switch.
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               spacing: espaciado.md,
               children: [
                 if (_lote == null)
                   Expanded(
-                    flex: 2,
+                    flex: 3,
                     child: TextFormField(
                       controller: _marca,
                       focusNode: _focoMarca,
@@ -272,6 +274,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                   ),
                 if (producto.forma.cuentaPiezas)
                   Expanded(
+                    flex: 2,
                     child: CampoCantidadRecibida(
                       etiqueta: 'Piezas',
                       controller: _piezas,
@@ -280,6 +283,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                     ),
                   ),
                 Expanded(
+                  flex: 3,
                   child: CampoCantidadRecibida(
                     etiqueta: producto.forma.cuentaPiezas ? 'Peso' : 'Cantidad',
                     controller: _cantidad,
@@ -289,7 +293,17 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                     unidad: producto.forma.unidad,
                   ),
                 ),
+                // Keeps the field half width, in line with the cost below.
+                if (_lote != null && !producto.forma.cuentaPiezas)
+                  const Spacer(flex: 3),
+              ],
+            ),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              spacing: espaciado.md,
+              children: [
                 Expanded(
+                  flex: 3,
                   child: TextFormField(
                     controller: _costo,
                     textAlign: TextAlign.right,
@@ -314,6 +328,7 @@ class EditorLineaCompraState extends State<EditorLineaCompra> {
                 ),
                 // Some invoices only give the line's total.
                 Expanded(
+                  flex: 3,
                   child: TextFormField(
                     controller: _total,
                     textAlign: TextAlign.right,
