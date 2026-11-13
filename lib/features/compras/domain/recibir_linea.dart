@@ -3,7 +3,7 @@ import 'package:inventario/features/entradas/domain/entrada.dart';
 import 'package:inventario/features/entradas/domain/sumar_entrada.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 
-/// The product with the line's goods added to its brand lot (or a new
+/// The product with what really arrived added to its brand lot (or a new
 /// one), and that lot's cost updated to what was just paid.
 Producto recibirLinea(
   Producto producto,
@@ -13,8 +13,8 @@ Producto recibirLinea(
   final entrada = Entrada(
     marca: linea.marca,
     proveedor: proveedor,
-    piezas: linea.piezas,
-    cantidad: linea.cantidad,
+    piezas: linea.piezasLlegadas,
+    cantidad: linea.cantidadLlegada,
   );
   final sumado = sumarEntrada(producto, entrada);
   final indice = indiceLoteDeEntrada(sumado, entrada);

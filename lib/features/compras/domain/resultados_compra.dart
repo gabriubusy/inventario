@@ -48,3 +48,28 @@ class PagoExcede extends ResultadoPago {
 class PagoSinTasa extends ResultadoPago {
   const PagoSinTasa();
 }
+
+sealed class ResultadoRecepcion {
+  const ResultadoRecepcion();
+}
+
+class RecepcionRegistrada extends ResultadoRecepcion {
+  const RecepcionRegistrada(this.compra, {required this.lineas});
+
+  final Compra compra;
+
+  /// How many lines entered the stock.
+  final int lineas;
+}
+
+/// Nothing was written down, so there is nothing to receive.
+class RecepcionVacia extends ResultadoRecepcion {
+  const RecepcionVacia();
+}
+
+/// A product of the order was removed while the window was open.
+class RecepcionSinProducto extends ResultadoRecepcion {
+  const RecepcionSinProducto(this.producto);
+
+  final String producto;
+}

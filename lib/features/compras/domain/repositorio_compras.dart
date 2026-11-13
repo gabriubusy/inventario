@@ -18,5 +18,8 @@ abstract interface class RepositorioCompras {
   /// Only to undo a payment just made.
   Future<void> borrarPago(String id);
 
+  /// Stores what arrived of each line, and when.
+  Future<void> guardarRecepcion(Compra compra);
+
   Future<void> renombrarProveedor(String anterior, String nuevo);
 }

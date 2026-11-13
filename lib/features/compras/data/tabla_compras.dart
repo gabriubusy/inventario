@@ -13,6 +13,9 @@ class Compras extends Table {
   TextColumn get medio => textEnum<MedioPago>().nullable()();
   IntColumn get tasa => integer().nullable()();
 
+  /// When what arrived was confirmed; null while nothing has.
+  DateTimeColumn get recibidaEl => dateTime().nullable()();
+
   @override
   Set<Column<Object>> get primaryKey => {id};
 }
@@ -32,6 +35,10 @@ class LineasCompra extends Table {
   IntColumn get piezas => integer()();
   IntColumn get cantidad => integer()();
   IntColumn get costo => integer()();
+
+  /// What really arrived; null while the line is still waiting.
+  IntColumn get piezasRecibidas => integer().nullable()();
+  IntColumn get cantidadRecibida => integer().nullable()();
 }
 
 @DataClassName('FilaPago')
