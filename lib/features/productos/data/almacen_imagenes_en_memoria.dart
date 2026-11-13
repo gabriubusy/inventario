@@ -12,6 +12,7 @@ class AlmacenImagenesEnMemoria implements AlmacenImagenes {
   @override
   Future<ResultadoGuardarImagen> guardar(Uint8List bytes) async {
     if (bytes.isEmpty) return const ImagenNoValida();
+    if (bytes.length > maximoBytesImagen) return const ImagenMuyGrande();
     final id = '${_siguienteId++}';
     _imagenes[id] = bytes;
     return ImagenGuardada(id);

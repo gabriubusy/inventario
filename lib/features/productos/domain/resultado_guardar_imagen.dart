@@ -12,3 +12,13 @@ class ImagenGuardada extends ResultadoGuardarImagen {
 class ImagenNoValida extends ResultadoGuardarImagen {
   const ImagenNoValida();
 }
+
+/// Over [maximoBytesImagen]: a shop photo is never this big, and opening
+/// one of 100 megapixels can take the app down.
+class ImagenMuyGrande extends ResultadoGuardarImagen {
+  const ImagenMuyGrande();
+}
+
+/// The biggest photo file that is opened at all.
+const maximoMegasImagen = 25;
+const maximoBytesImagen = maximoMegasImagen * 1024 * 1024;

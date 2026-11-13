@@ -34,6 +34,12 @@ void main() {
     expect(await guardar(), isNot(await guardar()));
   });
 
+  test('a photo over the limit is refused without opening it', () async {
+    final resultado = await almacen.guardar(Uint8List(maximoBytesImagen + 1));
+    expect(resultado, isA<ImagenMuyGrande>());
+    expect(carpeta.listSync(), isEmpty);
+  });
+
   test('rejects an invalid image without writing files', () async {
     final resultado = await almacen.guardar(Uint8List.fromList([0, 1, 2]));
     expect(resultado, isA<ImagenNoValida>());

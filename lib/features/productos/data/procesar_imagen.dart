@@ -8,7 +8,15 @@ Map<TamanoImagen, Uint8List>? procesarImagen(Uint8List bytes) {
   final img.Image? original;
   try {
     original = img.decodeImage(bytes);
+    // A truncated or lying file fails inside the decoder, not always with
+    // its own exception; none of it means more than "this is not a photo".
   } on img.ImageException {
+    return null;
+  } on FormatException {
+    return null;
+  } on RangeError {
+    return null;
+  } on ArgumentError {
     return null;
   }
   if (original == null) return null;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/productos/application/gestor_fotos.dart';
+import 'package:inventario/features/productos/domain/resultado_guardar_imagen.dart';
 import 'package:inventario/features/productos/domain/tamano_imagen.dart';
 import 'package:inventario/features/productos/presentation/foto_editable.dart';
 import 'package:inventario/features/productos/presentation/foto_producto.dart';
@@ -76,11 +77,15 @@ class SeccionFoto extends StatelessWidget {
                     ),
                   ),
                 Text(
-                  foto.noValida
-                      ? 'Ese archivo no es una imagen. Usa una foto JPG, PNG o WebP.'
+                  foto.muyGrande
+                      ? 'Esa foto pesa más de $maximoMegasImagen MB. Usa una '
+                            'más pequeña.'
+                      : foto.noValida
+                      ? 'Ese archivo no es una imagen. Usa una foto JPG, PNG '
+                            'o WebP.'
                       : 'Opcional · JPG, PNG o WebP',
                   style: tema.textTheme.bodySmall?.copyWith(
-                    color: foto.noValida
+                    color: foto.noValida || foto.muyGrande
                         ? colores.error
                         : colores.onSurfaceVariant,
                   ),

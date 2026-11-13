@@ -16,11 +16,15 @@ class FotoEditable extends ChangeNotifier {
   String? _id;
   var _cargando = false;
   var _noValida = false;
+  var _muyGrande = false;
   var _desechada = false;
 
   String? get id => _id;
   bool get cargando => _cargando;
   bool get noValida => _noValida;
+
+  /// The file chosen was over the size a photo is opened at.
+  bool get muyGrande => _muyGrande;
 
   Future<void> elegir() async {
     if (_cargando) return;
@@ -28,6 +32,7 @@ class FotoEditable extends ChangeNotifier {
     if (bytes == null || _desechada) return;
     _cargando = true;
     _noValida = false;
+    _muyGrande = false;
     notifyListeners();
     final resultado = await _fotos.guardar(bytes);
     if (_desechada) {
@@ -44,6 +49,8 @@ class FotoEditable extends ChangeNotifier {
         _subidas.add(id);
       case ImagenNoValida():
         _noValida = true;
+      case ImagenMuyGrande():
+        _muyGrande = true;
     }
     notifyListeners();
   }
@@ -52,6 +59,7 @@ class FotoEditable extends ChangeNotifier {
     _soltar(_id);
     _id = null;
     _noValida = false;
+    _muyGrande = false;
     notifyListeners();
   }
 

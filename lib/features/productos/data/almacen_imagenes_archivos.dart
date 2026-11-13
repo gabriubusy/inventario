@@ -28,6 +28,7 @@ class AlmacenImagenesArchivos implements AlmacenImagenes {
 
   @override
   Future<ResultadoGuardarImagen> guardar(Uint8List bytes) async {
+    if (bytes.length > maximoBytesImagen) return const ImagenMuyGrande();
     // Decoding a phone photo is slow enough to freeze the UI thread.
     final versiones = await Isolate.run(() => procesarImagen(bytes));
     if (versiones == null) return const ImagenNoValida();

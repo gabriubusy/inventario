@@ -48,4 +48,17 @@ void main() {
   test('rejects bytes that are not an image', () {
     expect(procesarImagen(Uint8List.fromList([1, 2, 3, 4])), isNull);
   });
+
+  test('a photo cut in half is refused, not thrown', () {
+    final entera = _png(1600, 1200);
+    final cortada = Uint8List.sublistView(entera, 0, entera.length ~/ 3);
+    expect(procesarImagen(cortada), isNull);
+  });
+
+  test('a header that lies about its size is refused', () {
+    final bytes = Uint8List.fromList(_png(40, 40));
+    // The width and height live right after the PNG signature.
+    bytes.setRange(16, 24, [0, 0, 255, 255, 0, 0, 255, 255]);
+    expect(procesarImagen(bytes), isNull);
+  });
 }
