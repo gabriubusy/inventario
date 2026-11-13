@@ -126,6 +126,81 @@ void main() {
     });
   });
 
+  group('when the day changes', () {
+    // The app is left open overnight, so the clock has to move.
+    ControladorTasa conReloj(
+      DateTime Function() ahora, {
+      ResultadoConsultaTasa respuesta = const TasaNoDisponible(),
+      TasaCambio? guardada,
+      List<int>? consultas,
+    }) => ControladorTasa(
+      AlmacenTasaEnMemoria(guardada),
+      fuente: _FuenteFija(respuesta, consultas ?? []),
+      ahora: ahora,
+    );
+
+    test('asks the BCV again on the new day', () async {
+      var ahora = DateTime(2026, 10, 25, 10);
+      final consultas = <int>[];
+      final controlador = conReloj(
+        () => ahora,
+        respuesta: const TasaObtenida(88623),
+        guardada: deAyer,
+        consultas: consultas,
+      );
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(consultas, hasLength(1));
+      ahora = DateTime(2026, 10, 26, 8);
+      expect(controlador.esDeHoy, isFalse);
+      await controlador.revisarDia();
+      expect(consultas, hasLength(2));
+      expect(controlador.esDeHoy, isTrue);
+      expect(controlador.tasa?.bolivaresPorDolar, 88623);
+    });
+
+    test('does not ask the BCV twice on the same day', () async {
+      final ahora = DateTime(2026, 10, 25, 10);
+      final consultas = <int>[];
+      final controlador = conReloj(
+        () => ahora,
+        guardada: deAyer,
+        consultas: consultas,
+      );
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      await controlador.revisarDia();
+      await controlador.revisarDia();
+      expect(consultas, hasLength(1));
+    });
+
+    test('asks the user again when the new day has no rate either', () async {
+      var ahora = DateTime(2026, 10, 25, 10);
+      final controlador = conReloj(() => ahora, guardada: deAyer);
+      await controlador.cargar();
+      await controlador.actualizarDesdeInternet();
+      expect(controlador.hayQuePedirla, isTrue);
+      await controlador.guardar(4000);
+      expect(controlador.hayQuePedirla, isFalse);
+      ahora = DateTime(2026, 10, 26, 8);
+      await controlador.revisarDia();
+      expect(controlador.hayQuePedirla, isTrue);
+    });
+
+    test("with today's rate in there is nothing to do", () async {
+      final ahora = DateTime(2026, 10, 25, 10);
+      final consultas = <int>[];
+      final controlador = conReloj(
+        () => ahora,
+        guardada: TasaCambio(bolivaresPorDolar: 4000, fecha: ahora),
+        consultas: consultas,
+      );
+      await controlador.cargar();
+      await controlador.revisarDia();
+      expect(consultas, isEmpty);
+    });
+  });
+
   test('without a source it asks as soon as the saved one is read', () async {
     final controlador = crear(deAyer);
     expect(controlador.hayQuePedirla, isFalse);

@@ -82,9 +82,8 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Finder cruz(String marca) => find.byTooltip(
-    'Quitar $marca de los productos de este proveedor',
-  );
+  Finder cruz(String marca) =>
+      find.byTooltip('Quitar $marca de los productos de este proveedor');
 
   List<String> marcasDelProducto() => [
     for (final lote in existencias.productos.single.lotes) lote.marca,

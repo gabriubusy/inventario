@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:inventario/core/fechas.dart';
 import 'package:inventario/features/tasa/domain/almacen_tasa.dart';
 import 'package:inventario/features/tasa/domain/fuente_tasa.dart';
 import 'package:inventario/features/tasa/domain/origen_tasa.dart';
@@ -16,6 +17,7 @@ class ControladorTasa extends ChangeNotifier {
   var _sinRespuesta = false;
   var _cargada = false;
   var _consultada = false;
+  DateTime? _diaConsultado;
 
   /// True while asking the internet for today's rate.
   bool get consultando => _consultando;
@@ -45,11 +47,27 @@ class ControladorTasa extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// The app stays open for days at a time: once the date changes, today's
+  /// rate is missing again, so the BCV is asked once more and the screens
+  /// ask the user again if it does not answer.
+  Future<void> revisarDia() async {
+    if (!_cargada || esDeHoy) return;
+    final consultado = _diaConsultado;
+    final hoy = _ahora();
+    if (consultado != null && diasEntre(consultado, hoy) == 0) return;
+    _diaConsultado = hoy;
+    _consultada = false;
+    _sinRespuesta = false;
+    notifyListeners();
+    await actualizarDesdeInternet();
+  }
+
   /// Fetches today's BCV rate unless there already is one for today.
   /// Without internet the last rate stays and the screens keep warning.
   Future<void> actualizarDesdeInternet() async {
     final fuente = _fuente;
     if (fuente == null || esDeHoy || _consultando) return;
+    _diaConsultado = _ahora();
     _consultando = true;
     notifyListeners();
     final resultado = await fuente.consultar();

@@ -34,7 +34,10 @@ void main() {
   test('a brand nobody has stock of can be taken off', () {
     expect(
       marcaSinExistencias(
-        [producto('a', [vacio]), producto('b', [vacio])],
+        [
+          producto('a', [vacio]),
+          producto('b', [vacio]),
+        ],
         proveedor: 'distribuidora 1',
         marca: 'marca a',
       ),
@@ -45,7 +48,10 @@ void main() {
   test('stock in one product keeps the brand', () {
     expect(
       marcaSinExistencias(
-        [producto('a', [vacio]), producto('b', [conStock])],
+        [
+          producto('a', [vacio]),
+          producto('b', [conStock]),
+        ],
         proveedor: 'Distribuidora 1',
         marca: 'Marca A',
       ),
@@ -56,7 +62,9 @@ void main() {
   test('the same brand from another supplier does not count', () {
     expect(
       marcaSinExistencias(
-        [producto('a', [deOtro])],
+        [
+          producto('a', [deOtro]),
+        ],
         proveedor: 'Distribuidora 1',
         marca: 'Marca A',
       ),
@@ -81,7 +89,9 @@ void main() {
   test('a brand nobody carries changes nothing', () {
     expect(
       productosSinMarca(
-        [producto('a', [vacio])],
+        [
+          producto('a', [vacio]),
+        ],
         proveedor: 'Distribuidora 1',
         marca: 'Marca Z',
       ),
