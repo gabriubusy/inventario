@@ -171,6 +171,7 @@ test/                    # misma estructura que lib/
   - El teléfono del proveedor se valida con `telefonoValido` (`core/telefono.dart`): formato venezolano escrito como sea ("0414-000.00.00", "+58 414…", sin el 0); vacío sigue valiendo y la etiqueta dice "(opcional)".
   - `EditorLineaCompra` reparte sus campos en dos filas (marca, piezas y peso arriba; costo, total y Añadir abajo) porque en una sola el peso quedaba tapado por el selector "kg | g", que además ocupa menos.
   - Los PDF llevan margen propio (`_margen` en `ExportadorArchivos`; el diálogo de impresión puede dar un formato sin márgenes) y, al volver, avisan "PDF guardado o impreso" (`ExportadorReportes.pdf` devuelve si se imprimió o se guardó).
+  - Quitar una marca de un proveedor: ✕ en cada chip de "Marcas que trae" de la ficha F5 (`ControladorProveedores.quitarMarca`, `proveedores/domain/quitar_marca.dart`): saca ese `LoteMarca` de todos los productos de ese proveedor en una transacción, con "Deshacer" en el aviso (vuelve solo si ningún producto cambió después). Si queda stock de esa marca el ✕ está apagado y el tooltip manda a ventas, mermas o Conteo (F9); el ✕ de la ventana del producto sigue estando.
 
 ## Decisiones pendientes
 

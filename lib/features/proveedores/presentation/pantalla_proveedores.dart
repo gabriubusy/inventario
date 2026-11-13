@@ -119,6 +119,40 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
     );
   }
 
+  /// Deshacer puts the brand back, so there is nothing to confirm.
+  Future<void> _quitarMarca(String marca) async {
+    final proveedor = widget.controlador.elegido;
+    if (proveedor == null) return;
+    final cuantos = await widget.controlador.quitarMarca(
+      proveedor.nombre,
+      marca,
+    );
+    if (cuantos == 0 || !mounted) return;
+    (ScaffoldMessenger.of(context)..hideCurrentSnackBar()).showSnackBar(
+      SnackBar(
+        content: Text(
+          cuantos == 1
+              ? '$marca fuera de 1 producto'
+              : '$marca fuera de $cuantos productos',
+        ),
+        persist: false,
+        action: SnackBarAction(
+          label: 'Deshacer',
+          onPressed: () => unawaited(_deshacerQuitarMarca()),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _deshacerQuitarMarca() async {
+    if (await widget.controlador.deshacerQuitarMarca() || !mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('No se pudo deshacer: algún producto cambió después'),
+      ),
+    );
+  }
+
   void _responder(Incidencia incidencia, RespuestaProveedor? respuesta) =>
       unawaited(
         responderIncidencia(
@@ -201,6 +235,7 @@ class _PantallaProveedoresState extends State<PantallaProveedores> {
                                       onRegistrarIncidencia:
                                           _registrarIncidencia,
                                       onResponder: _responder,
+                                      onQuitarMarca: _quitarMarca,
                                       onDevolver: widget.devoluciones == null
                                           ? null
                                           : _devolver,

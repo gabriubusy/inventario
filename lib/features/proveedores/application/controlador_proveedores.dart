@@ -2,9 +2,12 @@ import 'package:flutter/foundation.dart';
 import 'package:inventario/core/texto.dart';
 import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
+import 'package:inventario/features/productos/domain/datos_producto.dart';
+import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/proveedores/application/estado_proveedores.dart';
 import 'package:inventario/features/proveedores/domain/datos_proveedor.dart';
 import 'package:inventario/features/proveedores/domain/proveedor.dart';
+import 'package:inventario/features/proveedores/domain/quitar_marca.dart';
 import 'package:inventario/features/proveedores/domain/repositorio_proveedores.dart';
 import 'package:inventario/features/proveedores/domain/resultado_guardar_proveedor.dart';
 import 'package:inventario/features/proveedores/domain/suministro.dart';
@@ -35,6 +38,9 @@ class ControladorProveedores extends ChangeNotifier {
   EstadoProveedores _estado = const CargandoProveedores();
   String _busqueda = '';
   String? _elegidoId;
+
+  /// Products that lost a brand lot, kept for Deshacer.
+  List<CambioMarca>? _ultimoQuitado;
 
   EstadoProveedores get estado => _estado;
   String get busqueda => _busqueda;
@@ -140,5 +146,62 @@ class ControladorProveedores extends ChangeNotifier {
       notifyListeners();
     }
     return resultado;
+  }
+
+  /// Takes [marca] off every product of [proveedor]; how many products
+  /// lost it, 0 when none had it or it still has stock.
+  Future<int> quitarMarca(String proveedor, String marca) async {
+    if (!marcaSinExistencias(
+      _existencias.productos,
+      proveedor: proveedor,
+      marca: marca,
+    )) {
+      return 0;
+    }
+    final cambios = productosSinMarca(
+      _existencias.productos,
+      proveedor: proveedor,
+      marca: marca,
+    );
+    if (cambios.isEmpty) return 0;
+    final guardados = await _transacciones.enUna(() async {
+      final guardados = <CambioMarca>[];
+      for (final cambio in cambios) {
+        await _existencias.actualizarProducto(
+          cambio.antes.id,
+          DatosProducto.desde(cambio.despues),
+        );
+        if (_producto(cambio.antes.id) case final actual?) {
+          guardados.add((antes: cambio.antes, despues: actual));
+        }
+      }
+      return guardados;
+    });
+    _ultimoQuitado = guardados;
+    return guardados.length;
+  }
+
+  /// False when one of those products changed since, so the brand stays off.
+  Future<bool> deshacerQuitarMarca() async {
+    final ultimo = _ultimoQuitado;
+    _ultimoQuitado = null;
+    if (ultimo == null || ultimo.isEmpty) return false;
+    if (ultimo.any((c) => _producto(c.antes.id) != c.despues)) return false;
+    await _transacciones.enUna(() async {
+      for (final cambio in ultimo) {
+        await _existencias.actualizarProducto(
+          cambio.antes.id,
+          DatosProducto.desde(cambio.antes),
+        );
+      }
+    });
+    return true;
+  }
+
+  Producto? _producto(String id) {
+    for (final producto in _existencias.productos) {
+      if (producto.id == id) return producto;
+    }
+    return null;
   }
 }

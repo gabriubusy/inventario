@@ -4,6 +4,7 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/rejilla_adaptable.dart';
 import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/core/dinero.dart';
+import 'package:inventario/core/texto.dart';
 import 'package:inventario/features/incidencias/domain/incidencia.dart';
 import 'package:inventario/features/incidencias/domain/respuesta_proveedor.dart';
 import 'package:inventario/features/incidencias/presentation/seccion_incidencias.dart';
@@ -24,6 +25,7 @@ class FichaProveedor extends StatelessWidget {
     required this.onRegistrarIncidencia,
     required this.onResponder,
     this.onDevolver,
+    this.onQuitarMarca,
     this.deuda = 0,
   });
 
@@ -41,10 +43,24 @@ class FichaProveedor extends StatelessWidget {
   /// Ctrl+D: sends goods back to this supplier; hidden when null.
   final VoidCallback? onDevolver;
 
+  /// Takes a brand off this supplier's products; no cross is shown
+  /// without it.
+  final ValueChanged<String>? onQuitarMarca;
+
   /// What is still owed to this supplier, in dollar hundredths.
   final int deuda;
 
   static const _anchoDato = 160.0;
+
+  /// Stock left of a brand: then it is not taken off the supplier.
+  bool _conExistencias(String marca) {
+    final cual = normalizarParaBusqueda(marca);
+    return suministros.any(
+      (s) =>
+          normalizarParaBusqueda(s.lote.marca) == cual &&
+          s.lote.tieneExistencia,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -183,7 +199,14 @@ class FichaProveedor extends StatelessWidget {
                   Wrap(
                     spacing: espaciado.sm,
                     runSpacing: espaciado.sm,
-                    children: [for (final marca in marcas) _Marca(marca)],
+                    children: [
+                      for (final marca in marcas)
+                        _Marca(
+                          nombre: marca,
+                          conExistencias: _conExistencias(marca),
+                          onQuitar: onQuitarMarca,
+                        ),
+                    ],
                   ),
               ],
             ),
@@ -204,14 +227,26 @@ class FichaProveedor extends StatelessWidget {
 }
 
 class _Marca extends StatelessWidget {
-  const _Marca(this.nombre);
+  const _Marca({
+    required this.nombre,
+    required this.conExistencias,
+    this.onQuitar,
+  });
+
+  static const _tamanoQuitar = 16.0;
 
   final String nombre;
+
+  /// Stock left, so the brand cannot be taken off yet.
+  final bool conExistencias;
+
+  final ValueChanged<String>? onQuitar;
 
   @override
   Widget build(BuildContext context) {
     final tema = Theme.of(context);
     final espaciado = context.espaciado;
+    final onQuitar = this.onQuitar;
     return DecoratedBox(
       decoration: BoxDecoration(
         color: tema.colorScheme.surfaceContainerHighest,
@@ -222,7 +257,29 @@ class _Marca extends StatelessWidget {
           horizontal: espaciado.md,
           vertical: espaciado.xs + 2,
         ),
-        child: Text(nombre, style: tema.textTheme.labelLarge),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          spacing: espaciado.xs,
+          children: [
+            Text(nombre, style: tema.textTheme.labelLarge),
+            if (onQuitar != null)
+              // Out of the focus order: the card is walked with the arrows.
+              ExcludeFocus(
+                child: IconButton(
+                  onPressed: conExistencias ? null : () => onQuitar(nombre),
+                  icon: const Icon(Icons.close),
+                  iconSize: _tamanoQuitar,
+                  padding: EdgeInsets.zero,
+                  visualDensity: VisualDensity.compact,
+                  constraints: const BoxConstraints(),
+                  tooltip: conExistencias
+                      ? 'Queda stock de $nombre: sale con ventas, mermas o '
+                            'Conteo (F9)'
+                      : 'Quitar $nombre de los productos de este proveedor',
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }
