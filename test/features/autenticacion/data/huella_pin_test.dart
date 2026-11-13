@@ -22,27 +22,27 @@ void main() {
   });
 
   test('the stored print never contains the digits', () {
-    final huella = HuellaPin.crear('4826', azar: Random(1));
+    final huella = HuellaPin.crearAhora('4826', azar: Random(1));
     expect(huella, isNot(contains('4826')));
     expect(huella, startsWith(r'pbkdf2-sha256$'));
   });
 
   test('recognises the right PIN and only that one', () {
-    final huella = HuellaPin.crear('4826');
-    expect(HuellaPin.coincide('4826', huella), isTrue);
-    expect(HuellaPin.coincide('4827', huella), isFalse);
+    final huella = HuellaPin.crearAhora('4826');
+    expect(HuellaPin.coincideAhora('4826', huella), isTrue);
+    expect(HuellaPin.coincideAhora('4827', huella), isFalse);
   });
 
   test(
     'the same PIN gives a different print each time, thanks to the salt',
     () {
-      expect(HuellaPin.crear('4826'), isNot(HuellaPin.crear('4826')));
+      expect(HuellaPin.crearAhora('4826'), isNot(HuellaPin.crearAhora('4826')));
     },
   );
 
   test('a damaged print never lets anyone in', () {
     for (final mala in ['', 'abc', r'pbkdf2-sha256$x$a$b', r'md5$1$a$b']) {
-      expect(HuellaPin.coincide('4826', mala), isFalse, reason: mala);
+      expect(HuellaPin.coincideAhora('4826', mala), isFalse, reason: mala);
     }
   });
 }

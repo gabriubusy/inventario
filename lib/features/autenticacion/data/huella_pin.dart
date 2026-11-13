@@ -1,34 +1,58 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'dart:math';
-import 'dart:typed_data';
 
 import 'package:crypto/crypto.dart';
+import 'package:flutter/foundation.dart';
 
 /// PBKDF2-HMAC-SHA256 of a PIN with its own salt, stored as
 /// "pbkdf2-sha256$iterations$salt$hash" so the digits are never kept.
-/// A 4-digit PIN can still be guessed by brute force; this only stops it
-/// from being read straight from the disk.
+/// Only 10.000 PINs exist, so whoever copies the file can still try them
+/// all: the rounds below just make that slower, and what really guards the
+/// app is the wait after a wrong PIN. Each print carries the rounds it was
+/// made with, so older ones still open and get rewritten on the way in.
 abstract final class HuellaPin {
   static const _prefijo = 'pbkdf2-sha256';
-  static const _iteraciones = 20000;
+
+  /// Around a third of a second on this kind of computer, off the UI
+  /// isolate; more would be felt every time the app is unlocked.
+  static const iteraciones = 100000;
   static const _bytesSal = 16;
 
-  static String crear(String pin, {Random? azar}) {
+  /// On another isolate: the rounds would freeze the login otherwise.
+  static Future<String> crear(String pin, {Random? azar}) =>
+      _fuera(() => crearAhora(pin, azar: azar));
+
+  static Future<bool> coincide(String pin, String huella) =>
+      _fuera(() => coincideAhora(pin, huella));
+
+  /// The rounds the print was made with; null if it cannot be read.
+  static int? iteracionesDe(String huella) {
+    final partes = huella.split(r'$');
+    if (partes.length != 4 || partes[0] != _prefijo) return null;
+    return int.tryParse(partes[1]);
+  }
+
+  // Isolates are not a thing on the web build, where it runs as it comes.
+  static Future<T> _fuera<T>(T Function() trabajo) =>
+      kIsWeb ? Future.value(trabajo()) : Isolate.run(trabajo);
+
+  /// [rondas] only for tests and for reading what an older version wrote.
+  static String crearAhora(
+    String pin, {
+    Random? azar,
+    int rondas = iteraciones,
+  }) {
     final generador = azar ?? Random.secure();
     final sal = Uint8List.fromList(
       List.generate(_bytesSal, (_) => generador.nextInt(256)),
     );
-    final hash = pbkdf2(utf8.encode(pin), sal, _iteraciones);
-    return [
-      _prefijo,
-      _iteraciones,
-      base64Encode(sal),
-      base64Encode(hash),
-    ].join(r'$');
+    final hash = pbkdf2(utf8.encode(pin), sal, rondas);
+    return [_prefijo, rondas, base64Encode(sal), base64Encode(hash)].join(r'$');
   }
 
   /// False as well for a damaged or unknown format.
-  static bool coincide(String pin, String huella) {
+  static bool coincideAhora(String pin, String huella) {
     final partes = huella.split(r'$');
     if (partes.length != 4 || partes[0] != _prefijo) return false;
     final iteraciones = int.tryParse(partes[1]);

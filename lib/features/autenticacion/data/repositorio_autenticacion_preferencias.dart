@@ -27,9 +27,23 @@ class RepositorioAutenticacionPreferencias implements RepositorioAutenticacion {
     return HuellaPin.coincide(pin.digitos, huella);
   }
 
+  /// A print from an older version is rewritten with today's rounds, now
+  /// that the right PIN is at hand.
+  Future<void> _ponerAlDia(Pin pin) async {
+    final huella = await _preferencias.getString(_claveHuella);
+    if (huella == null) return;
+    final rondas = HuellaPin.iteracionesDe(huella);
+    if (rondas == null || rondas >= HuellaPin.iteraciones) return;
+    await _guardar(pin);
+  }
+
+  Future<void> _guardar(Pin pin) async =>
+      _preferencias.setString(_claveHuella, await HuellaPin.crear(pin.digitos));
+
   @override
   Future<ResultadoInicioSesion> iniciarSesion({required Pin pin}) async {
     if (!await _esElPin(pin)) return const PinIncorrecto();
+    await _ponerAlDia(pin);
     return InicioSesionCorrecto(usuario);
   }
 
@@ -39,7 +53,7 @@ class RepositorioAutenticacionPreferencias implements RepositorioAutenticacion {
     required Pin nuevo,
   }) async {
     if (!await _esElPin(actual)) return const PinActualIncorrecto();
-    await _preferencias.setString(_claveHuella, HuellaPin.crear(nuevo.digitos));
+    await _guardar(nuevo);
     return const PinCambiado();
   }
 }

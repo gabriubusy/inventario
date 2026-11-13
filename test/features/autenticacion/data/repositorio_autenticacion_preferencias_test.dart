@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:inventario/features/autenticacion/data/huella_pin.dart';
 import 'package:inventario/features/autenticacion/data/repositorio_autenticacion_preferencias.dart';
 import 'package:inventario/features/autenticacion/domain/pin.dart';
 import 'package:inventario/features/autenticacion/domain/resultado_cambio_pin.dart';
@@ -44,6 +45,28 @@ void main() {
     expect(resultado, isA<PinActualIncorrecto>());
     expect(
       await crear().iniciarSesion(pin: inicial),
+      isA<InicioSesionCorrecto>(),
+    );
+  });
+
+  test('a print from an older version still opens, and is rewritten with '
+      "today's rounds", () async {
+    // What version 1 stored: the same PIN with only 20.000 rounds.
+    final vieja = HuellaPin.crearAhora(nuevo.digitos, rondas: 20000);
+    await SharedPreferencesAsync().setString('autenticacion.huellaPin', vieja);
+
+    final repositorio = crear();
+    expect(
+      await repositorio.iniciarSesion(pin: nuevo),
+      isA<InicioSesionCorrecto>(),
+    );
+    final guardada = await SharedPreferencesAsync().getString(
+      'autenticacion.huellaPin',
+    );
+    expect(guardada, isNot(vieja));
+    expect(HuellaPin.iteracionesDe(guardada!), HuellaPin.iteraciones);
+    expect(
+      await repositorio.iniciarSesion(pin: nuevo),
       isA<InicioSesionCorrecto>(),
     );
   });
