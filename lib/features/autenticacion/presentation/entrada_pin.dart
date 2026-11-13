@@ -23,11 +23,42 @@ class EntradaPin extends StatefulWidget {
 
 class _EntradaPinState extends State<EntradaPin> {
   var _digitos = '';
+  Timer? _cuenta;
 
   bool get _cargando => widget.controlador.estado is IniciandoSesion;
 
+  Duration get _espera => widget.controlador.esperaRestante;
+
+  bool get _esperando => _espera > Duration.zero;
+
+  @override
+  void initState() {
+    super.initState();
+    widget.controlador.addListener(_revisarEspera);
+  }
+
+  @override
+  void dispose() {
+    _cuenta?.cancel();
+    widget.controlador.removeListener(_revisarEspera);
+    super.dispose();
+  }
+
+  /// A wait counts down on screen, so the second left is visible.
+  void _revisarEspera() {
+    if (!_esperando || _cuenta != null) return;
+    setState(() => _digitos = '');
+    _cuenta = Timer.periodic(const Duration(seconds: 1), (reloj) {
+      if (!mounted || !_esperando) {
+        reloj.cancel();
+        _cuenta = null;
+      }
+      if (mounted) setState(() {});
+    });
+  }
+
   void _anadir(String digito) {
-    if (_cargando || _digitos.length >= Pin.longitud) return;
+    if (_cargando || _esperando || _digitos.length >= Pin.longitud) return;
     setState(() => _digitos += digito);
     // The fourth digit enters on its own: one key less every time.
     if (_digitos.length == Pin.longitud) unawaited(_enviar());
@@ -80,11 +111,16 @@ class _EntradaPinState extends State<EntradaPin> {
               estado is SesionCerrada &&
               estado.pinIncorrecto &&
               _digitos.isEmpty;
+          final segundos =
+              _espera.inSeconds + (_espera.inMilliseconds % 1000 > 0 ? 1 : 0);
           return Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               IndicadorPin(introducidos: _digitos.length),
-              if (fallo) ...[
+              if (_esperando) ...[
+                SizedBox(height: espaciado.lg),
+                AvisoError('Demasiados intentos · espera $segundos s'),
+              ] else if (fallo) ...[
                 SizedBox(height: espaciado.lg),
                 const AvisoError('PIN incorrecto'),
               ],
@@ -92,7 +128,7 @@ class _EntradaPinState extends State<EntradaPin> {
               // Keeps focus here so the physical keyboard keeps working after a tap.
               ExcludeFocus(
                 child: TecladoPin(
-                  cargando: _cargando,
+                  cargando: _cargando || _esperando,
                   puedeEntrar: _digitos.length == Pin.longitud,
                   onDigito: _anadir,
                   onBorrar: _borrar,

@@ -94,6 +94,40 @@ void main() {
     expect(find.text('PIN incorrecto'), findsNothing);
   });
 
+  testWidgets('after three wrong PINs it makes you wait', (tester) async {
+    var ahora = DateTime(2026, 11, 12, 9);
+    controlador.dispose();
+    controlador = ControladorSesion(
+      RepositorioAutenticacionEnMemoria((
+        usuario: const Usuario(id: '1', nombre: 'Ana'),
+        pin: Pin.tryParse('1234')!,
+      )),
+      AlmacenSesionEnMemoria(),
+      ahora: () => ahora,
+    );
+    await mostrar(tester);
+    // Not pumpAndSettle: the countdown on screen never goes quiet.
+    for (var i = 0; i < 3; i++) {
+      await teclear(tester, '9999');
+      await tester.pump();
+      await tester.pump();
+    }
+    expect(find.textContaining('Demasiados intentos'), findsOneWidget);
+    expect(find.textContaining('5 s'), findsOneWidget);
+
+    // The keypad is off, so the right PIN cannot be tried either.
+    await teclear(tester, '1234');
+    await tester.pump();
+    expect(controlador.estado, isA<SesionCerrada>());
+
+    ahora = ahora.add(const Duration(seconds: 5));
+    await tester.pump(const Duration(seconds: 1));
+    expect(find.textContaining('Demasiados intentos'), findsNothing);
+    await teclear(tester, '1234');
+    await tester.pumpAndSettle();
+    expect(controlador.estado, isA<SesionAbierta>());
+  });
+
   testWidgets('accepts the PIN from the physical keyboard', (tester) async {
     await mostrar(tester);
     await tester.sendKeyEvent(LogicalKeyboardKey.digit1);

@@ -87,6 +87,74 @@ void main() {
     expect(repositorio.llamadas, 1);
   });
 
+  group('too many wrong pins', () {
+    var ahora = DateTime(2026, 11, 12, 9);
+    late ControladorSesion conReloj;
+
+    setUp(() {
+      ahora = DateTime(2026, 11, 12, 9);
+      conReloj = ControladorSesion(repositorio, almacen, ahora: () => ahora);
+    });
+
+    tearDown(() => conReloj.dispose());
+
+    Future<void> fallar() async {
+      repositorio.respuesta = Completer();
+      final enCurso = conReloj.iniciarSesion(pin: Pin.tryParse('1111')!);
+      repositorio.respuesta.complete(const PinIncorrecto());
+      await enCurso;
+    }
+
+    test('the first two mistakes cost no wait', () async {
+      await fallar();
+      await fallar();
+      expect(conReloj.esperaRestante, Duration.zero);
+      expect((conReloj.estado as SesionCerrada).esperaHasta, isNull);
+    });
+
+    test('the third one waits, and the wait grows', () async {
+      await fallar();
+      await fallar();
+      await fallar();
+      expect(conReloj.esperaRestante, const Duration(seconds: 5));
+      ahora = ahora.add(const Duration(seconds: 5));
+      expect(conReloj.esperaRestante, Duration.zero);
+      await fallar();
+      expect(conReloj.esperaRestante, const Duration(seconds: 15));
+      ahora = ahora.add(const Duration(seconds: 15));
+      await fallar();
+      expect(conReloj.esperaRestante, const Duration(seconds: 30));
+      ahora = ahora.add(const Duration(seconds: 30));
+      await fallar();
+      expect(conReloj.esperaRestante, const Duration(seconds: 30));
+    });
+
+    test('no PIN is even tried while it waits', () async {
+      await fallar();
+      await fallar();
+      await fallar();
+      final antes = repositorio.llamadas;
+      await conReloj.iniciarSesion(pin: Pin.tryParse('1234')!);
+      expect(repositorio.llamadas, antes);
+    });
+
+    test('the right PIN after the wait opens the session and forgets the '
+        'mistakes', () async {
+      await fallar();
+      await fallar();
+      await fallar();
+      ahora = ahora.add(const Duration(seconds: 5));
+      repositorio.respuesta = Completer();
+      final enCurso = conReloj.iniciarSesion(pin: Pin.tryParse('1234')!);
+      repositorio.respuesta.complete(const InicioSesionCorrecto(ana));
+      await enCurso;
+      expect(conReloj.estado, isA<SesionAbierta>());
+      expect(conReloj.esperaRestante, Duration.zero);
+      await fallar();
+      expect(conReloj.esperaRestante, Duration.zero);
+    });
+  });
+
   test('closing the session clears the user', () async {
     final enCurso = iniciar();
     repositorio.respuesta.complete(const InicioSesionCorrecto(ana));
