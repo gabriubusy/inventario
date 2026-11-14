@@ -5,6 +5,7 @@ import 'package:inventario/app/espaciado.dart';
 abstract final class TemaApp {
   static const _granate = Color(0xFF7A1F2B);
   static const _radio = BorderRadius.all(Radius.circular(8));
+
   /// Also for a card drawn behind a lazy list (see TablaKardex).
   static const radioTarjeta = BorderRadius.all(Radius.circular(12));
 

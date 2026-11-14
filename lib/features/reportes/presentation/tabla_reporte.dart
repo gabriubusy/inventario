@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/reportes/domain/reporte.dart';
 
 /// The report's table; numeric columns align right, the first stands out.
@@ -46,26 +47,38 @@ class TablaReporte extends StatelessWidget {
         ],
       ),
     );
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          fila(reporte.columnas, encabezado: true),
+    return DecoratedSliver(
+      decoration: BoxDecoration(
+        color: colores.surface,
+        border: Border.all(color: colores.outlineVariant),
+        borderRadius: TemaApp.radioTarjeta,
+      ),
+      sliver: SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(child: fila(reporte.columnas, encabezado: true)),
           if (reporte.filas.isEmpty)
-            Padding(
-              padding: EdgeInsets.all(espaciado.xl),
-              child: Text(
-                'Sin datos en este periodo',
-                textAlign: TextAlign.center,
-                style: tema.textTheme.bodyMedium?.copyWith(
-                  color: colores.onSurfaceVariant,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(espaciado.xl),
+                child: Text(
+                  'Sin datos en este periodo',
+                  textAlign: TextAlign.center,
+                  style: tema.textTheme.bodyMedium?.copyWith(
+                    color: colores.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
-          for (final celdas in reporte.filas) ...[
-            Divider(height: 1, color: colores.outlineVariant),
-            fila(celdas, encabezado: false),
-          ],
+          SliverList.builder(
+            itemCount: reporte.filas.length,
+            itemBuilder: (_, i) => Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Divider(height: 1, color: colores.outlineVariant),
+                fila(reporte.filas[i], encabezado: false),
+              ],
+            ),
+          ),
         ],
       ),
     );

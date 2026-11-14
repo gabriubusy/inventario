@@ -161,57 +161,85 @@ class _PantallaReportesState extends State<PantallaReportes> {
                 constraints: const BoxConstraints(
                   maxWidth: PantallaReportes._anchoMaximo,
                 ),
-                child: ListView(
-                  padding: EdgeInsets.all(espaciado.xl),
-                  children: [
-                    ConEtiqueta(
-                      etiqueta: 'Reporte',
-                      ayuda: lineasAyuda(
-                        [for (final t in TipoReporte.values) t.etiqueta],
-                        [
-                          for (var i = 1; i <= TipoReporte.values.length; i++)
-                            'Alt+$i',
-                        ],
-                      ).join('\n'),
-                      child: ExcludeFocus(
-                        child: Wrap(
-                          spacing: espaciado.sm,
-                          runSpacing: espaciado.sm,
-                          children: [
-                            for (final t in TipoReporte.values)
-                              ChoiceChip(
-                                label: Text(t.etiqueta),
-                                selected: t == _tipo,
-                                showCheckmark: false,
-                                onSelected: (_) => setState(() => _tipo = t),
+                // Slivers, so a report of hundreds of rows only builds the
+                // ones on screen.
+                child: CustomScrollView(
+                  slivers: [
+                    SliverPadding(
+                      padding: EdgeInsets.all(espaciado.xl),
+                      sliver: SliverMainAxisGroup(
+                        slivers: [
+                          SliverToBoxAdapter(
+                            child: ConEtiqueta(
+                              etiqueta: 'Reporte',
+                              ayuda: lineasAyuda(
+                                [
+                                  for (final t in TipoReporte.values)
+                                    t.etiqueta,
+                                ],
+                                [
+                                  for (
+                                    var i = 1;
+                                    i <= TipoReporte.values.length;
+                                    i++
+                                  )
+                                    'Alt+$i',
+                                ],
+                              ).join('\n'),
+                              child: ExcludeFocus(
+                                child: Wrap(
+                                  spacing: espaciado.sm,
+                                  runSpacing: espaciado.sm,
+                                  children: [
+                                    for (final t in TipoReporte.values)
+                                      ChoiceChip(
+                                        label: Text(t.etiqueta),
+                                        selected: t == _tipo,
+                                        showCheckmark: false,
+                                        onSelected: (_) =>
+                                            setState(() => _tipo = t),
+                                      ),
+                                  ],
+                                ),
                               ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: espaciado.md),
-                    Text(
-                      _subtitulo,
-                      style: tema.textTheme.bodyMedium?.copyWith(
-                        color: colores.onSurfaceVariant,
-                      ),
-                    ),
-                    SizedBox(height: espaciado.md),
-                    Row(
-                      spacing: espaciado.md,
-                      children: [
-                        for (final c in reporte.cifras)
-                          Expanded(
-                            child: CifraDelDia(
-                              titulo: c.titulo,
-                              valor: c.valor,
-                              detalle: c.detalle,
                             ),
                           ),
-                      ],
+                          SliverToBoxAdapter(
+                            child: SizedBox(height: espaciado.md),
+                          ),
+                          SliverToBoxAdapter(
+                            child: Text(
+                              _subtitulo,
+                              style: tema.textTheme.bodyMedium?.copyWith(
+                                color: colores.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          SliverToBoxAdapter(
+                            child: SizedBox(height: espaciado.md),
+                          ),
+                          SliverToBoxAdapter(
+                            child: Row(
+                              spacing: espaciado.md,
+                              children: [
+                                for (final c in reporte.cifras)
+                                  Expanded(
+                                    child: CifraDelDia(
+                                      titulo: c.titulo,
+                                      valor: c.valor,
+                                      detalle: c.detalle,
+                                    ),
+                                  ),
+                              ],
+                            ),
+                          ),
+                          SliverToBoxAdapter(
+                            child: SizedBox(height: espaciado.lg),
+                          ),
+                          TablaReporte(reporte: reporte),
+                        ],
+                      ),
                     ),
-                    SizedBox(height: espaciado.lg),
-                    TablaReporte(reporte: reporte),
                   ],
                 ),
               ),
