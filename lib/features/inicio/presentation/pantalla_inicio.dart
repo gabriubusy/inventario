@@ -12,8 +12,10 @@ import 'package:inventario/features/caja/application/controlador_caja.dart';
 import 'package:inventario/features/caja/presentation/aviso_caja.dart';
 import 'package:inventario/features/caja/presentation/pantalla_caja.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/presentation/aviso_pedidos.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/compras/presentation/pantalla_cuentas.dart';
+import 'package:inventario/features/compras/presentation/pantalla_pedidos.dart';
 import 'package:inventario/features/configuracion/application/controlador_negocio.dart';
 import 'package:inventario/features/configuracion/presentation/pantalla_configuracion.dart';
 import 'package:inventario/features/conteo/application/controlador_conteo.dart';
@@ -219,6 +221,19 @@ class _PantallaInicioState extends State<PantallaInicio> {
         builder: (_) => PantallaCuentas(
           compras: widget.compras,
           aBolivares: widget.tasa.aBolivares,
+        ),
+      ),
+    ),
+  );
+
+  void _abrirPedidos() => unawaited(
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        builder: (_) => PantallaPedidos(
+          compras: widget.compras,
+          aBolivares: widget.tasa.aBolivares,
+          onNuevoPedido: _registrarEntrada,
+          onCuentas: _abrirCuentas,
         ),
       ),
     ),
@@ -455,6 +470,8 @@ class _PantallaInicioState extends State<PantallaInicio> {
         _registrarIncidencia,
     const SingleActivator(LogicalKeyboardKey.keyD, control: true):
         _devolverAProveedor,
+    const SingleActivator(LogicalKeyboardKey.keyP, control: true):
+        _abrirPedidos,
     const SingleActivator(LogicalKeyboardKey.keyT, control: true): _ponerTasa,
     const SingleActivator(LogicalKeyboardKey.keyR, control: true):
         _abrirCalculadora,
@@ -480,6 +497,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
     ),
     (texto: 'Historial', atajo: 'F8', onPressed: _abrirKardex),
     (texto: 'Conteo', atajo: 'F9', onPressed: _abrirConteo),
+    (texto: 'Pedidos', atajo: 'Ctrl+P', onPressed: _abrirPedidos),
     (texto: 'Cuentas', atajo: 'F10', onPressed: _abrirCuentas),
     (texto: 'Reportes', atajo: 'F12', onPressed: _abrirReportes),
     if (widget.negocio != null)
@@ -519,6 +537,7 @@ class _PantallaInicioState extends State<PantallaInicio> {
               AvisoCaja(caja: widget.caja, onAbrir: _abrirCaja),
               if (widget.respaldo case final respaldo?)
                 AvisoRespaldo(respaldo: respaldo, onRespaldar: _respaldar),
+              AvisoPedidos(compras: widget.compras, onVer: _abrirPedidos),
               AvisoStock(
                 existencias: widget.controlador,
                 onPedido: () => _ejecutar(AccionRapida.entrada),

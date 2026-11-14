@@ -51,10 +51,8 @@ class Compra {
   int get recibido => lineas.fold(0, (suma, l) => suma + l.subtotalRecibido);
 
   /// What is still on the way, at the invoice's cost.
-  int get porRecibir => lineas.fold(
-    0,
-    (suma, l) => suma + (l.recibida ? 0 : l.subtotal),
-  );
+  int get porRecibir =>
+      lineas.fold(0, (suma, l) => suma + (l.recibida ? 0 : l.subtotal));
 
   /// More (or less) than the invoice, in dollar hundredths.
   int get diferencia => lineas.fold(
@@ -62,8 +60,7 @@ class Compra {
     (suma, l) => suma + (l.recibida ? l.subtotalRecibido - l.subtotal : 0),
   );
 
-  int get lineasConDiferencia =>
-      lineas.where((l) => l.tieneDiferencia).length;
+  int get lineasConDiferencia => lineas.where((l) => l.tieneDiferencia).length;
 
   EstadoPedido get estado {
     final recibidas = lineas.where((l) => l.recibida).length;

@@ -318,6 +318,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byType(Drawer), findsOneWidget);
     // A short window scrolls the menu to its last entries.
+    await tester.drag(find.byType(Drawer), const Offset(0, -240));
+    await tester.pumpAndSettle();
     await tester.ensureVisible(find.text('Cambiar PIN'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Cambiar PIN'));

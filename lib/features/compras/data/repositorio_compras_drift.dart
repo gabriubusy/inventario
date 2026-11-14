@@ -29,6 +29,8 @@ class RepositorioComprasDrift implements RepositorioCompras {
           piezas: l.piezas,
           cantidad: l.cantidad,
           costo: l.costo,
+          piezasRecibidas: l.piezasRecibidas,
+          cantidadRecibida: l.cantidadRecibida,
         ),
       );
     }
@@ -43,6 +45,7 @@ class RepositorioComprasDrift implements RepositorioCompras {
           vence: f.vence,
           medio: f.medio,
           tasa: f.tasa,
+          recibidaEl: f.recibidaEl,
         ),
     ];
   }
@@ -80,6 +83,7 @@ class RepositorioComprasDrift implements RepositorioCompras {
               vence: Value(guardada.vence),
               medio: Value(guardada.medio),
               tasa: Value(guardada.tasa),
+              recibidaEl: Value(guardada.recibidaEl),
             ),
           );
       for (final (i, l) in guardada.lineas.indexed) {
@@ -96,6 +100,8 @@ class RepositorioComprasDrift implements RepositorioCompras {
                 piezas: l.piezas,
                 cantidad: l.cantidad,
                 costo: l.costo,
+                piezasRecibidas: Value(l.piezasRecibidas),
+                cantidadRecibida: Value(l.cantidadRecibida),
               ),
             );
       }
@@ -130,6 +136,24 @@ class RepositorioComprasDrift implements RepositorioCompras {
   @override
   Future<void> borrarPago(String id) =>
       (_db.delete(_db.pagos)..where((t) => t.id.equals(id))).go();
+
+  @override
+  Future<void> guardarRecepcion(Compra compra) async {
+    await _db.transaction(() async {
+      await (_db.update(_db.compras)..where((t) => t.id.equals(compra.id)))
+          .write(ComprasCompanion(recibidaEl: Value(compra.recibidaEl)));
+      for (final (i, l) in compra.lineas.indexed) {
+        await (_db.update(_db.lineasCompra)
+              ..where((t) => t.compraId.equals(compra.id) & t.orden.equals(i)))
+            .write(
+              LineasCompraCompanion(
+                piezasRecibidas: Value(l.piezasRecibidas),
+                cantidadRecibida: Value(l.cantidadRecibida),
+              ),
+            );
+      }
+    });
+  }
 
   @override
   Future<void> renombrarProveedor(String anterior, String nuevo) async {

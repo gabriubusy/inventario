@@ -3935,6 +3935,17 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, FilaCompra> {
     type: DriftSqlType.int,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _recibidaElMeta = const VerificationMeta(
+    'recibidaEl',
+  );
+  @override
+  late final GeneratedColumn<DateTime> recibidaEl = GeneratedColumn<DateTime>(
+    'recibida_el',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -3944,6 +3955,7 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, FilaCompra> {
     vence,
     medio,
     tasa,
+    recibidaEl,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -3998,6 +4010,12 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, FilaCompra> {
         tasa.isAcceptableOrUnknown(data['tasa']!, _tasaMeta),
       );
     }
+    if (data.containsKey('recibida_el')) {
+      context.handle(
+        _recibidaElMeta,
+        recibidaEl.isAcceptableOrUnknown(data['recibida_el']!, _recibidaElMeta),
+      );
+    }
     return context;
   }
 
@@ -4037,6 +4055,10 @@ class $ComprasTable extends Compras with TableInfo<$ComprasTable, FilaCompra> {
         DriftSqlType.int,
         data['${effectivePrefix}tasa'],
       ),
+      recibidaEl: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}recibida_el'],
+      ),
     );
   }
 
@@ -4059,6 +4081,9 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
   final DateTime? vence;
   final MedioPago? medio;
   final int? tasa;
+
+  /// When what arrived was confirmed; null while nothing has.
+  final DateTime? recibidaEl;
   const FilaCompra({
     required this.id,
     required this.fecha,
@@ -4067,6 +4092,7 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
     this.vence,
     this.medio,
     this.tasa,
+    this.recibidaEl,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4086,6 +4112,9 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
     if (!nullToAbsent || tasa != null) {
       map['tasa'] = Variable<int>(tasa);
     }
+    if (!nullToAbsent || recibidaEl != null) {
+      map['recibida_el'] = Variable<DateTime>(recibidaEl);
+    }
     return map;
   }
 
@@ -4102,6 +4131,9 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
           ? const Value.absent()
           : Value(medio),
       tasa: tasa == null && nullToAbsent ? const Value.absent() : Value(tasa),
+      recibidaEl: recibidaEl == null && nullToAbsent
+          ? const Value.absent()
+          : Value(recibidaEl),
     );
   }
 
@@ -4120,6 +4152,7 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
         serializer.fromJson<String?>(json['medio']),
       ),
       tasa: serializer.fromJson<int?>(json['tasa']),
+      recibidaEl: serializer.fromJson<DateTime?>(json['recibidaEl']),
     );
   }
   @override
@@ -4135,6 +4168,7 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
         $ComprasTable.$convertermedion.toJson(medio),
       ),
       'tasa': serializer.toJson<int?>(tasa),
+      'recibidaEl': serializer.toJson<DateTime?>(recibidaEl),
     };
   }
 
@@ -4146,6 +4180,7 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
     Value<DateTime?> vence = const Value.absent(),
     Value<MedioPago?> medio = const Value.absent(),
     Value<int?> tasa = const Value.absent(),
+    Value<DateTime?> recibidaEl = const Value.absent(),
   }) => FilaCompra(
     id: id ?? this.id,
     fecha: fecha ?? this.fecha,
@@ -4154,6 +4189,7 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
     vence: vence.present ? vence.value : this.vence,
     medio: medio.present ? medio.value : this.medio,
     tasa: tasa.present ? tasa.value : this.tasa,
+    recibidaEl: recibidaEl.present ? recibidaEl.value : this.recibidaEl,
   );
   FilaCompra copyWithCompanion(ComprasCompanion data) {
     return FilaCompra(
@@ -4164,6 +4200,9 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
       vence: data.vence.present ? data.vence.value : this.vence,
       medio: data.medio.present ? data.medio.value : this.medio,
       tasa: data.tasa.present ? data.tasa.value : this.tasa,
+      recibidaEl: data.recibidaEl.present
+          ? data.recibidaEl.value
+          : this.recibidaEl,
     );
   }
 
@@ -4176,14 +4215,23 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
           ..write('factura: $factura, ')
           ..write('vence: $vence, ')
           ..write('medio: $medio, ')
-          ..write('tasa: $tasa')
+          ..write('tasa: $tasa, ')
+          ..write('recibidaEl: $recibidaEl')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, fecha, proveedor, factura, vence, medio, tasa);
+  int get hashCode => Object.hash(
+    id,
+    fecha,
+    proveedor,
+    factura,
+    vence,
+    medio,
+    tasa,
+    recibidaEl,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4194,7 +4242,8 @@ class FilaCompra extends DataClass implements Insertable<FilaCompra> {
           other.factura == this.factura &&
           other.vence == this.vence &&
           other.medio == this.medio &&
-          other.tasa == this.tasa);
+          other.tasa == this.tasa &&
+          other.recibidaEl == this.recibidaEl);
 }
 
 class ComprasCompanion extends UpdateCompanion<FilaCompra> {
@@ -4205,6 +4254,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
   final Value<DateTime?> vence;
   final Value<MedioPago?> medio;
   final Value<int?> tasa;
+  final Value<DateTime?> recibidaEl;
   final Value<int> rowid;
   const ComprasCompanion({
     this.id = const Value.absent(),
@@ -4214,6 +4264,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
     this.vence = const Value.absent(),
     this.medio = const Value.absent(),
     this.tasa = const Value.absent(),
+    this.recibidaEl = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   ComprasCompanion.insert({
@@ -4224,6 +4275,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
     this.vence = const Value.absent(),
     this.medio = const Value.absent(),
     this.tasa = const Value.absent(),
+    this.recibidaEl = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        fecha = Value(fecha),
@@ -4237,6 +4289,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
     Expression<DateTime>? vence,
     Expression<String>? medio,
     Expression<int>? tasa,
+    Expression<DateTime>? recibidaEl,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -4247,6 +4300,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
       if (vence != null) 'vence': vence,
       if (medio != null) 'medio': medio,
       if (tasa != null) 'tasa': tasa,
+      if (recibidaEl != null) 'recibida_el': recibidaEl,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -4259,6 +4313,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
     Value<DateTime?>? vence,
     Value<MedioPago?>? medio,
     Value<int?>? tasa,
+    Value<DateTime?>? recibidaEl,
     Value<int>? rowid,
   }) {
     return ComprasCompanion(
@@ -4269,6 +4324,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
       vence: vence ?? this.vence,
       medio: medio ?? this.medio,
       tasa: tasa ?? this.tasa,
+      recibidaEl: recibidaEl ?? this.recibidaEl,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -4299,6 +4355,9 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
     if (tasa.present) {
       map['tasa'] = Variable<int>(tasa.value);
     }
+    if (recibidaEl.present) {
+      map['recibida_el'] = Variable<DateTime>(recibidaEl.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -4315,6 +4374,7 @@ class ComprasCompanion extends UpdateCompanion<FilaCompra> {
           ..write('vence: $vence, ')
           ..write('medio: $medio, ')
           ..write('tasa: $tasa, ')
+          ..write('recibidaEl: $recibidaEl, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -4432,6 +4492,28 @@ class $LineasCompraTable extends LineasCompra
     type: DriftSqlType.int,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _piezasRecibidasMeta = const VerificationMeta(
+    'piezasRecibidas',
+  );
+  @override
+  late final GeneratedColumn<int> piezasRecibidas = GeneratedColumn<int>(
+    'piezas_recibidas',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _cantidadRecibidaMeta = const VerificationMeta(
+    'cantidadRecibida',
+  );
+  @override
+  late final GeneratedColumn<int> cantidadRecibida = GeneratedColumn<int>(
+    'cantidad_recibida',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -4444,6 +4526,8 @@ class $LineasCompraTable extends LineasCompra
     piezas,
     cantidad,
     costo,
+    piezasRecibidas,
+    cantidadRecibida,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4524,6 +4608,24 @@ class $LineasCompraTable extends LineasCompra
     } else if (isInserting) {
       context.missing(_costoMeta);
     }
+    if (data.containsKey('piezas_recibidas')) {
+      context.handle(
+        _piezasRecibidasMeta,
+        piezasRecibidas.isAcceptableOrUnknown(
+          data['piezas_recibidas']!,
+          _piezasRecibidasMeta,
+        ),
+      );
+    }
+    if (data.containsKey('cantidad_recibida')) {
+      context.handle(
+        _cantidadRecibidaMeta,
+        cantidadRecibida.isAcceptableOrUnknown(
+          data['cantidad_recibida']!,
+          _cantidadRecibidaMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -4575,6 +4677,14 @@ class $LineasCompraTable extends LineasCompra
         DriftSqlType.int,
         data['${effectivePrefix}costo'],
       )!,
+      piezasRecibidas: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}piezas_recibidas'],
+      ),
+      cantidadRecibida: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}cantidad_recibida'],
+      ),
     );
   }
 
@@ -4598,6 +4708,10 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
   final int piezas;
   final int cantidad;
   final int costo;
+
+  /// What really arrived; null while the line is still waiting.
+  final int? piezasRecibidas;
+  final int? cantidadRecibida;
   const FilaLineaCompra({
     required this.id,
     required this.compraId,
@@ -4609,6 +4723,8 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
     required this.piezas,
     required this.cantidad,
     required this.costo,
+    this.piezasRecibidas,
+    this.cantidadRecibida,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -4627,6 +4743,12 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
     map['piezas'] = Variable<int>(piezas);
     map['cantidad'] = Variable<int>(cantidad);
     map['costo'] = Variable<int>(costo);
+    if (!nullToAbsent || piezasRecibidas != null) {
+      map['piezas_recibidas'] = Variable<int>(piezasRecibidas);
+    }
+    if (!nullToAbsent || cantidadRecibida != null) {
+      map['cantidad_recibida'] = Variable<int>(cantidadRecibida);
+    }
     return map;
   }
 
@@ -4642,6 +4764,12 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
       piezas: Value(piezas),
       cantidad: Value(cantidad),
       costo: Value(costo),
+      piezasRecibidas: piezasRecibidas == null && nullToAbsent
+          ? const Value.absent()
+          : Value(piezasRecibidas),
+      cantidadRecibida: cantidadRecibida == null && nullToAbsent
+          ? const Value.absent()
+          : Value(cantidadRecibida),
     );
   }
 
@@ -4663,6 +4791,8 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
       piezas: serializer.fromJson<int>(json['piezas']),
       cantidad: serializer.fromJson<int>(json['cantidad']),
       costo: serializer.fromJson<int>(json['costo']),
+      piezasRecibidas: serializer.fromJson<int?>(json['piezasRecibidas']),
+      cantidadRecibida: serializer.fromJson<int?>(json['cantidadRecibida']),
     );
   }
   @override
@@ -4681,6 +4811,8 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
       'piezas': serializer.toJson<int>(piezas),
       'cantidad': serializer.toJson<int>(cantidad),
       'costo': serializer.toJson<int>(costo),
+      'piezasRecibidas': serializer.toJson<int?>(piezasRecibidas),
+      'cantidadRecibida': serializer.toJson<int?>(cantidadRecibida),
     };
   }
 
@@ -4695,6 +4827,8 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
     int? piezas,
     int? cantidad,
     int? costo,
+    Value<int?> piezasRecibidas = const Value.absent(),
+    Value<int?> cantidadRecibida = const Value.absent(),
   }) => FilaLineaCompra(
     id: id ?? this.id,
     compraId: compraId ?? this.compraId,
@@ -4706,6 +4840,12 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
     piezas: piezas ?? this.piezas,
     cantidad: cantidad ?? this.cantidad,
     costo: costo ?? this.costo,
+    piezasRecibidas: piezasRecibidas.present
+        ? piezasRecibidas.value
+        : this.piezasRecibidas,
+    cantidadRecibida: cantidadRecibida.present
+        ? cantidadRecibida.value
+        : this.cantidadRecibida,
   );
   FilaLineaCompra copyWithCompanion(LineasCompraCompanion data) {
     return FilaLineaCompra(
@@ -4721,6 +4861,12 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
       piezas: data.piezas.present ? data.piezas.value : this.piezas,
       cantidad: data.cantidad.present ? data.cantidad.value : this.cantidad,
       costo: data.costo.present ? data.costo.value : this.costo,
+      piezasRecibidas: data.piezasRecibidas.present
+          ? data.piezasRecibidas.value
+          : this.piezasRecibidas,
+      cantidadRecibida: data.cantidadRecibida.present
+          ? data.cantidadRecibida.value
+          : this.cantidadRecibida,
     );
   }
 
@@ -4736,7 +4882,9 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
           ..write('marca: $marca, ')
           ..write('piezas: $piezas, ')
           ..write('cantidad: $cantidad, ')
-          ..write('costo: $costo')
+          ..write('costo: $costo, ')
+          ..write('piezasRecibidas: $piezasRecibidas, ')
+          ..write('cantidadRecibida: $cantidadRecibida')
           ..write(')'))
         .toString();
   }
@@ -4753,6 +4901,8 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
     piezas,
     cantidad,
     costo,
+    piezasRecibidas,
+    cantidadRecibida,
   );
   @override
   bool operator ==(Object other) =>
@@ -4767,7 +4917,9 @@ class FilaLineaCompra extends DataClass implements Insertable<FilaLineaCompra> {
           other.marca == this.marca &&
           other.piezas == this.piezas &&
           other.cantidad == this.cantidad &&
-          other.costo == this.costo);
+          other.costo == this.costo &&
+          other.piezasRecibidas == this.piezasRecibidas &&
+          other.cantidadRecibida == this.cantidadRecibida);
 }
 
 class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
@@ -4781,6 +4933,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
   final Value<int> piezas;
   final Value<int> cantidad;
   final Value<int> costo;
+  final Value<int?> piezasRecibidas;
+  final Value<int?> cantidadRecibida;
   const LineasCompraCompanion({
     this.id = const Value.absent(),
     this.compraId = const Value.absent(),
@@ -4792,6 +4946,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
     this.piezas = const Value.absent(),
     this.cantidad = const Value.absent(),
     this.costo = const Value.absent(),
+    this.piezasRecibidas = const Value.absent(),
+    this.cantidadRecibida = const Value.absent(),
   });
   LineasCompraCompanion.insert({
     this.id = const Value.absent(),
@@ -4804,6 +4960,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
     required int piezas,
     required int cantidad,
     required int costo,
+    this.piezasRecibidas = const Value.absent(),
+    this.cantidadRecibida = const Value.absent(),
   }) : compraId = Value(compraId),
        orden = Value(orden),
        productoId = Value(productoId),
@@ -4824,6 +4982,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
     Expression<int>? piezas,
     Expression<int>? cantidad,
     Expression<int>? costo,
+    Expression<int>? piezasRecibidas,
+    Expression<int>? cantidadRecibida,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4836,6 +4996,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
       if (piezas != null) 'piezas': piezas,
       if (cantidad != null) 'cantidad': cantidad,
       if (costo != null) 'costo': costo,
+      if (piezasRecibidas != null) 'piezas_recibidas': piezasRecibidas,
+      if (cantidadRecibida != null) 'cantidad_recibida': cantidadRecibida,
     });
   }
 
@@ -4850,6 +5012,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
     Value<int>? piezas,
     Value<int>? cantidad,
     Value<int>? costo,
+    Value<int?>? piezasRecibidas,
+    Value<int?>? cantidadRecibida,
   }) {
     return LineasCompraCompanion(
       id: id ?? this.id,
@@ -4862,6 +5026,8 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
       piezas: piezas ?? this.piezas,
       cantidad: cantidad ?? this.cantidad,
       costo: costo ?? this.costo,
+      piezasRecibidas: piezasRecibidas ?? this.piezasRecibidas,
+      cantidadRecibida: cantidadRecibida ?? this.cantidadRecibida,
     );
   }
 
@@ -4900,6 +5066,12 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
     if (costo.present) {
       map['costo'] = Variable<int>(costo.value);
     }
+    if (piezasRecibidas.present) {
+      map['piezas_recibidas'] = Variable<int>(piezasRecibidas.value);
+    }
+    if (cantidadRecibida.present) {
+      map['cantidad_recibida'] = Variable<int>(cantidadRecibida.value);
+    }
     return map;
   }
 
@@ -4915,7 +5087,9 @@ class LineasCompraCompanion extends UpdateCompanion<FilaLineaCompra> {
           ..write('marca: $marca, ')
           ..write('piezas: $piezas, ')
           ..write('cantidad: $cantidad, ')
-          ..write('costo: $costo')
+          ..write('costo: $costo, ')
+          ..write('piezasRecibidas: $piezasRecibidas, ')
+          ..write('cantidadRecibida: $cantidadRecibida')
           ..write(')'))
         .toString();
   }
@@ -11688,6 +11862,7 @@ typedef $$ComprasTableCreateCompanionBuilder = ComprasCompanion Function({
   Value<DateTime?> vence,
   Value<MedioPago?> medio,
   Value<int?> tasa,
+  Value<DateTime?> recibidaEl,
   Value<int> rowid,
 });
 typedef $$ComprasTableUpdateCompanionBuilder = ComprasCompanion Function({
@@ -11698,6 +11873,7 @@ typedef $$ComprasTableUpdateCompanionBuilder = ComprasCompanion Function({
   Value<DateTime?> vence,
   Value<MedioPago?> medio,
   Value<int?> tasa,
+  Value<DateTime?> recibidaEl,
   Value<int> rowid,
 });
 
@@ -11785,6 +11961,11 @@ class $$ComprasTableFilterComposer
 
   ColumnFilters<int> get tasa => $composableBuilder(
     column: $table.tasa,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<DateTime> get recibidaEl => $composableBuilder(
+    column: $table.recibidaEl,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -11882,6 +12063,11 @@ class $$ComprasTableOrderingComposer
     column: $table.tasa,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<DateTime> get recibidaEl => $composableBuilder(
+    column: $table.recibidaEl,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$ComprasTableAnnotationComposer
@@ -11913,6 +12099,11 @@ class $$ComprasTableAnnotationComposer
 
   GeneratedColumn<int> get tasa =>
       $composableBuilder(column: $table.tasa, builder: (column) => column);
+
+  GeneratedColumn<DateTime> get recibidaEl => $composableBuilder(
+    column: $table.recibidaEl,
+    builder: (column) => column,
+  );
 
   Expression<T> lineasCompraRefs<T extends Object>(
     Expression<T> Function($$LineasCompraTableAnnotationComposer a) f,
@@ -12000,6 +12191,7 @@ class $$ComprasTableTableManager
                 Value<DateTime?> vence = const Value.absent(),
                 Value<MedioPago?> medio = const Value.absent(),
                 Value<int?> tasa = const Value.absent(),
+                Value<DateTime?> recibidaEl = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ComprasCompanion(
                 id: id,
@@ -12009,6 +12201,7 @@ class $$ComprasTableTableManager
                 vence: vence,
                 medio: medio,
                 tasa: tasa,
+                recibidaEl: recibidaEl,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -12020,6 +12213,7 @@ class $$ComprasTableTableManager
                 Value<DateTime?> vence = const Value.absent(),
                 Value<MedioPago?> medio = const Value.absent(),
                 Value<int?> tasa = const Value.absent(),
+                Value<DateTime?> recibidaEl = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => ComprasCompanion.insert(
                 id: id,
@@ -12029,6 +12223,7 @@ class $$ComprasTableTableManager
                 vence: vence,
                 medio: medio,
                 tasa: tasa,
+                recibidaEl: recibidaEl,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
@@ -12120,6 +12315,8 @@ typedef $$LineasCompraTableCreateCompanionBuilder =
       required int piezas,
       required int cantidad,
       required int costo,
+      Value<int?> piezasRecibidas,
+      Value<int?> cantidadRecibida,
     });
 typedef $$LineasCompraTableUpdateCompanionBuilder =
     LineasCompraCompanion Function({
@@ -12133,6 +12330,8 @@ typedef $$LineasCompraTableUpdateCompanionBuilder =
       Value<int> piezas,
       Value<int> cantidad,
       Value<int> costo,
+      Value<int?> piezasRecibidas,
+      Value<int?> cantidadRecibida,
     });
 
 final class $$LineasCompraTableReferences
@@ -12209,6 +12408,16 @@ class $$LineasCompraTableFilterComposer
 
   ColumnFilters<int> get costo => $composableBuilder(
     column: $table.costo,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get piezasRecibidas => $composableBuilder(
+    column: $table.piezasRecibidas,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<int> get cantidadRecibida => $composableBuilder(
+    column: $table.cantidadRecibida,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -12290,6 +12499,16 @@ class $$LineasCompraTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<int> get piezasRecibidas => $composableBuilder(
+    column: $table.piezasRecibidas,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<int> get cantidadRecibida => $composableBuilder(
+    column: $table.cantidadRecibida,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$ComprasTableOrderingComposer get compraId {
     final $$ComprasTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -12351,6 +12570,16 @@ class $$LineasCompraTableAnnotationComposer
 
   GeneratedColumn<int> get costo =>
       $composableBuilder(column: $table.costo, builder: (column) => column);
+
+  GeneratedColumn<int> get piezasRecibidas => $composableBuilder(
+    column: $table.piezasRecibidas,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<int> get cantidadRecibida => $composableBuilder(
+    column: $table.cantidadRecibida,
+    builder: (column) => column,
+  );
 
   $$ComprasTableAnnotationComposer get compraId {
     final $$ComprasTableAnnotationComposer composer = $composerBuilder(
@@ -12414,6 +12643,8 @@ class $$LineasCompraTableTableManager
                 Value<int> piezas = const Value.absent(),
                 Value<int> cantidad = const Value.absent(),
                 Value<int> costo = const Value.absent(),
+                Value<int?> piezasRecibidas = const Value.absent(),
+                Value<int?> cantidadRecibida = const Value.absent(),
               }) => LineasCompraCompanion(
                 id: id,
                 compraId: compraId,
@@ -12425,6 +12656,8 @@ class $$LineasCompraTableTableManager
                 piezas: piezas,
                 cantidad: cantidad,
                 costo: costo,
+                piezasRecibidas: piezasRecibidas,
+                cantidadRecibida: cantidadRecibida,
               ),
           createCompanionCallback:
               ({
@@ -12438,6 +12671,8 @@ class $$LineasCompraTableTableManager
                 required int piezas,
                 required int cantidad,
                 required int costo,
+                Value<int?> piezasRecibidas = const Value.absent(),
+                Value<int?> cantidadRecibida = const Value.absent(),
               }) => LineasCompraCompanion.insert(
                 id: id,
                 compraId: compraId,
@@ -12449,6 +12684,8 @@ class $$LineasCompraTableTableManager
                 piezas: piezas,
                 cantidad: cantidad,
                 costo: costo,
+                piezasRecibidas: piezasRecibidas,
+                cantidadRecibida: cantidadRecibida,
               ),
           withReferenceMapper: (p0) => p0
               .map(

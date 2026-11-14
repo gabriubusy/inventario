@@ -4,12 +4,15 @@ import 'package:inventario/core/texto.dart';
 import 'package:inventario/core/transacciones.dart';
 import 'package:inventario/features/compras/domain/compra.dart';
 import 'package:inventario/features/compras/domain/cuenta_por_pagar.dart';
+import 'package:inventario/features/compras/domain/estado_pedido.dart';
 import 'package:inventario/features/compras/domain/linea_compra.dart';
 import 'package:inventario/features/compras/domain/pago.dart';
+import 'package:inventario/features/compras/domain/recepcion.dart';
 import 'package:inventario/features/compras/domain/recibir_linea.dart';
 import 'package:inventario/features/compras/domain/repositorio_compras.dart';
 import 'package:inventario/features/compras/domain/resultados_compra.dart';
 import 'package:inventario/features/compras/domain/resumen_cuentas.dart';
+import 'package:inventario/features/compras/domain/resumen_pedidos.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
 import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/movimientos/domain/tipo_movimiento.dart';
@@ -27,14 +30,16 @@ typedef BorradorCompra = ({
   MedioPago medio,
 });
 
-typedef _CambioCompra = ({
-  Compra compra,
+typedef _CambioRecepcion = ({
+  Compra antes,
+  Compra despues,
   List<({Producto antes, Producto despues})> productos,
   List<Movimiento> anotados,
 });
 
-/// Supplier invoices (F2) and what is still owed on them (F10). A purchase
-/// raises the stock and its lots' cost in one transaction.
+/// Supplier orders (F2), what arrived of each one (Ctrl+P) and what is
+/// still owed (F10). Placing an order does not touch the stock: the goods
+/// come in when their arrival is confirmed, in one transaction.
 class ControladorCompras extends ChangeNotifier {
   ControladorCompras(
     this._repositorio,
@@ -56,12 +61,14 @@ class ControladorCompras extends ChangeNotifier {
   List<Compra> _compras = const [];
   List<Pago> _pagos = const [];
   Map<String, int> _devuelto = const {};
-  _CambioCompra? _ultimaCompra;
+  Compra? _ultimaCompra;
+  _CambioRecepcion? _ultimaRecepcion;
   Pago? _ultimoPago;
 
   DateTime get hoy => _ahora();
   int? get tasaDeHoy => _tasaDeHoy?.call();
   bool get puedeDeshacerCompra => _ultimaCompra != null;
+  bool get puedeDeshacerRecepcion => _ultimaRecepcion != null;
 
   /// Kept when F2 closes with lines still unregistered (Esc), so a long
   /// invoice is not typed twice. Null once it is registered.
@@ -69,6 +76,14 @@ class ControladorCompras extends ChangeNotifier {
 
   /// Newest first.
   List<Compra> get compras => _compras;
+
+  /// Orders with goods still on the way, the oldest first.
+  List<Compra> get pendientes => [
+    for (final c in _compras.reversed)
+      if (c.estado.esperando) c,
+  ];
+
+  ResumenPedidos get resumenPedidos => ResumenPedidos.de(_compras, hoy);
 
   /// Every payment made to suppliers.
   List<Pago> get pagos => _pagos;
@@ -111,14 +126,21 @@ class ControladorCompras extends ChangeNotifier {
     return null;
   }
 
+  Compra? compraDe(String id) {
+    for (final compra in _compras) {
+      if (compra.id == id) return compra;
+    }
+    return null;
+  }
+
   Future<void> cargar() async {
     _compras = _ordenar(await _repositorio.obtenerCompras());
     _pagos = await _repositorio.obtenerPagos();
     notifyListeners();
   }
 
-  /// Adds every line to its brand lot, notes the entries in the kardex and
-  /// stores the invoice, all or nothing.
+  /// Stores the order, waiting until what arrived is confirmed. The stock
+  /// does not move here: the supplier may bring something else.
   Future<ResultadoCompra> registrar(Compra compra) async {
     for (final linea in compra.lineas) {
       if (_buscar(linea.productoId) == null) {
@@ -128,60 +150,129 @@ class ControladorCompras extends ChangeNotifier {
     if (compra.medio?.moneda == Moneda.bolivares && tasaDeHoy == null) {
       return const CompraSinTasa();
     }
-    final datos = Compra(
-      fecha: _ahora(),
-      proveedor: compra.proveedor,
-      factura: compra.factura,
-      lineas: compra.lineas,
-      vence: compra.vence,
-      medio: compra.medio,
-      tasa: tasaDeHoy,
+    final guardada = await _repositorio.crearCompra(
+      Compra(
+        fecha: _ahora(),
+        proveedor: compra.proveedor,
+        factura: compra.factura,
+        lineas: compra.lineas,
+        vence: compra.vence,
+        medio: compra.medio,
+        tasa: tasaDeHoy,
+      ),
     );
-    final cambio = await _transacciones.enUna(() => _escribir(datos));
-    _ultimaCompra = cambio;
-    _compras = _ordenar([..._compras, cambio.compra]);
+    _ultimaCompra = guardada;
+    _compras = _ordenar([..._compras, guardada]);
     notifyListeners();
-    return CompraRegistrada(cambio.compra);
+    return CompraRegistrada(guardada);
   }
 
-  Future<_CambioCompra> _escribir(Compra compra) async {
+  /// Takes the last order back. Refused (false) once something of it
+  /// arrived, because that is stock already.
+  Future<bool> deshacerCompra() async {
+    final ultima = _ultimaCompra;
+    if (ultima == null) return false;
+    _ultimaCompra = null;
+    final actual = compraDe(ultima.id);
+    if (actual == null || actual.estado != EstadoPedido.pendiente) {
+      notifyListeners();
+      return false;
+    }
+    await _repositorio.borrarCompra(ultima.id);
+    _compras = [
+      for (final c in _compras)
+        if (c.id != ultima.id) c,
+    ];
+    _pagos = [
+      for (final p in _pagos)
+        if (p.compraId != ultima.id) p,
+    ];
+    notifyListeners();
+    return true;
+  }
+
+  /// Puts what really arrived into the stock, notes an entry per line in
+  /// the kardex and keeps it on the order, all or nothing.
+  Future<ResultadoRecepcion> recibir(
+    String compraId,
+    List<Llegada> llegadas, {
+    String nota = '',
+  }) async {
+    final antes = compraDe(compraId);
+    if (antes == null) return const RecepcionVacia();
+    final indices = indicesDeLlegadas(antes, llegadas);
+    if (indices.isEmpty) return const RecepcionVacia();
+    final lineas = conLlegadas(antes, llegadas);
+    for (final i in indices) {
+      if (_buscar(lineas[i].productoId) == null) {
+        return RecepcionSinProducto(lineas[i].producto);
+      }
+    }
+    final despues = antes.conRecepcion(lineas, cuando: _ahora());
+    final cambio = await _transacciones.enUna(
+      () => _escribirRecepcion(antes, despues, indices, nota),
+    );
+    _ultimaRecepcion = cambio;
+    _guardarEnMemoria(despues);
+    return RecepcionRegistrada(despues, lineas: indices.length);
+  }
+
+  Future<_CambioRecepcion> _escribirRecepcion(
+    Compra antes,
+    Compra despues,
+    List<int> indices,
+    String nota,
+  ) async {
+    final anotacion = [
+      if (despues.factura.isEmpty)
+        'Pedido recibido'
+      else
+        'Factura ${despues.factura}',
+      if (nota.isNotEmpty) nota,
+    ].join(' · ');
     final productos = <({Producto antes, Producto despues})>[];
     final anotados = <Movimiento>[];
-    for (final linea in compra.lineas) {
-      final antes = _buscar(linea.productoId)!;
+    for (final i in indices) {
+      final linea = despues.lineas[i];
+      final previo = _buscar(linea.productoId)!;
       await _existencias.actualizarProducto(
-        antes.id,
+        previo.id,
         DatosProducto.desde(
-          recibirLinea(antes, linea, proveedor: compra.proveedor),
+          recibirLinea(previo, linea, proveedor: despues.proveedor),
         ),
       );
-      productos.add((antes: antes, despues: _buscar(antes.id)!));
+      productos.add((antes: previo, despues: _buscar(previo.id)!));
       final anotado = await _movimientos?.anotar(
         Movimiento(
-          fecha: compra.fecha,
+          fecha: _ahora(),
           tipo: TipoMovimiento.entrada,
           productoId: linea.productoId,
           producto: linea.producto,
           forma: linea.forma,
           marca: linea.marca,
-          proveedor: compra.proveedor,
-          piezas: linea.piezas,
-          cantidad: linea.cantidad,
-          nota: compra.factura.isEmpty ? 'Compra' : 'Factura ${compra.factura}',
+          proveedor: despues.proveedor,
+          piezas: linea.piezasLlegadas,
+          cantidad: linea.cantidadLlegada,
+          nota: anotacion,
         ),
       );
       if (anotado != null) anotados.add(anotado);
     }
-    final guardada = await _repositorio.crearCompra(compra);
-    return (compra: guardada, productos: productos, anotados: anotados);
+    await _repositorio.guardarRecepcion(despues);
+    return (
+      antes: antes,
+      despues: despues,
+      productos: productos,
+      anotados: anotados,
+    );
   }
 
-  /// Takes the last purchase back. Refused (false) when one of its products
-  /// changed since, to not lose that change.
-  Future<bool> deshacerCompra() async {
-    final ultima = _ultimaCompra;
+  /// Takes the last reception back. Refused (false) when one of its
+  /// products changed since, to not lose that change.
+  Future<bool> deshacerRecepcion() async {
+    final ultima = _ultimaRecepcion;
     if (ultima == null) return false;
-    _ultimaCompra = null;
+    _ultimaRecepcion = null;
     notifyListeners();
     // Two lines of one product: its first "before" and its last "after".
     final antes = <String, Producto>{};
@@ -203,17 +294,9 @@ class ControladorCompras extends ChangeNotifier {
       for (final anotado in ultima.anotados) {
         await _movimientos?.quitar(anotado);
       }
-      await _repositorio.borrarCompra(ultima.compra.id);
+      await _repositorio.guardarRecepcion(ultima.antes);
     });
-    _compras = [
-      for (final c in _compras)
-        if (c.id != ultima.compra.id) c,
-    ];
-    _pagos = [
-      for (final p in _pagos)
-        if (p.compraId != ultima.compra.id) p,
-    ];
-    notifyListeners();
+    _guardarEnMemoria(ultima.antes);
     return true;
   }
 
@@ -266,6 +349,14 @@ class ControladorCompras extends ChangeNotifier {
   Future<void> renombrarProveedor(String anterior, String nuevo) async {
     await _repositorio.renombrarProveedor(anterior, nuevo);
     await cargar();
+  }
+
+  void _guardarEnMemoria(Compra compra) {
+    _compras = _ordenar([
+      for (final c in _compras)
+        if (c.id == compra.id) compra else c,
+    ]);
+    notifyListeners();
   }
 
   static List<Compra> _ordenar(List<Compra> compras) =>

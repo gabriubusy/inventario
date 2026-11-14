@@ -291,6 +291,13 @@ class _DialogoCompraState extends State<DialogoCompra> {
                   ),
                 ),
                 TotalCompra(lineas: _lineas, aBolivares: widget.aBolivares),
+                Text(
+                  'El pedido queda por recibir: el stock sube cuando '
+                  'confirmes lo que llegó, en Pedidos (Ctrl+P).',
+                  style: tema.textTheme.bodySmall?.copyWith(
+                    color: tema.colorScheme.onSurfaceVariant,
+                  ),
+                ),
                 if (error != null)
                   Text(
                     error,

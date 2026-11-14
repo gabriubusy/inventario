@@ -50,7 +50,7 @@ class BaseDatos extends _$BaseDatos {
   BaseDatos(super.ejecutor);
 
   @override
-  int get schemaVersion => 9;
+  int get schemaVersion => 10;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -96,6 +96,22 @@ class BaseDatos extends _$BaseDatos {
       // 9: when a sale was cancelled, for the till open at that moment.
       if (desde < 9) {
         await m.addColumn(movimientos, movimientos.anuladaEl);
+      }
+      // 10: an order raises the stock when its arrival is confirmed, so
+      // older ones, which raised it when placed, count as received.
+      if (desde < 10) {
+        // A database older than 2 just got today's compras tables, these
+        // columns included.
+        if (desde >= 2) {
+          await m.addColumn(compras, compras.recibidaEl);
+          await m.addColumn(lineasCompra, lineasCompra.piezasRecibidas);
+          await m.addColumn(lineasCompra, lineasCompra.cantidadRecibida);
+        }
+        await customStatement(
+          'UPDATE lineas_compra SET piezas_recibidas = piezas, '
+          'cantidad_recibida = cantidad',
+        );
+        await customStatement('UPDATE compras SET recibida_el = fecha');
       }
     },
     beforeOpen: (_) async {

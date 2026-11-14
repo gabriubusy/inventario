@@ -17,7 +17,10 @@ class ResumenPedidos {
   static const diasMes = 30;
 
   factory ResumenPedidos.de(List<Compra> compras, DateTime hoy) {
-    final esperando = [for (final c in compras) if (c.estado.esperando) c];
+    final esperando = [
+      for (final c in compras)
+        if (c.estado.esperando) c,
+    ];
     final semana = [
       for (final c in compras)
         if (c.recibidaEl case final cuando?)
@@ -34,7 +37,9 @@ class ResumenPedidos {
       porRecibir: esperando.fold(0, (t, c) => t + c.porRecibir),
       masViejo: esperando.isEmpty
           ? null
-          : esperando.map((c) => c.fecha).reduce((a, b) => a.isBefore(b) ? a : b),
+          : esperando
+                .map((c) => c.fecha)
+                .reduce((a, b) => a.isBefore(b) ? a : b),
       recibidos: semana.length,
       conDiferencias: semana.where((c) => c.lineasConDiferencia > 0).length,
       diferenciaMes: diferencia,

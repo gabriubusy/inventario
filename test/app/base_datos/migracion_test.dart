@@ -35,6 +35,12 @@ void main() {
     await nueva.customStatement(
       'ALTER TABLE movimientos DROP COLUMN anulada_el',
     );
+    await nueva.customStatement('ALTER TABLE compras DROP COLUMN recibida_el');
+    for (final columna in ['piezas_recibidas', 'cantidad_recibida']) {
+      await nueva.customStatement(
+        'ALTER TABLE lineas_compra DROP COLUMN $columna',
+      );
+    }
     await nueva.customStatement('PRAGMA user_version = 2');
     await nueva.close();
 
@@ -42,6 +48,10 @@ void main() {
     addTearDown(vieja.close);
     await vieja.customSelect('SELECT lista FROM ventas').get();
     await vieja.customSelect('SELECT venta_id FROM movimientos').get();
+    await vieja.customSelect('SELECT recibida_el FROM compras').get();
+    await vieja
+        .customSelect('SELECT cantidad_recibida FROM lineas_compra')
+        .get();
     final indices = await vieja
         .customSelect(
           "SELECT name FROM sqlite_master WHERE name = 'ventas_fecha'",

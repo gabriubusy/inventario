@@ -7,7 +7,8 @@ import 'package:inventario/features/compras/application/controlador_compras.dart
 import 'package:inventario/features/compras/domain/compra.dart';
 
 /// "Pedido registrado · Distribuidora 1 · 3 productos · $ 331,60 · a
-/// crédito hasta el 11 nov" with Deshacer.
+/// crédito hasta el 11 nov" with Deshacer. The goods are not in the stock
+/// yet: that happens when their arrival is confirmed (Ctrl+P).
 void mostrarCompraRegistrada(
   ScaffoldMessengerState mensajero,
   ControladorCompras compras,
@@ -26,7 +27,7 @@ void mostrarCompraRegistrada(
       SnackBar(
         content: Text(
           'Pedido registrado · ${compra.proveedor} · $productos · '
-          '${formatearDolares(compra.total)} · $pago',
+          '${formatearDolares(compra.total)} · $pago · por recibir',
         ),
         persist: false,
         action: SnackBarAction(
@@ -48,8 +49,8 @@ Future<void> _deshacer(
       SnackBar(
         content: Text(
           deshecha
-              ? 'Pedido deshecho: el stock vuelve a como estaba'
-              : 'No se pudo deshacer: algún producto cambió después',
+              ? 'Pedido deshecho'
+              : 'No se pudo deshacer: ya se recibió algo de ese pedido',
         ),
       ),
     );

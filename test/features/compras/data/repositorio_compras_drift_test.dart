@@ -4,8 +4,10 @@ import 'package:inventario/app/base_datos/base_datos.dart';
 import 'package:inventario/core/medio_pago.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_drift.dart';
 import 'package:inventario/features/compras/domain/compra.dart';
+import 'package:inventario/features/compras/domain/estado_pedido.dart';
 import 'package:inventario/features/compras/domain/linea_compra.dart';
 import 'package:inventario/features/compras/domain/pago.dart';
+import 'package:inventario/features/compras/domain/recepcion.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
 
 void main() {
@@ -68,6 +70,22 @@ void main() {
     await repositorio.borrarCompra(guardada.id);
     expect(await repositorio.obtenerCompras(), isEmpty);
     expect(await repositorio.obtenerPagos(), isEmpty);
+  });
+
+  test('what arrived of each line is kept, line by line', () async {
+    final guardada = await repositorio.crearCompra(compra);
+    expect(guardada.lineas.every((l) => !l.recibida), isTrue);
+    final recibida = guardada.conRecepcion(
+      conLlegadas(guardada, [(indice: 1, piezas: 0, cantidad: 47000)]),
+      cuando: DateTime(2026, 10, 28, 8),
+    );
+    await repositorio.guardarRecepcion(recibida);
+    final leida = (await repositorio.obtenerCompras()).single;
+    expect(leida, recibida);
+    expect(leida.estado, EstadoPedido.parcial);
+    expect(leida.lineas.first.recibida, isFalse);
+    expect(leida.lineas.last.cantidadRecibida, 47000);
+    expect(leida.recibidaEl, DateTime(2026, 10, 28, 8));
   });
 
   test('renaming a supplier carries its invoices', () async {

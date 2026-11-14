@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:inventario/app/tema.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
 import 'package:inventario/features/compras/data/repositorio_compras_en_memoria.dart';
+import 'package:inventario/features/compras/domain/estado_pedido.dart';
 import 'package:inventario/features/compras/presentation/dialogo_compra.dart';
 import 'package:inventario/features/entradas/presentation/selector_unidad_minima.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
@@ -137,9 +138,10 @@ void main() {
 
     expect(compras.compras.single.lineas, hasLength(2));
     expect(compras.deudaDe('Frigorífico 1'), 6509);
+    // Ordering does not move the stock: that happens on reception.
+    expect(compras.compras.single.estado, EstadoPedido.pendiente);
     final queso = existencias.productos.firstWhere((p) => p.id == 'q');
-    expect(queso.lotes.single.proveedor, 'Frigorífico 1');
-    expect(queso.lotes.single.piezas, 6);
+    expect(queso.lotes, isEmpty);
   });
 
   testWidgets('cash with Alt+Q leaves nothing owed', (tester) async {

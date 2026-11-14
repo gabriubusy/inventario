@@ -46,6 +46,13 @@ class RepositorioComprasEnMemoria implements RepositorioCompras {
       _pagos.removeWhere((p) => p.id == id);
 
   @override
+  Future<void> guardarRecepcion(Compra compra) async {
+    for (final (i, c) in _compras.indexed) {
+      if (c.id == compra.id) _compras[i] = compra;
+    }
+  }
+
+  @override
   Future<void> renombrarProveedor(String anterior, String nuevo) async {
     final clave = normalizarParaBusqueda(anterior);
     for (final (i, compra) in _compras.indexed) {
