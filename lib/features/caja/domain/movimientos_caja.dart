@@ -34,6 +34,14 @@ List<MovimientoCaja> movimientosDeCaja({
       ),
   ];
   final porVenta = {for (final v in ventas) v.id: v};
+  // Counted in one pass: looking for each ticket's lines inside the whole
+  // history turned a year of sales into seconds of work per repaint.
+  final lineasPorVenta = <String, int>{};
+  for (final linea in lineas) {
+    if (linea.ventaId case final id?) {
+      lineasPorVenta[id] = (lineasPorVenta[id] ?? 0) + 1;
+    }
+  }
   for (final venta in ventas) {
     if (!caja.incluye(venta.fecha)) continue;
     final montos = <MedioPago, int>{};
@@ -54,7 +62,7 @@ List<MovimientoCaja> movimientosDeCaja({
         bolivares: cobro.vueltoEnBolivares,
       );
     }
-    final lineasVenta = lineas.where((l) => l.ventaId == venta.id).length;
+    final lineasVenta = lineasPorVenta[venta.id] ?? 0;
     movimientos.add(
       MovimientoCaja(
         fecha: venta.fecha,

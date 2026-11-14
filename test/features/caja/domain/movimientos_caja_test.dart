@@ -204,6 +204,40 @@ void main() {
     expect(tieneDevolucion(tarde), isTrue);
   });
 
+  test('each ticket says how many products it carried', () {
+    final ventas = [
+      Venta(
+        id: 'v1',
+        fecha: a(9),
+        total: 650,
+        pagos: const [PagoVenta(medio: MedioPago.efectivoDolares, monto: 650)],
+      ),
+      Venta(
+        id: 'v2',
+        fecha: a(10),
+        total: 1950,
+        pagos: const [PagoVenta(medio: MedioPago.efectivoDolares, monto: 1950)],
+      ),
+    ];
+    final movimientos = movimientosDeCaja(
+      caja: caja,
+      ventas: ventas,
+      // The lines of the two tickets, mixed, plus one of another day.
+      lineas: [
+        linea('v2'),
+        linea('v1'),
+        linea('v2'),
+        linea('v2'),
+        linea('v9'),
+      ],
+    );
+    final detalles = [
+      for (final m in movimientos)
+        if (m.tipo == TipoMovimientoCaja.venta) m.detalle,
+    ];
+    expect(detalles, containsAll(['Ticket · 1 producto', 'Ticket · 3 productos']));
+  });
+
   test('only what happened while the till was open counts', () {
     final cerrada = caja.cerradaCon(fecha: a(12), contado: const {});
     final gastos = [
