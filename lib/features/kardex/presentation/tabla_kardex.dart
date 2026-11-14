@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:inventario/app/espaciado.dart';
+import 'package:inventario/app/tema.dart';
 import 'package:inventario/core/unidad.dart';
 import 'package:inventario/features/kardex/domain/linea_kardex.dart';
 import 'package:inventario/features/kardex/presentation/fila_kardex.dart';
 
+/// The product's movements, as a sliver: over a year a single product can
+/// pile up thousands of rows, and building them all at once froze the
+/// screen. The card is drawn behind the list so it looks the same.
 class TablaKardex extends StatelessWidget {
   const TablaKardex({
     super.key,
@@ -26,37 +30,48 @@ class TablaKardex extends StatelessWidget {
     );
     Widget derecha(String texto) =>
         Text(texto, textAlign: TextAlign.right, style: encabezado);
-    return Card(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: espaciado.lg,
-              vertical: espaciado.md,
-            ),
-            child: ColumnasKardex(
-              fecha: Text('FECHA', style: encabezado),
-              tipo: Text('MOVIMIENTO', style: encabezado),
-              detalle: Text('DETALLE', style: encabezado),
-              entra: derecha('ENTRA'),
-              sale: derecha('SALE'),
-              saldo: derecha('SALDO'),
+    return DecoratedSliver(
+      decoration: BoxDecoration(
+        color: tema.colorScheme.surface,
+        border: Border.all(color: tema.colorScheme.outlineVariant),
+        borderRadius: TemaApp.radioTarjeta,
+      ),
+      sliver: SliverMainAxisGroup(
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: espaciado.lg,
+                vertical: espaciado.md,
+              ),
+              child: ColumnasKardex(
+                fecha: Text('FECHA', style: encabezado),
+                tipo: Text('MOVIMIENTO', style: encabezado),
+                detalle: Text('DETALLE', style: encabezado),
+                entra: derecha('ENTRA'),
+                sale: derecha('SALE'),
+                saldo: derecha('SALDO'),
+              ),
             ),
           ),
           if (lineas.isEmpty)
-            Padding(
-              padding: EdgeInsets.all(espaciado.xl),
-              child: Text(
-                'Sin movimientos en este periodo',
-                textAlign: TextAlign.center,
-                style: tema.textTheme.bodyMedium?.copyWith(
-                  color: tema.colorScheme.onSurfaceVariant,
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(espaciado.xl),
+                child: Text(
+                  'Sin movimientos en este periodo',
+                  textAlign: TextAlign.center,
+                  style: tema.textTheme.bodyMedium?.copyWith(
+                    color: tema.colorScheme.onSurfaceVariant,
+                  ),
                 ),
               ),
             ),
-          for (final linea in lineas)
-            FilaKardex(linea: linea, unidad: unidad, hoy: hoy),
+          SliverList.builder(
+            itemCount: lineas.length,
+            itemBuilder: (_, i) =>
+                FilaKardex(linea: lineas[i], unidad: unidad, hoy: hoy),
+          ),
         ],
       ),
     );

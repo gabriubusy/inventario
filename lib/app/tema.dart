@@ -5,7 +5,8 @@ import 'package:inventario/app/espaciado.dart';
 abstract final class TemaApp {
   static const _granate = Color(0xFF7A1F2B);
   static const _radio = BorderRadius.all(Radius.circular(8));
-  static const _radioTarjeta = BorderRadius.all(Radius.circular(12));
+  /// Also for a card drawn behind a lazy list (see TablaKardex).
+  static const radioTarjeta = BorderRadius.all(Radius.circular(12));
 
   static ThemeData claro() {
     // Fidelity keeps the primary close to the brand burgundy.
@@ -23,14 +24,14 @@ abstract final class TemaApp {
         margin: EdgeInsets.zero,
         color: colores.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: _radioTarjeta,
+          borderRadius: radioTarjeta,
           side: BorderSide(color: colores.outlineVariant),
         ),
       ),
       dialogTheme: DialogThemeData(
         backgroundColor: colores.surface,
         shape: RoundedRectangleBorder(
-          borderRadius: _radioTarjeta,
+          borderRadius: radioTarjeta,
           side: BorderSide(color: colores.outlineVariant),
         ),
       ),

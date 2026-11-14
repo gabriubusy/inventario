@@ -210,27 +210,42 @@ class _Kardex extends StatelessWidget {
       periodo: periodo,
       hoy: hoy,
     );
-    return ListView(
-      padding: EdgeInsets.all(espaciado.xl),
-      children: [
-        ResumenKardexTarjetas(
-          producto: producto,
-          resumen: ResumenKardex.de(delPeriodo),
-          periodo: periodo.etiqueta.toLowerCase(),
+    // Slivers, so the rows are built as they are scrolled into view.
+    return CustomScrollView(
+      slivers: [
+        SliverPadding(
+          padding: EdgeInsets.all(espaciado.xl),
+          sliver: SliverMainAxisGroup(
+            slivers: [
+              SliverToBoxAdapter(
+                child: ResumenKardexTarjetas(
+                  producto: producto,
+                  resumen: ResumenKardex.de(delPeriodo),
+                  periodo: periodo.etiqueta.toLowerCase(),
+                ),
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: espaciado.lg)),
+              SliverToBoxAdapter(
+                child: FiltrosKardex(
+                  grupo: grupo,
+                  periodo: periodo,
+                  // One brand can come from two suppliers; listed once.
+                  marcas: {for (final l in producto.lotes) l.marca}.toList(),
+                  marca: marca,
+                  onGrupo: onGrupo,
+                  onPeriodo: onPeriodo,
+                  onMarca: onMarca,
+                ),
+              ),
+              SliverToBoxAdapter(child: SizedBox(height: espaciado.md)),
+              TablaKardex(
+                lineas: visibles,
+                unidad: producto.forma.unidad,
+                hoy: hoy,
+              ),
+            ],
+          ),
         ),
-        SizedBox(height: espaciado.lg),
-        FiltrosKardex(
-          grupo: grupo,
-          periodo: periodo,
-          // One brand can come from two suppliers; the filter lists it once.
-          marcas: {for (final l in producto.lotes) l.marca}.toList(),
-          marca: marca,
-          onGrupo: onGrupo,
-          onPeriodo: onPeriodo,
-          onMarca: onMarca,
-        ),
-        SizedBox(height: espaciado.md),
-        TablaKardex(lineas: visibles, unidad: producto.forma.unidad, hoy: hoy),
       ],
     );
   }
