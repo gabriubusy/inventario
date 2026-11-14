@@ -4,6 +4,7 @@ import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/filtro_productos.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
+import 'package:inventario/features/productos/domain/por_reponer.dart' as dominio;
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/repositorio_productos.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
@@ -28,6 +29,13 @@ class ControladorExistencias extends ChangeNotifier {
     ExistenciasCargadas(:final productos) => productos,
   };
 
+  List<Producto>? _porReponer;
+
+  /// Sold out and below the minimum, for the home banner and the day
+  /// panel: both ask on every repaint, so it is worked out once per change.
+  List<Producto> get porReponer =>
+      _porReponer ??= dominio.porReponer(productos);
+
   List<Producto> get visibles => switch (_estado) {
     CargandoExistencias() => const [],
     ExistenciasCargadas(:final productos) => filtrarProductos(
@@ -39,8 +47,13 @@ class ControladorExistencias extends ChangeNotifier {
 
   Future<void> cargar() async {
     final productos = await _repositorio.obtenerTodos();
-    _estado = ExistenciasCargadas(productos);
+    _ponerProductos(productos);
     notifyListeners();
+  }
+
+  void _ponerProductos(List<Producto> productos) {
+    _estado = ExistenciasCargadas(productos);
+    _porReponer = null;
   }
 
   /// Adds the product to the list as soon as the repository accepts it.
@@ -52,7 +65,7 @@ class ControladorExistencias extends ChangeNotifier {
     final resultado = await _repositorio.crear(datos);
     if (resultado case ProductoGuardado(:final producto)) {
       ultimoCreado = (categoria: producto.categoria, forma: producto.forma);
-      _estado = ExistenciasCargadas([...productos, producto]);
+      _ponerProductos([...productos, producto]);
       notifyListeners();
     }
     return resultado;
@@ -65,7 +78,7 @@ class ControladorExistencias extends ChangeNotifier {
   ) async {
     final resultado = await _repositorio.actualizar(id, datos);
     if (resultado case ProductoGuardado(:final producto)) {
-      _estado = ExistenciasCargadas([
+      _ponerProductos([
         for (final p in productos) p.id == id ? producto : p,
       ]);
       notifyListeners();
@@ -75,7 +88,7 @@ class ControladorExistencias extends ChangeNotifier {
 
   Future<void> borrarProducto(String id) async {
     await _repositorio.borrar(id);
-    _estado = ExistenciasCargadas([
+    _ponerProductos([
       for (final p in productos)
         if (p.id != id) p,
     ]);

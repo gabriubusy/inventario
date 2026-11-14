@@ -18,7 +18,21 @@ class ControladorMovimientos extends ChangeNotifier {
   /// Newest first.
   List<Movimiento> get todos => _todos;
 
-  ResumenDia get resumenDeHoy => ResumenDia.de(_todos, hoy);
+  ResumenDia? _resumen;
+  DateTime? _diaDelResumen;
+
+  /// Walks the whole history, and the home screen asks for it on every
+  /// repaint: kept until something is noted or the day changes.
+  ResumenDia get resumenDeHoy {
+    final hoy = this.hoy;
+    if (_resumen case final hecho?) {
+      if (_diaDelResumen case final dia? when diasEntre(dia, hoy) == 0) {
+        return hecho;
+      }
+    }
+    _diaDelResumen = hoy;
+    return _resumen = ResumenDia.de(_todos, hoy);
+  }
 
   /// Today's sales, newest first, at most [limite].
   List<Movimiento> ultimasVentas({int limite = 7}) => _todos
@@ -75,6 +89,7 @@ class ControladorMovimientos extends ChangeNotifier {
 
   void _poner(List<Movimiento> movimientos) {
     _todos = [...movimientos]..sort((a, b) => b.fecha.compareTo(a.fecha));
+    _resumen = null;
     notifyListeners();
   }
 }

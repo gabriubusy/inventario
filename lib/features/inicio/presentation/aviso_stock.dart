@@ -4,7 +4,6 @@ import 'package:inventario/app/espaciado.dart';
 import 'package:inventario/app/tecla_atajo.dart';
 import 'package:inventario/features/productos/application/controlador_existencias.dart';
 import 'package:inventario/features/productos/domain/estado_stock.dart';
-import 'package:inventario/features/productos/domain/por_reponer.dart';
 import 'package:inventario/features/productos/domain/producto.dart';
 
 /// "No tienes Chuleta ahumada · tienes poco Carne molida" on the home screen,
@@ -54,7 +53,7 @@ class AvisoStock extends StatelessWidget {
     return ListenableBuilder(
       listenable: existencias,
       builder: (context, _) {
-        final reponer = porReponer(existencias.productos);
+        final reponer = existencias.porReponer;
         if (reponer.isEmpty) return const SizedBox.shrink();
         final alertas = context.coloresEstado;
         final espaciado = context.espaciado;

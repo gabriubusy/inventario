@@ -5,9 +5,14 @@ import 'package:inventario/features/caja/domain/movimiento_caja.dart';
 import 'package:inventario/features/caja/domain/movimientos_caja.dart';
 import 'package:inventario/features/caja/domain/repositorio_cajas.dart';
 import 'package:inventario/features/compras/application/controlador_compras.dart';
+import 'package:inventario/features/compras/domain/compra.dart';
+import 'package:inventario/features/compras/domain/pago.dart';
 import 'package:inventario/features/devoluciones_proveedor/application/controlador_devoluciones_proveedor.dart';
+import 'package:inventario/features/devoluciones_proveedor/domain/devolucion_proveedor.dart';
 import 'package:inventario/features/gastos/application/controlador_gastos.dart';
+import 'package:inventario/features/gastos/domain/gasto.dart';
 import 'package:inventario/features/movimientos/application/controlador_movimientos.dart';
+import 'package:inventario/features/movimientos/domain/movimiento.dart';
 import 'package:inventario/features/salidas/domain/repositorio_ventas.dart';
 import 'package:inventario/features/salidas/domain/venta.dart';
 
@@ -75,17 +80,46 @@ class ControladorCaja extends ChangeNotifier {
     return ultima;
   }
 
-  List<MovimientoCaja> movimientosDe(Caja caja) => movimientosDeCaja(
+  /// The screen asks for these on every repaint and they walk the whole
+  /// history, so the answer is kept until one of the lists it was made
+  /// from is replaced (every controller swaps the list on a change).
+  _Entradas? _hechoCon;
+  List<MovimientoCaja>? _movimientosHechos;
+  Map<MedioPago, int>? _saldosHechos;
+
+  List<MovimientoCaja> movimientosDe(Caja caja) {
+    final entradas = _entradasDe(caja);
+    if (_movimientosHechos case final hechos? when entradas == _hechoCon) {
+      return hechos;
+    }
+    final movimientos = movimientosDeCaja(
+      caja: caja,
+      ventas: entradas.ventas,
+      lineas: entradas.lineas,
+      compras: entradas.compras,
+      pagos: entradas.pagos,
+      gastos: entradas.gastos,
+      devolucionesProveedor: entradas.devoluciones,
+    );
+    _hechoCon = entradas;
+    _saldosHechos = null;
+    return _movimientosHechos = movimientos;
+  }
+
+  Map<MedioPago, int> saldosDe(Caja caja) {
+    final movimientos = movimientosDe(caja);
+    return _saldosHechos ??= saldosDeCaja(movimientos);
+  }
+
+  _Entradas _entradasDe(Caja caja) => (
     caja: caja,
     ventas: _todasLasVentas,
     lineas: _movimientos?.todos ?? const [],
     compras: _compras?.compras ?? const [],
     pagos: _compras?.pagos ?? const [],
     gastos: _gastos?.todos ?? const [],
-    devolucionesProveedor: _devolucionesProveedor?.todas ?? const [],
+    devoluciones: _devolucionesProveedor?.todas ?? const [],
   );
-
-  Map<MedioPago, int> saldosDe(Caja caja) => saldosDeCaja(movimientosDe(caja));
 
   /// Reads tills and sales again; called when the screen opens.
   Future<void> cargar() async {
@@ -154,3 +188,15 @@ class ControladorCaja extends ChangeNotifier {
     return true;
   }
 }
+
+/// What the till's figures are made of; two of these are equal when every
+/// list is the very same object, which is how a change is spotted.
+typedef _Entradas = ({
+  Caja caja,
+  List<Venta> ventas,
+  List<Movimiento> lineas,
+  List<Compra> compras,
+  List<Pago> pagos,
+  List<Gasto> gastos,
+  List<DevolucionProveedor> devoluciones,
+});
