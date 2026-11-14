@@ -188,6 +188,13 @@ test/                    # misma estructura que lib/
   - Enter abre la recepción en un panel abajo, en la misma pantalla (`PanelRecepcion`): cada línea pendiente viene con lo pedido escrito (si llegó todo, basta Ctrl+S), Alt+T vuelve a ponerlo, lo que se deja vacío sigue pendiente y la diferencia se ve por línea; a la derecha `ResumenDeRecepcion` (`ResumenRecepcion`: líneas, valor, diferencia) y nota opcional. Ctrl+S guarda con "Deshacer" en el aviso, Esc cierra el panel.
   - El inicio avisa mientras haya pedidos sin recibir (`AvisoPedidos`: "Hay N pedidos por recibir", su mercancía no cuenta en el inventario).
 
+- Rendimiento (noviembre 2026, medido con un año de historial: 18.000 ventas y 55.000 líneas):
+  - Nada que recorra el historial se calcula en `build`. `ControladorCaja` guarda los movimientos y saldos de una caja y los recalcula solo cuando cambia alguna de las seis listas de las que salen (se comparan por identidad: todos esos controladores reemplazan la lista al cambiar, nunca la mutan). `ControladorMovimientos.resumenDeHoy` caduca al anotar algo o al cambiar el día, y `porReponer` vive en `ControladorExistencias` (invalidado en `_ponerProductos`), no en el widget.
+  - `movimientosDeCaja` cuenta las líneas de cada ticket con un mapa en una pasada; buscarlas dentro de todo el historial costaba ~450 ms por repintado (ahora ~30 ms).
+  - Las tablas largas se construyen al desplazarse, con `DecoratedSliver` para que la tarjeta se vea igual: historial del producto (F8, `TablaKardex`) y reportes (F12, `TablaReporte`). Con 5.000 filas se construyen 15. El radio del borde sale de `TemaApp.radioTarjeta`.
+  - Conteo F9 sigue construyendo todas sus filas a propósito: con slivers, el "Enter pasa al siguiente" se corta al final de lo construido. Hacerlo perezoso pide un `FocusNode` por fila y mover el foco con `ensureVisible`.
+  - Cargar los 55.000 movimientos de SQLite cuesta ~1,2 s, una vez al arrancar y en segundo plano. Se deja así; pasados ~100.000 habría que leer por rango de fechas en vez de todo.
+
 ## Decisiones pendientes
 
 Registrar aquí cuando se decidan:

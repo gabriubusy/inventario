@@ -4,7 +4,8 @@ import 'package:inventario/features/productos/domain/categoria.dart';
 import 'package:inventario/features/productos/domain/datos_producto.dart';
 import 'package:inventario/features/productos/domain/filtro_productos.dart';
 import 'package:inventario/features/productos/domain/forma_conteo.dart';
-import 'package:inventario/features/productos/domain/por_reponer.dart' as dominio;
+import 'package:inventario/features/productos/domain/por_reponer.dart'
+    as dominio;
 import 'package:inventario/features/productos/domain/producto.dart';
 import 'package:inventario/features/productos/domain/repositorio_productos.dart';
 import 'package:inventario/features/productos/domain/resultado_guardar_producto.dart';
@@ -78,9 +79,7 @@ class ControladorExistencias extends ChangeNotifier {
   ) async {
     final resultado = await _repositorio.actualizar(id, datos);
     if (resultado case ProductoGuardado(:final producto)) {
-      _ponerProductos([
-        for (final p in productos) p.id == id ? producto : p,
-      ]);
+      _ponerProductos([for (final p in productos) p.id == id ? producto : p]);
       notifyListeners();
     }
     return resultado;

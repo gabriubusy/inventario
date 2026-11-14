@@ -223,19 +223,16 @@ void main() {
       caja: caja,
       ventas: ventas,
       // The lines of the two tickets, mixed, plus one of another day.
-      lineas: [
-        linea('v2'),
-        linea('v1'),
-        linea('v2'),
-        linea('v2'),
-        linea('v9'),
-      ],
+      lineas: [linea('v2'), linea('v1'), linea('v2'), linea('v2'), linea('v9')],
     );
     final detalles = [
       for (final m in movimientos)
         if (m.tipo == TipoMovimientoCaja.venta) m.detalle,
     ];
-    expect(detalles, containsAll(['Ticket · 1 producto', 'Ticket · 3 productos']));
+    expect(
+      detalles,
+      containsAll(['Ticket · 1 producto', 'Ticket · 3 productos']),
+    );
   });
 
   test('only what happened while the till was open counts', () {
